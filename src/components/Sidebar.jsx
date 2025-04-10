@@ -1,0 +1,112 @@
+import React from 'react';
+import {
+    TeamOutlined,
+    IdcardOutlined,
+    FileTextOutlined,
+    MedicineBoxOutlined,
+    ClockCircleOutlined,
+    BankOutlined,
+    RestOutlined,
+    PercentageOutlined,
+    ReconciliationOutlined
+} from '@ant-design/icons';
+import { Layout, Menu } from 'antd';
+import { Link } from 'react-router-dom';
+
+const { Sider } = Layout;
+
+export const Sidebar = ({ collapsed, onCollapse }) => {
+    const items = [
+        {
+            key: 'empleados',
+            icon: <TeamOutlined />,
+            label: <Link to="/finanzas/empleados">Empleados</Link>,
+        },
+        {
+            key: 'afp-empleados',
+            icon: <IdcardOutlined />,
+            label: <Link to="/finanzas/afp-empleados">AFP Empleados</Link>,
+        },
+        {
+            key: 'contrato',
+            icon: <FileTextOutlined />,
+            label: <Link to="/finanzas/contrato">Contratos</Link>,
+        },
+        {
+            key: 'eps',
+            icon: <MedicineBoxOutlined />,
+            label: <Link to="/finanzas/eps">EPS</Link>,
+        },
+        {
+            key: 'horas-extra',
+            icon: <ClockCircleOutlined />,
+            label: <Link to="/finanzas/horas-extra">Horas Extra</Link>,
+        },
+        {
+            key: 'retencion-judicial',
+            icon: <BankOutlined />,
+            label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
+        },
+        {
+            key: 'afp',
+            icon: <ReconciliationOutlined />,
+            label: <Link to="/finanzas/afp">AFP</Link>,
+        },
+        {
+            key: 'descanso-medicos',
+            icon: <RestOutlined />,
+            label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
+        },
+        {
+            key: 'comisiones',
+            icon: <PercentageOutlined />,
+            label: <Link to="/finanzas/comisiones">Comisiones</Link>,
+        },
+    ];
+
+    return (
+        <Sider
+            collapsible
+            collapsed={collapsed}
+            onCollapse={onCollapse}
+            width={250}
+            style={{
+                overflow: 'auto',
+                height: '100vh',
+                position: 'fixed',
+                left: 0,
+                top: 0,
+                bottom: 0,
+            }}
+        >
+            <div style={{
+                height: "auto",
+                padding: '50px 0px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                {!collapsed ? (
+                    <div className='text-white flex flex-col items-center justify-center gap-4'>
+                        <img
+                            className="w-15 h-15"
+                            src="/icono-logo.png"
+                            alt="Logo"
+                            onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/80" }}
+                        />
+                        <h2 className='roboto font-bold '>CARLOS CALDERON</h2>
+                    </div>
+                ) : (
+                    <TeamOutlined style={{ fontSize: '20px' }} />
+                )}
+            </div>
+            <Menu
+                theme="dark"
+                mode="inline"
+                defaultSelectedKeys={['empleados']}
+                style={{ borderRight: 0 }}
+                items={items}
+            />
+        </Sider>
+    );
+};

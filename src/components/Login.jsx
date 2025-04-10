@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Input, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 export const Login = () => {
     const [messageApi, contextHolder] = message.useMessage();
@@ -9,7 +10,7 @@ export const Login = () => {
         contraseña: ""
     });
     const [loading, setLoading] = useState(false);
-
+    const navegar = useNavigate()
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCredenciales(prev => ({
@@ -25,6 +26,9 @@ export const Login = () => {
             setLoading(false);
             if (credenciales.usuario === "admin" && credenciales.contraseña === "admin123") {
                 messageApi.success("Bienvenido!");
+                setTimeout(() => {
+                    navegar("/finanzas/empleados");
+                  }, 1000)
             } else {
                 messageApi.error("Credenciales incorrectas");
             }
@@ -45,7 +49,7 @@ export const Login = () => {
                         alt="Logo" 
                         onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/80" }}
                     />
-                    <h1 className="text-2xl font-bold text-gray-800 font-sans">
+                    <h1 className="text-2xl font-bold text-gray-800 font-sans text-center">
                         DATA ENTRY - FINANZAS
                     </h1>
                     <p className="text-gray-500 mt-2">Ingrese sus credenciales</p>
@@ -85,7 +89,7 @@ export const Login = () => {
                             loading={loading}
                             onClick={onFinish}
                             disabled={!isFormValid}
-                            className={`w-full ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full ${!isFormValid ? 'cursor-not-allowed' : ''}`}
                         >
                             {loading ? 'Ingresando...' : 'Ingresar'}
                         </Button>
