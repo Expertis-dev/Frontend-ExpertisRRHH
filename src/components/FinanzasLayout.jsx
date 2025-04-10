@@ -12,8 +12,8 @@ export const FinanzasLayout = () => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
-      <Layout style={{ marginLeft: collapsed ? 80 : 250 }}>
-        <Content style={{ margin: '24px 16px', padding: 24 }}>
+      <Layout>
+        <Content style={{ padding: 24 }}>
           <Outlet />
         </Content>
       </Layout>

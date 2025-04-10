@@ -69,19 +69,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             collapsible
             collapsed={collapsed}
             onCollapse={onCollapse}
-            width={250}
-            style={{
-                overflow: 'auto',
-                height: '100vh',
-                position: 'fixed',
-                left: 0,
-                top: 0,
-                bottom: 0,
-            }}
+            width={180}
         >
             <div style={{
                 height: "auto",
-                padding: '50px 0px',
+                padding: '50px 0px 20px 0px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -97,12 +89,16 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                         <h2 className='roboto font-bold '>CARLOS CALDERON</h2>
                     </div>
                 ) : (
-                    <TeamOutlined style={{ fontSize: '20px' }} />
+                    <img
+                        className="w-12 h-12"
+                        src="/icono-logo.png"
+                        alt="Logo"
+                        onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/80" }}
+                    />
                 )}
             </div>
             <Menu
                 theme="dark"
-                mode="inline"
                 defaultSelectedKeys={['empleados']}
                 style={{ borderRight: 0 }}
                 items={items}
