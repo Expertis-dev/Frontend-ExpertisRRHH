@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Children } from 'react';
 import {
     TeamOutlined,
     IdcardOutlined,
@@ -23,11 +23,6 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             label: <Link to="/finanzas/empleados">Empleados</Link>,
         },
         {
-            key: 'afp-empleados',
-            icon: <IdcardOutlined />,
-            label: <Link to="/finanzas/afp-empleados">AFP Empleados</Link>,
-        },
-        {
             key: 'contrato',
             icon: <FileTextOutlined />,
             label: <Link to="/finanzas/contrato">Contratos</Link>,
@@ -48,9 +43,23 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
         },
         {
-            key: 'afp',
+            key: 'sub1',
             icon: <ReconciliationOutlined />,
-            label: <Link to="/finanzas/afp">AFP</Link>,
+            label: "AFP",
+            children: [
+                {
+                    key: 'empleados-afp',
+                    label: <Link to="/finanzas/empleados-afp">AFP Empleados</Link>,
+                },
+                {
+                    key: 'cambios-afp',
+                    label: <Link to="/finanzas/cambios-afp">Cambios AFP</Link>,
+                },
+                {
+                    key: 'historico-afp',
+                    label: <Link to="/finanzas/info-afp">Info. AFP</Link>,
+                },
+            ],
         },
         {
             key: 'descanso-medicos',
@@ -101,6 +110,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                 theme="dark"
                 defaultSelectedKeys={['empleados']}
                 style={{ borderRight: 0 }}
+                mode="inline"
                 items={items}
             />
         </Sider>
