@@ -475,13 +475,10 @@ export const ListarEmpleados = () => {
               <TableRow className="bg-gray-100">
                 <TableHead className="font-bold text-gray-700">NOMBRE COMPLETO</TableHead>
                 <TableHead className="font-bold text-gray-700">DNI</TableHead>
-                <TableHead className="font-bold text-gray-700">INGRESO</TableHead>
-                <TableHead className="font-bold text-gray-700">SALIDA</TableHead>
-                <TableHead className="font-bold text-gray-700">CODIGO EMPLEADO</TableHead>
-                <TableHead className="font-bold text-gray-700">MOTIVO CESE</TableHead>
-                <TableHead className="font-bold text-gray-700">INGRESO BRUTO</TableHead>
-                <TableHead className="font-bold text-gray-700">IMPUESTO RETENIDO</TableHead>
-                <TableHead className="font-bold text-gray-700">SUMA GRACIOSA</TableHead>
+                <TableHead className="font-bold text-gray-700">FECHA INGRESO</TableHead>
+                <TableHead className="font-bold text-gray-700">FECHA SALIDA</TableHead>
+                <TableHead className="font-bold text-gray-700">ESTADO LABORAL</TableHead> 
+                <TableHead className="font-bold text-gray-700">MOTIVO CESE</TableHead>           
                 <TableHead className="font-bold text-gray-700">DETALLE</TableHead>
                 <TableHead className="font-bold text-gray-700">EDITAR</TableHead>
               </TableRow>
@@ -493,11 +490,8 @@ export const ListarEmpleados = () => {
                   <TableCell>{employee.dni}</TableCell>
                   <TableCell>{employee.entryDate}</TableCell>
                   <TableCell>{employee.exitDate}</TableCell>
-                  <TableCell>{employee.employeeCode}</TableCell>
-                  <TableCell>{employee.terminationReason}</TableCell>
-                  <TableCell>{employee.grossIncome}</TableCell>
-                  <TableCell>{employee.taxWithheld}</TableCell>
-                  <TableCell>{employee.bonus}</TableCell>
+                  <TableCell>PRACTICANTE</TableCell>                  
+                  <TableCell>{employee.terminationReason}</TableCell>                  
                   <TableCell>
                     <Button
                       variant="ghost"
