@@ -31,8 +31,8 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     label: <Link to="/finanzas/empleados-crear">Crear Empleado</Link>,
                 },
                 {
-                    key: 'empleados-editar',
-                    label: <Link to="/finanzas/empleados-editar">Editar Empleado</Link>,
+                    key: 'empleados-cesar',
+                    label: <Link to="/finanzas/empleados-cesar">Cesar Empleado</Link>,
                 },
             ]
         },

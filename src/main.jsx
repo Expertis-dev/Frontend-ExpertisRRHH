@@ -14,7 +14,7 @@ import { DescansoMedico } from './view/DescansoMedico.jsx';
 import { Comisiones } from './view/Comisiones.jsx';
 import { ListarEmpleados } from './view/Empleado/ListarEmpleados';
 import { CrearEmpleado } from './view/Empleado/CrearEmpleado';
-import { EditarEmpleado } from './view/Empleado/EditarEmpleado';
+import { CesarEmpleado } from './view/Empleado/CesarEmpleado';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -23,7 +23,7 @@ createRoot(document.getElementById('root')).render(
       <Route path="/finanzas" element={<FinanzasLayout />}>
         <Route path="empleados-listar" element={<ListarEmpleados/>} />
         <Route path="empleados-crear" element={<CrearEmpleado/> } />
-        <Route path="empleados-editar" element={<EditarEmpleado/> } />
+        <Route path="empleados-cesar" element={<CesarEmpleado/> } />
         <Route path="empleados-afp" element={<AFPempleado/>} />
         <Route path="cambios-afp" element={<CambiosAFP/>} />
         <Route path="info-afp" element={<InfoAFP/>} />
