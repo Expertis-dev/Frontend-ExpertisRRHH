@@ -8,17 +8,20 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import axios from "axios"
 
 export const ListarEmpleados = () => {
   // Estados de búsqueda y validación
   const [searchQuery, setSearchQuery] = useState("")
   const [isValid, setIsValid] = useState(false)
-  
+  const [empleados, setEmpleados] = useState([])
+  const [filteredEmpleados, setFilteredEmpleados] = useState([])
+  const [datosCese, setDatosCese] = useState([])
   // Estados para los diálogos
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState(null)
-  
+
   // Estados para el flujo de edición por pasos
   const [selectedField, setSelectedField] = useState(null)
   const [currentStep, setCurrentStep] = useState(1)
@@ -30,22 +33,34 @@ export const ListarEmpleados = () => {
   })
   const [allStepsValid, setAllStepsValid] = useState(false)
 
-  // Datos de ejemplo
-  const employees = Array(30).fill(null).map((_, index) => ({
-    id: index + 1,
-    fullName: "Carlos Sebastian Calderon Vega",
-    dni: "12345678",
-    entryDate: "01/01/2023",
-    exitDate: "01/01/2023",
-    employeeCode: "06815077-2015-11",
-    terminationReason: "N/A",
-    grossIncome: 5000,
-    taxWithheld: 800,
-    bonus: "N/A",
-    position: "Desarrollador Senior",
-    familyAllowance: "2 hijos",
-    afp: "AFP Integra",
-  }))
+  // Obtener empleados desde el backend
+  const obtenerEmpleados = async () => {
+    try {
+      const response = await axios.get('https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarEmpleados')
+      setEmpleados(response.data.recordset)
+      setFilteredEmpleados(response.data.recordset)
+    } catch (error) {
+      console.error("Error al obtener empleados:", error)
+    }
+  }
+
+  useEffect(() => {
+    obtenerEmpleados()
+  }, [])
+
+  // Filtrar empleados por búsqueda
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredEmpleados(empleados)
+    } else {
+      const filtered = empleados.filter(emp =>
+        emp.documento.includes(searchQuery) ||
+        emp.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.CODIGO.includes(searchQuery)
+      )
+      setFilteredEmpleados(filtered)
+    }
+  }, [searchQuery, empleados])
 
   // Efecto para verificar si todos los pasos están completos
   useEffect(() => {
@@ -54,20 +69,47 @@ export const ListarEmpleados = () => {
       setAllStepsValid(fieldData.valid)
     }
   }, [formData, selectedField])
-
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredEmpleados(empleados);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = empleados.filter(emp =>
+        emp.documento.includes(searchQuery) || // Búsqueda exacta por DNI
+        emp.nombreCompleto.toLowerCase().includes(query) || // Búsqueda parcial por nombre
+        emp.CODIGO.toLowerCase().includes(query) // Búsqueda parcial por código
+      );
+      setFilteredEmpleados(filtered);
+    }
+  }, [searchQuery, empleados]);
   // Manejo del documento de búsqueda
-  const handleDocumentoChange = (e) => {
+  // Modificaciones en la función de manejo de búsqueda
+  const handleSearchChange = (e) => {
     const inputValue = e.target.value;
-    const numericValue = inputValue.replace(/\D/g, '');
-    const truncatedValue = numericValue.slice(0, 8);
-    setSearchQuery(truncatedValue);
-    setIsValid(/^\d{8}$/.test(truncatedValue));
+    setSearchQuery(inputValue);
+
+    // No necesitamos validación para búsqueda por nombre
+    if (inputValue.trim() === '') {
+      setIsValid(false);
+    } else {
+      setIsValid(true); // Consideramos válido cualquier texto para búsqueda por nombre
+    }
   };
 
+  // Formatear fecha para visualización
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('es-PE')
+  }
+
   // Abrir detalles del empleado
-  const openDetails = (employee) => {
+  const openDetails = async (employee) => {
     setSelectedEmployee(employee)
     setDetailsOpen(true)
+    const response = await axios.get(`https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/historicoCeses/${employee.idPersona}`)
+    console.log(response.data.data[0])
+    setDatosCese(response.data.data[0])
   }
 
   // Abrir edición del empleado
@@ -76,31 +118,32 @@ export const ListarEmpleados = () => {
     setSelectedField(null)
     setCurrentStep(1)
     setEditOpen(true)
+
     // Inicializar formulario con datos del empleado
     setFormData({
-      salary: { 
-        amount: employee.grossIncome.toString(), 
-        currency: 'PEN', 
-        valid: true 
+      salary: {
+        amount: employee.sueldo?.toString() || '',
+        currency: 'PEN',
+        valid: true
       },
-      position: { 
-        title: employee.position, 
-        department: 'Tecnología', 
-        startDate: employee.entryDate,
-        valid: true 
+      position: {
+        title: employee.cargo || '',
+        department: employee.departamento || '',
+        startDate: employee.fecIngreso || '',
+        valid: true
       },
-      familyAllowance: { 
-        hasAllowance: employee.familyAllowance !== "N/A", 
-        dependents: employee.familyAllowance === "2 hijos" ? 2 : 0, 
-        amount: employee.familyAllowance === "2 hijos" ? 200 : 0,
-        valid: true 
+      familyAllowance: {
+        hasAllowance: employee.asignacionFamiliar === 'Sí',
+        dependents: employee.numHijos || 0,
+        amount: employee.montoAsignacion || 0,
+        valid: true
       },
-      personalData: { 
-        fullName: employee.fullName, 
-        dni: employee.dni, 
-        address: 'Dirección no especificada',
+      personalData: {
+        fullName: employee.nombreCompleto || '',
+        dni: employee.documento || '',
+        address: employee.direccion || '',
         photo: null,
-        valid: true 
+        valid: true
       }
     })
   }
@@ -112,14 +155,14 @@ export const ListarEmpleados = () => {
       [selectedField]: {
         ...prev[selectedField],
         ...value,
-        valid: validateStep(selectedField, {...prev[selectedField], ...value})
+        valid: validateStep(selectedField, { ...prev[selectedField], ...value })
       }
     }))
   }
 
   // Validar el paso actual
   const validateStep = (field, data) => {
-    switch(field) {
+    switch (field) {
       case 'salary':
         return !!data.amount && !isNaN(data.amount)
       case 'position':
@@ -136,29 +179,72 @@ export const ListarEmpleados = () => {
   // Avanzar al siguiente paso
   const handleNextStep = () => {
     if (currentStep === 1) {
-      // Primer paso: selección de campo
       if (!selectedField) return
       setCurrentStep(2)
     } else if (currentStep === 2) {
-      // Segundo paso: edición del campo
       if (!allStepsValid) return
       setCurrentStep(3)
     }
   }
 
-  // Enviar datos (último paso)
-  const handleSubmit = () => {
-    console.log('Datos enviados:', {
-      employeeId: selectedEmployee.id,
-      field: selectedField,
-      data: formData[selectedField]
-    })
-    setEditOpen(false)
+  // Enviar datos actualizados al backend
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        idPersona: selectedEmployee.idPersona,
+        [selectedField]: formData[selectedField]
+      }
+
+      // Aquí iría la llamada real al backend
+      console.log('Datos a enviar:', payload)
+
+      // Ejemplo de llamada API (descomentar cuando esté listo el endpoint)
+      // const response = await axios.put('/api/empleados/actualizar', payload)
+      // console.log('Respuesta del servidor:', response.data)
+
+      // Actualizar localmente los datos (esto sería reemplazado por la respuesta del backend)
+      const updatedEmpleados = empleados.map(emp =>
+        emp.idPersona === selectedEmployee.idPersona
+          ? { ...emp, ...mapFormDataToEmployee(formData) }
+          : emp
+      )
+
+      setEmpleados(updatedEmpleados)
+      setFilteredEmpleados(updatedEmpleados)
+      setEditOpen(false)
+
+    } catch (error) {
+      console.error("Error al actualizar empleado:", error)
+    }
+  }
+
+  // Mapear datos del formulario a estructura de empleado
+  const mapFormDataToEmployee = (formData) => {
+    return {
+      ...(selectedField === 'salary' && {
+        sueldo: parseFloat(formData.salary.amount)
+      }),
+      ...(selectedField === 'position' && {
+        cargo: formData.position.title,
+        departamento: formData.position.department,
+        fecIngreso: formData.position.startDate
+      }),
+      ...(selectedField === 'familyAllowance' && {
+        asignacionFamiliar: formData.familyAllowance.hasAllowance ? 'Sí' : 'No',
+        numHijos: formData.familyAllowance.dependents,
+        montoAsignacion: formData.familyAllowance.amount
+      }),
+      ...(selectedField === 'personalData' && {
+        nombreCompleto: formData.personalData.fullName,
+        documento: formData.personalData.dni,
+        direccion: formData.personalData.address
+      })
+    }
   }
 
   // Renderizar el paso actual
   const renderCurrentStep = () => {
-    switch(currentStep) {
+    switch (currentStep) {
       case 1:
         return (
           <div className="space-y-4 py-4">
@@ -228,11 +314,11 @@ export const ListarEmpleados = () => {
         return (
           <div className="space-y-4 py-4">
             <DialogDescription className="text-center">
-              Complete los datos para modificar {selectedField === 'salary' ? 'el sueldo' : 
-              selectedField === 'position' ? 'el puesto' : 
-              selectedField === 'familyAllowance' ? 'la asignación familiar' : 'los datos personales'}
+              Complete los datos para modificar {selectedField === 'salary' ? 'el sueldo' :
+                selectedField === 'position' ? 'el puesto' :
+                  selectedField === 'familyAllowance' ? 'la asignación familiar' : 'los datos personales'}
             </DialogDescription>
-            
+
             {selectedField === 'salary' && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -303,13 +389,13 @@ export const ListarEmpleados = () => {
                   <Checkbox
                     id="hasAllowance"
                     checked={formData.familyAllowance.hasAllowance}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       handleFieldChange('familyAllowance', { hasAllowance: checked })
                     }
                   />
                   <Label htmlFor="hasAllowance">Recibe asignación familiar</Label>
                 </div>
-                
+
                 {formData.familyAllowance.hasAllowance && (
                   <>
                     <div className="space-y-2">
@@ -319,8 +405,8 @@ export const ListarEmpleados = () => {
                         type="number"
                         min="0"
                         value={formData.familyAllowance.dependents}
-                        onChange={(e) => handleFieldChange('familyAllowance', { 
-                          dependents: parseInt(e.target.value) || 0 
+                        onChange={(e) => handleFieldChange('familyAllowance', {
+                          dependents: parseInt(e.target.value) || 0
                         })}
                       />
                     </div>
@@ -331,8 +417,8 @@ export const ListarEmpleados = () => {
                         type="number"
                         min="0"
                         value={formData.familyAllowance.amount}
-                        onChange={(e) => handleFieldChange('familyAllowance', { 
-                          amount: parseFloat(e.target.value) || 0 
+                        onChange={(e) => handleFieldChange('familyAllowance', {
+                          amount: parseFloat(e.target.value) || 0
                         })}
                       />
                     </div>
@@ -393,13 +479,13 @@ export const ListarEmpleados = () => {
             <DialogDescription className="text-center">
               Revise los cambios antes de enviar
             </DialogDescription>
-            
+
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-2">Resumen de cambios:</h3>
               {selectedField === 'salary' && (
                 <>
                   <p><span className="font-medium">Nuevo sueldo:</span> {formData.salary.currency} {formData.salary.amount}</p>
-                  <p><span className="font-medium">Anterior:</span> PEN {selectedEmployee.grossIncome}</p>
+                  <p><span className="font-medium">Anterior:</span> PEN {selectedEmployee.sueldo || 'N/A'}</p>
                 </>
               )}
               {selectedField === 'position' && (
@@ -407,7 +493,7 @@ export const ListarEmpleados = () => {
                   <p><span className="font-medium">Nuevo puesto:</span> {formData.position.title}</p>
                   <p><span className="font-medium">Departamento:</span> {formData.position.department}</p>
                   <p><span className="font-medium">Fecha inicio:</span> {formData.position.startDate}</p>
-                  <p><span className="font-medium">Anterior:</span> {selectedEmployee.position}</p>
+                  <p><span className="font-medium">Anterior:</span> {selectedEmployee.cargo || 'N/A'}</p>
                 </>
               )}
               {selectedField === 'familyAllowance' && (
@@ -419,7 +505,7 @@ export const ListarEmpleados = () => {
                       <p><span className="font-medium">Monto:</span> {formData.familyAllowance.amount}</p>
                     </>
                   )}
-                  <p><span className="font-medium">Anterior:</span> {selectedEmployee.familyAllowance}</p>
+                  <p><span className="font-medium">Anterior:</span> {selectedEmployee.asignacionFamiliar || 'N/A'}</p>
                 </>
               )}
               {selectedField === 'personalData' && (
@@ -428,7 +514,7 @@ export const ListarEmpleados = () => {
                   <p><span className="font-medium">DNI:</span> {formData.personalData.dni}</p>
                   <p><span className="font-medium">Dirección:</span> {formData.personalData.address}</p>
                   <p><span className="font-medium">Foto:</span> {formData.personalData.photo ? 'Subida' : 'Sin cambios'}</p>
-                  <p><span className="font-medium">Anterior nombre:</span> {selectedEmployee.fullName}</p>
+                  <p><span className="font-medium">Anterior nombre:</span> {selectedEmployee.nombreCompleto || 'N/A'}</p>
                 </>
               )}
             </div>
@@ -444,23 +530,23 @@ export const ListarEmpleados = () => {
       <h1 className="text-center text-2xl font-bold text-gray-800">MÓDULO DE EMPLEADOS</h1>
 
       {/* Barra de búsqueda */}
-      <div className="py-8 w-1/2">
+      <div className="py-8 w-full md:w-1/2">
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="flex items-center gap-2 w-full">
-            <span className="font-medium text-gray-700 whitespace-nowrap">Documento:</span>
+            <span className="font-medium text-gray-700 whitespace-nowrap">Buscar:</span>
             <div className="relative w-full">
               <Input
                 type="text"
                 value={searchQuery}
-                onChange={handleDocumentoChange}
-                placeholder="Ingrese DNI (8 dígitos)"
-                maxLength={8}
-                inputMode="numeric"
-                pattern="\d*"
+                onChange={handleSearchChange}
+                placeholder="Ingrese DNI, nombre o código"
               />
             </div>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto transition-all cursor-pointer" disabled={!isValid}>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto transition-all cursor-pointer"
+            onClick={() => obtenerEmpleados()}
+          >
             <Search className="h-4 w-4" />
             Buscar
           </Button>
@@ -468,30 +554,28 @@ export const ListarEmpleados = () => {
       </div>
 
       {/* Tabla de empleados */}
-      <Card className="shadow-lg overflow-y-auto max-h-[70vh] ">
+      <Card className="shadow-lg overflow-y-auto max-h-[70vh]">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="bg-gray-100">
+                <TableHead className="font-bold text-gray-700">CODIGO EMPLEADO</TableHead>
                 <TableHead className="font-bold text-gray-700">NOMBRE COMPLETO</TableHead>
                 <TableHead className="font-bold text-gray-700">DNI</TableHead>
                 <TableHead className="font-bold text-gray-700">FECHA INGRESO</TableHead>
-                <TableHead className="font-bold text-gray-700">FECHA SALIDA</TableHead>
-                <TableHead className="font-bold text-gray-700">ESTADO LABORAL</TableHead> 
-                <TableHead className="font-bold text-gray-700">MOTIVO CESE</TableHead>           
+                <TableHead className="font-bold text-gray-700">ESTADO LABORAL</TableHead>
                 <TableHead className="font-bold text-gray-700">DETALLE</TableHead>
                 <TableHead className="font-bold text-gray-700">EDITAR</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {employees.map((employee) => (
-                <TableRow key={employee.id} className="border-t hover:bg-blue-50 transition-colors">
-                  <TableCell>{employee.fullName}</TableCell>
-                  <TableCell>{employee.dni}</TableCell>
-                  <TableCell>{employee.entryDate}</TableCell>
-                  <TableCell>{employee.exitDate}</TableCell>
-                  <TableCell>PRACTICANTE</TableCell>                  
-                  <TableCell>{employee.terminationReason}</TableCell>                  
+              {filteredEmpleados.map((employee) => (
+                <TableRow key={employee.idPersona} className="border-t hover:bg-blue-50 transition-colors">
+                  <TableCell>{employee.CODIGO}</TableCell>
+                  <TableCell>{employee.nombreCompleto}</TableCell>
+                  <TableCell>{employee.documento}</TableCell>
+                  <TableCell>{formatDate(employee.fecIngreso)}</TableCell>
+                  <TableCell>{employee.estadoLaboral}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -521,42 +605,32 @@ export const ListarEmpleados = () => {
 
       {/* Modal de Detalles */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-6xl max-h-[96vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center text-blue-800 border-b pb-2">
-              MODAL DE RELACIÓN DEL EMPLEADO
+              DETALLES DEL EMPLEADO
             </DialogTitle>
           </DialogHeader>
 
           {selectedEmployee && (
-            <div className="space-y-6">
+            <div className="space-y-2">
               {/* Datos generales */}
-              <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+              <div className="border border-blue-200 rounded-lg p-2 bg-blue-50">
                 <h3 className="font-bold text-center mb-2 text-blue-700">
-                  DATOS GENERALES DEL EMPLEADO (SERÁN LOS DATOS QUE SE VISUALIZÓ EN LA TABLA)
+                  DATOS GENERALES
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p>
-                      <span className="font-semibold">Nombre:</span> {selectedEmployee.fullName}
-                    </p>
-                    <p>
-                      <span className="font-semibold">DNI:</span> {selectedEmployee.dni}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Código:</span> {selectedEmployee.employeeCode}
-                    </p>
+                    <p><span className="font-semibold">Nombre:</span> {selectedEmployee.nombreCompleto}</p>
+                    <p><span className="font-semibold">DNI:</span> {selectedEmployee.documento}</p>
+                    <p><span className="font-semibold">Código:</span> {selectedEmployee.CODIGO}</p>
+                    <p><span className="font-semibold">Dirección:</span> {selectedEmployee.direccion || 'N/A'}</p>
                   </div>
                   <div className="space-y-1">
-                    <p>
-                      <span className="font-semibold">Ingreso:</span> {selectedEmployee.entryDate}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Salida:</span> {selectedEmployee.exitDate}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Motivo Cese:</span> {selectedEmployee.terminationReason}
-                    </p>
+                    <p><span className="font-semibold">Ingreso:</span> {formatDate(selectedEmployee.fecIngreso)}</p>
+                    <p><span className="font-semibold">Salida:</span> {formatDate(selectedEmployee.fecCese) || 'N/A'}</p>
+                    <p><span className="font-semibold">Estado:</span> {selectedEmployee.estadoLaboral}</p>
+                    <p><span className="font-semibold">Motivo Cese:</span> {selectedEmployee.motivoCese || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -565,39 +639,65 @@ export const ListarEmpleados = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Detalle de puestos */}
                 <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Detalle de los puestos de trabajo</h3>
-                  <p>Puesto actual: {selectedEmployee.position}</p>
-                  <p>Fecha de asignación: {selectedEmployee.entryDate}</p>
-                  <p>Departamento: Tecnología</p>
-                </div>
-
-                {/* Detalle de AFP */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Detalle de los AFP</h3>
-                  <p>AFP actual: {selectedEmployee.afp}</p>
-                  <p>Fecha de afiliación: 01/01/2020</p>
-                  <p>Porcentaje: 10%</p>
-                </div>
-
-                {/* Detalle de sueldos */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Detalle de los sueldos</h3>
-                  <p>Sueldo bruto: S/ {selectedEmployee.grossIncome}</p>
-                  <p>Impuesto retenido: S/ {selectedEmployee.taxWithheld}</p>
-                  <p>Sueldo neto: S/ {selectedEmployee.grossIncome - selectedEmployee.taxWithheld}</p>
+                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS PUESTOS DE TRABAJO</h3>
+                  <p><span className="font-medium">Puesto:</span> {selectedEmployee.cargo || 'N/A'}</p>
+                  <p><span className="font-medium">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
+                  <p><span className="font-medium">Sueldo:</span> S/ {selectedEmployee.sueldo || 'N/A'}</p>
+                  <p><span className="font-medium">AFP:</span> {selectedEmployee.AFP || 'N/A'}</p>
                 </div>
 
                 {/* Detalle de asignación familiar */}
                 <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Detalle de la Asignación Familiar</h3>
-                  <p>Estado: Activo</p>
-                  <p>Dependientes: {selectedEmployee.familyAllowance}</p>
-                  <p>Monto asignado: S/ 200</p>
+                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS AFP</h3>
+                  <p><span className="font-medium">Asignación familiar:</span> {selectedEmployee.asignacionFamiliar || 'N/A'}</p>
+                  <p><span className="font-medium">Número de hijos:</span> {selectedEmployee.numHijos || '0'}</p>
+                  <p><span className="font-medium">Monto asignado:</span> S/ {selectedEmployee.montoAsignacion || '0'}</p>
+                </div>
+                {/* Detalle de puestos */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS SUELDOS</h3>
+                  <p><span className="font-medium">Puesto:</span> {selectedEmployee.cargo || 'N/A'}</p>
+                  <p><span className="font-medium">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
+                  <p><span className="font-medium">Sueldo:</span> S/ {selectedEmployee.sueldo || 'N/A'}</p>
+                  <p><span className="font-medium">AFP:</span> {selectedEmployee.AFP || 'N/A'}</p>
+                </div>
+
+                {/* Detalle de asignación familiar */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LA ASIGNACION FAMILIAR</h3>
+                  <p><span className="font-medium">Asignación familiar:</span> {selectedEmployee.asignacionFamiliar || 'N/A'}</p>
+                  <p><span className="font-medium">Número de hijos:</span> {selectedEmployee.numHijos || '0'}</p>
+                  <p><span className="font-medium">Monto asignado:</span> S/ {selectedEmployee.montoAsignacion || '0'}</p>
+                </div>
+                {/* Detalle de asignación familiar */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS CESES</h3>
+
+                  <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
+                    <Table>
+                      <TableHeader >
+                        <TableRow className="bg-gray-100">
+                          <TableHead className="font-bold text-gray-700">FECHA CESE</TableHead>
+                          <TableHead className="font-bold text-gray-700">FECHA INGRESO</TableHead>
+                          <TableHead className="font-bold text-gray-700">MOTIVO</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {datosCese.map((cese, index) => (
+                          <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
+                            <TableCell>{formatDate(cese.fecCese)}</TableCell>
+                            <TableCell>{formatDate(cese.fecIngreso)}</TableCell>
+                            <TableCell>{cese.motivo}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
                 </div>
               </div>
             </div>
           )}
-
           <DialogFooter>
             <Button onClick={() => setDetailsOpen(false)} className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
               Cerrar
@@ -617,8 +717,8 @@ export const ListarEmpleados = () => {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center text-yellow-800">
-              {currentStep === 1 ? '¿QUÉ CAMPO REQUIERE MODIFICAR?' : 
-               currentStep === 2 ? 'MODIFICAR DATOS' : 'CONFIRMAR CAMBIOS'}
+              {currentStep === 1 ? '¿QUÉ CAMPO REQUIERE MODIFICAR?' :
+                currentStep === 2 ? 'MODIFICAR DATOS' : 'CONFIRMAR CAMBIOS'}
             </DialogTitle>
             <div className="py-2">
               <Progress value={(currentStep / 3) * 100} className="h-2" />
@@ -642,16 +742,16 @@ export const ListarEmpleados = () => {
 
           <DialogFooter className="flex justify-between">
             {currentStep > 1 ? (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setCurrentStep(currentStep - 1)}
                 className="flex items-center"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" /> Atrás
               </Button>
             ) : (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSelectedField(null)
                   setEditOpen(false)
@@ -660,13 +760,13 @@ export const ListarEmpleados = () => {
                 Cancelar
               </Button>
             )}
-            
+
             {currentStep < 3 ? (
               <Button
                 onClick={handleNextStep}
                 className="bg-yellow-600 hover:bg-yellow-700 flex items-center"
                 disabled={
-                  (currentStep === 1 && !selectedField) || 
+                  (currentStep === 1 && !selectedField) ||
                   (currentStep === 2 && !allStepsValid)
                 }
               >
