@@ -27,7 +27,7 @@ export const Login = () => {
             if (credenciales.usuario === "admin" && credenciales.contraseña === "admin") {
                 messageApi.success("Bienvenido!");
                 setTimeout(() => {
-                    navegar("/finanzas/empleados");
+                    navegar("/finanzas/empleados-listar");
                   }, 1000)
             } else {
                 messageApi.error("Credenciales incorrectas");

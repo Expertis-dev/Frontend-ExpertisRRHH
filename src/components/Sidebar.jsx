@@ -18,9 +18,23 @@ const { Sider } = Layout;
 export const Sidebar = ({ collapsed, onCollapse }) => {
     const items = [
         {
-            key: 'empleados',
+            key: 'sub2',
             icon: <TeamOutlined />,
-            label: <Link to="/finanzas/empleados">Empleados</Link>,
+            label: "Empleados",
+            children: [
+                {
+                    key: 'empleados-listar',
+                    label: <Link to="/finanzas/empleados-listar">Listar Empleados</Link>,
+                },
+                {
+                    key: 'empleados-crear',
+                    label: <Link to="/finanzas/empleados-crear">Crear Empleado</Link>,
+                },
+                {
+                    key: 'empleados-editar',
+                    label: <Link to="/finanzas/empleados-editar">Editar Empleado</Link>,
+                },
+            ]
         },
         {
             key: 'contrato',
