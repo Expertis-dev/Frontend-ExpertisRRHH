@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { FinanzasLayout } from './components/FinanzasLayout.jsx';
 import { AFPempleado } from './view/AFP/AFPempleado.jsx';
-import { CambiosAFP } from './view/AFP/CambiosAFP.JSX';
+import { CambiosAFP } from './view/AFP/CambiosAFP.jsx';
 import { InfoAFP } from './view/AFP/InfoAFP.jsx';
 import { Contratos } from './view/Contratos.jsx';
 import { EPS } from './view/EPS.jsx';
@@ -12,9 +12,9 @@ import { HorasExtra } from './view/HorasExtra.jsx';
 import { RetencionJudicial } from './view/RetencionJudicial.jsx';
 import { DescansoMedico } from './view/DescansoMedico.jsx';
 import { Comisiones } from './view/Comisiones.jsx';
-import { ListarEmpleados } from './view/Empleado/ListarEmpleados';
-import { CrearEmpleado } from './view/Empleado/CrearEmpleado';
-import { CesarEmpleado } from './view/Empleado/CesarEmpleado';
+import { ListarEmpleados } from './view/Empleado/ListarEmpleados.jsx';
+import { CrearEmpleado } from './view/Empleado/CrearEmpleado.jsx';
+import { CesarEmpleado } from './view/Empleado/CesarEmpleado.jsx';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
