@@ -123,3 +123,18 @@
     @apply bg-background text-foreground;
     }
 }
+
+
+
+.spin-reverse {
+    animation: spinReverse 2s linear infinite;
+  }
+
+  @keyframes spinReverse {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
