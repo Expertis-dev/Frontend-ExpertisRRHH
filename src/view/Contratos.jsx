@@ -176,8 +176,8 @@ export const Contratos = () => {
       {/* Tabla de contratos */}
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full border-collapse">
-          <thead >
-            <tr className="bg-gray-100 text-black">
+          <thead>
+            <tr className="bg-gray-500 text-white">
               <th className="py-3 px-4 text-left border border-gray-600">DNI</th>
               <th className="py-3 px-4 text-left border border-gray-600">COD. EMPLEADO</th>
               <th className="py-3 px-4 text-left border border-gray-600">TIPO DE CONTRATO</th>

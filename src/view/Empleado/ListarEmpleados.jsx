@@ -1,10 +1,10 @@
 import axios from "axios"
 import { useState, useEffect } from "react"
-import { Search, Eye, Pencil, ChevronLeft, ChevronRight, Check, X } from "lucide-react"
+import { Eye, Pencil, ChevronLeft, ChevronRight, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -26,7 +26,7 @@ export const ListarEmpleados = () => {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState(null)
-
+  const [loading, setLoading] = useState(true)
   // Estados para el flujo de edición por pasos
   const [selectedField, setSelectedField] = useState(null)
   const [currentStep, setCurrentStep] = useState(1)
@@ -46,6 +46,8 @@ export const ListarEmpleados = () => {
       setFilteredEmpleados(response.data.recordset)
     } catch (error) {
       console.error("Error al obtener empleados:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -592,63 +594,70 @@ export const ListarEmpleados = () => {
           </div>
         </div>
       </div>
-
-      {/* Tabla de empleados */}
-      <Card className="shadow-lg overflow-y-auto max-h-[70vh]">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10">
-              <TableRow className="bg-gray-100">
-                <TableHead className="font-bold text-gray-700">CODIGO EMPLEADO</TableHead>
-                <TableHead className="font-bold text-gray-700">NOMBRE COMPLETO</TableHead>
-                <TableHead className="font-bold text-gray-700">DNI</TableHead>
-                <TableHead className="font-bold text-gray-700">FECHA INGRESO</TableHead>
-                <TableHead className="font-bold text-gray-700">ESTADO LABORAL</TableHead>
-                <TableHead className="font-bold text-gray-700">DETALLE</TableHead>
-                <TableHead className="font-bold text-gray-700">EDITAR</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredEmpleados &&
-                filteredEmpleados.map((employee) => (
-                  <TableRow key={employee.idPersona} className="border-t hover:bg-blue-50 transition-colors">
-                    <TableCell>{employee.CODIGO}</TableCell>
-                    <TableCell>{employee.nombreCompleto}</TableCell>
-                    <TableCell>{employee.documento}</TableCell>
-                    <TableCell>{formatDate(employee.fecIngreso)}</TableCell>
-                    <TableCell>{employee.estadoLaboral}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 cursor-pointer"
-                        onClick={() => openDetails(employee)}
-                      >
-                        <Eye className="h-5 w-5" />
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-green-600 hover:text-green-800 hover:bg-green-100 cursor-pointer"
-                        onClick={() => openEdit(employee)}
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </Button>
-                    </TableCell>
+      {!loading ? (
+        <>
+          {/* Tabla de empleados */}
+          < Card className="shadow-lg overflow-y-auto max-h-[70vh]">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="sticky top-0 z-10">
+                  <TableRow className="bg-gray-100">
+                    <TableHead>CODIGO EMPLEADO</TableHead>
+                    <TableHead>NOMBRE COMPLETO</TableHead>
+                    <TableHead>DNI</TableHead>
+                    <TableHead>FECHA INGRESO</TableHead>
+                    <TableHead>ESTADO LABORAL</TableHead>
+                    <TableHead>DETALLE</TableHead>
+                    <TableHead>EDITAR</TableHead>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredEmpleados.map((employee) => (
+                    <TableRow key={employee.idPersona} className="border-t hover:bg-blue-50 transition-colors">
+                      <TableCell>{employee.CODIGO}</TableCell>
+                      <TableCell>{employee.nombreCompleto}</TableCell>
+                      <TableCell>{employee.documento}</TableCell>
+                      <TableCell>{formatDate(employee.fecIngreso)}</TableCell>
+                      <TableCell>{employee.estadoLaboral}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 cursor-pointer"
+                          onClick={() => openDetails(employee)}
+                        >
+                          <Eye className="h-5 w-5" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-green-600 hover:text-green-800 hover:bg-green-100 cursor-pointer"
+                          onClick={() => openEdit(employee)}
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <p className="font-semibold text-xl">Cargando los datos...</p>
         </div>
-      </Card>
-
+      )
+      }
       {/* Modal de Detalles */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center text-blue-800 border-b pb-2">
+            <DialogTitle className="text-xl font-bold text-center text-slate-800 border-b pb-2">
               DETALLES DEL EMPLEADO
             </DialogTitle>
           </DialogHeader>
@@ -658,8 +667,8 @@ export const ListarEmpleados = () => {
           {loadingDetails ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="relative w-16 h-16">
-              <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-blue-500 border-b-transparent border-l-transparent animate-spin"></div>
-              <div className="absolute inset-2 rounded-full border-4 border-t-blue-600 border-r-transparent border-b-transparent border-l-blue-600 spin-reverse"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-blue-500 border-b-transparent border-l-transparent animate-spin"></div>
+                <div className="absolute inset-2 rounded-full border-4 border-t-blue-600 border-r-transparent border-b-transparent border-l-blue-600 spin-reverse"></div>
               </div>
               <p className="mt-4 text-blue-600 font-medium">Cargando detalles del empleado...</p>
             </div>
@@ -667,8 +676,8 @@ export const ListarEmpleados = () => {
             selectedEmployee && (
               <div className="space-y-2">
                 {/* Datos generales */}
-                <div className="border border-blue-200 rounded-lg p-2 bg-blue-50">
-                  <h3 className="font-bold text-center mb-2 text-blue-700">
+                <div className="border border-blue-200 rounded-lg p-2 bg-neutral-100">
+                  <h3 className="font-bold text-center mb-2 text-slate-700">
                     DATOS GENERALES
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -691,15 +700,15 @@ export const ListarEmpleados = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Detalle de puestos */}
                   <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS PUESTOS DE TRABAJO</h3>
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS PUESTOS DE TRABAJO</h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
 
                       <Table>
                         <TableHeader >
-                          <TableRow className="bg-gray-100">
-                            <TableHead className="font-bold text-gray-700">CARGO</TableHead>
-                            <TableHead className="font-bold text-gray-700">MES INICIO</TableHead>
-                            <TableHead className="font-bold text-gray-700">MES FIN</TableHead>
+                          <TableRow >
+                            <TableHead>CARGO</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -724,16 +733,16 @@ export const ListarEmpleados = () => {
 
                   {/* Detalle de asignación familiar */}
                   <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS AFP</h3>
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS AFP</h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
 
                       <Table>
                         <TableHeader >
-                          <TableRow className="bg-gray-100">
-                            <TableHead className="font-bold text-gray-700">SP</TableHead>
-                            <TableHead className="font-bold text-gray-700">TIPO COMISION</TableHead>
-                            <TableHead className="font-bold text-gray-700">MES INICIO</TableHead>
-                            <TableHead className="font-bold text-gray-700">MES FIN</TableHead>
+                          <TableRow>
+                            <TableHead>SP</TableHead>
+                            <TableHead>TIPO COMISION</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -758,7 +767,7 @@ export const ListarEmpleados = () => {
                   </div>
                   {/* Detalle de puestos */}
                   <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS SUELDOS</h3>
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS SUELDOS</h3>
                     <p><span className="font-medium">Puesto:</span> {selectedEmployee.cargo || 'N/A'}</p>
                     <p><span className="font-medium">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
                     <p><span className="font-medium">Sueldo:</span> S/ {selectedEmployee.sueldo || 'N/A'}</p>
@@ -767,15 +776,15 @@ export const ListarEmpleados = () => {
 
                   {/* Detalle de asignación familiar */}
                   <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LA ASIGNACION FAMILIAR</h3>
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LA ASIGNACION FAMILIAR</h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
 
                       <Table>
                         <TableHeader >
-                          <TableRow className="bg-gray-100">
-                            <TableHead className="font-bold text-gray-700">ASIGNACION</TableHead>
-                            <TableHead className="font-bold text-gray-700">MES INICIO</TableHead>
-                            <TableHead className="font-bold text-gray-700">MES FIN</TableHead>
+                          <TableRow >
+                            <TableHead>ASIGNACION</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -799,16 +808,16 @@ export const ListarEmpleados = () => {
                   </div>
                   {/* Detalle de asignación familiar */}
                   <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS CESES</h3>
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS CESES</h3>
 
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
 
                       <Table>
                         <TableHeader >
-                          <TableRow className="bg-gray-100">
-                            <TableHead className="font-bold text-gray-700">FECHA INGRESO</TableHead>
-                            <TableHead className="font-bold text-gray-700">FECHA CESE</TableHead>
-                            <TableHead className="font-bold text-gray-700">MOTIVO</TableHead>
+                          <TableRow >
+                            <TableHead>FECHA INGRESO</TableHead>
+                            <TableHead>FECHA CESE</TableHead>
+                            <TableHead>MOTIVO</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -911,6 +920,6 @@ export const ListarEmpleados = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   )
 }

@@ -19,7 +19,7 @@ export const CrearEmpleado = () => {
     const [distritos, setDistritos] = useState([]);
     const [provinciasNacimiento, setProvinciasNacimiento] = useState([]);
     const [distritosNacimiento, setDistritosNacimiento] = useState([]);
-
+    const [registro, setRegistro] = useState(true)
     // Estados para el formulario
     const [currentStep, setCurrentStep] = useState(0)
     const [formErrors, setFormErrors] = useState({})
@@ -33,7 +33,7 @@ export const CrearEmpleado = () => {
         apellidoMaterno: "",
         nombreCompleto: "",
         fechaInicioGestion: "",
-        edad: "",
+        sexo: "",
         estadoCivil: "",
         cargo: "",
         numHijos: "",
@@ -60,7 +60,7 @@ export const CrearEmpleado = () => {
             fields: [
                 { label: "Nombre", value: `${formData.nombreCompleto} ${formData.apellidoPaterno} ${formData.apellidoMaterno}` },
                 { label: "DNI", value: formData.dni },
-                { label: "Edad", value: `${formData.edad} años` },
+                { label: "Sexo", value: `${formData.sexo}` },
                 { label: "Estado Civil", value: formData.estadoCivil },
                 { label: "N° de Hijos", value: formData.numHijos },
                 { label: "Teléfono", value: formData.telefono },
@@ -82,7 +82,7 @@ export const CrearEmpleado = () => {
             fields: [
                 { label: "AFP", value: formData.afp },
                 { label: "Régimen", value: formData.regimenPension },
-                { label: "Porcentaje AFP", value: `${formData.porcentajeAfp}%` },
+                { label: "Dependientes EPS", value: `${formData.porcentajeAfp}` },
             ]
         },
         {
@@ -195,8 +195,8 @@ export const CrearEmpleado = () => {
                 errors.fechaInicioGestion = "Fecha de inicio es requerida"
                 isValid = false
             }
-            if (!formData.edad || formData.edad < 18 || formData.edad > 65) {
-                errors.edad = "Edad debe ser entre 18 y 65 años"
+            if (!formData.sexo) {
+                errors.sexo = "Sexo es requerido"
                 isValid = false
             }
             if (!formData.estadoCivil) {
@@ -379,10 +379,6 @@ export const CrearEmpleado = () => {
     const renderPersonalInfoFields = () => (
         <>
             <InputField
-                label="DNI*" id="dni" name="dni" value={formData.dni}
-                onChange={handleChange} maxLength={8} error={formErrors.dni}
-            />
-            <InputField
                 label="NOMBRES*" id="nombreCompleto" name="nombreCompleto"
                 value={formData.nombreCompleto} onChange={handleChange} error={formErrors.nombreCompleto}
             />
@@ -408,9 +404,13 @@ export const CrearEmpleado = () => {
                     { value: "viudo", label: "Viudo" }
                 ]}
             />
-            <InputField
-                label="EDAD*" id="edad" name="edad" type="number"
-                value={formData.edad} onChange={handleChange} error={formErrors.edad}
+            <SelectField
+                label="Sexo*" name="sexo" value={formData.sexo}
+                onValueChange={handleSelectChange} error={formErrors.sexo}
+                options={[
+                    { value: "masculino", label: "Femenino" },
+                    { value: "femenino", label: "Masculino" },
+                ]}
             />
             <InputField
                 label="NUM. HIJOS*" id="numHijos" name="numHijos" type="number"
@@ -441,7 +441,7 @@ export const CrearEmpleado = () => {
     )
 
     const renderAddressFields = () => (
-        <>
+        <div className="flex flex-col gap-2">
             <InputField
                 label="DIRECCIÓN*" id="direccion" name="direccion"
                 value={formData.direccion} onChange={handleChange} error={formErrors.direccion}
@@ -465,11 +465,11 @@ export const CrearEmpleado = () => {
                 options={distritos.map(d => ({ value: d.name, label: d.name }))}
                 placeholder={formData.provincia ? "Seleccione distrito" : "Primero seleccione provincia"}
             />
-        </>
+        </div>
     )
 
     const renderBirthplaceFields = () => (
-        <>
+        <div className="flex flex-col gap-2">
             <InputField
                 label="FECHA NACIMIENTO*" id="fechaNacimientoLugar" name="fechaNacimientoLugar"
                 type="date" value={formData.fechaNacimientoLugar} onChange={handleChange}
@@ -495,7 +495,7 @@ export const CrearEmpleado = () => {
                 options={distritosNacimiento.map(d => ({ value: d.name, label: d.name }))}
                 placeholder={formData.provinciaNacimiento ? "Seleccione distrito" : "Primero seleccione provincia"}
             />
-        </>
+        </div>
     )
 
     const renderWorkInfoFields = () => (
@@ -609,158 +609,190 @@ export const CrearEmpleado = () => {
             )}
         </div>
     )
+    const Verificar = () => {
 
-    return (
-        <div className="w-full max-w-5xl mx-auto p-4">
-            <h1 className="text-center text-2xl font-bold mb-4">REGISTRO EMPLEADO</h1>
+        setRegistro(false)
 
-            {/* Slider de progreso */}
-            <div className="mb-10">
-                <div className="relative">
-                    <div className="flex justify-between mb-4">
-                        <span className={currentStep >= 0 ? "font-medium text-blue-600" : ""}>Datos Personales</span>
-                        <span className={currentStep >= 1 ? "font-medium text-blue-600" : ""}>Dirección</span>
-                        <span className={currentStep >= 2 ? "font-medium text-blue-600" : ""}>Datos Laborales</span>
-                    </div>
-
-                    <div className="h-2 bg-gray-200 rounded-full">
-                        <div
-                            className="h-2 bg-blue-500 rounded-full transition-all duration-300"
-                            style={{ width: `${(currentStep / 2) * 100}%` }}
-                        ></div>
-                    </div>
-
-                    <div className="flex justify-between mt-1">
-                        {[0, 1, 2].map((step) => (
-                            <div
-                                key={step}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center -mt-5 ${currentStep >= step ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}
-                            >
-                                {currentStep > step ? <Check className="w-4 h-4" /> : <span className="text-xs">{step + 1}</span>}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Formulario */}
-            {renderStep()}
-
-            {/* Botones de navegación */}
-            <div className="flex justify-between mt-6">
-                {currentStep > 0 && (
-                    <Button
-                        type="button"
-                        onClick={prevStep}
-                        variant="outline"
-                        className="border-blue-300 text-blue-600 hover:bg-blue-50"
-                    >
-                        Anterior
-                    </Button>
-                )}
-
-                {currentStep === 2 ? (
-                    <Button
-                        type="button"
-                        className="bg-green-500 hover:bg-green-600 ml-auto cursor-pointer"
-                        onClick={() => setIsSubmitting(true)}
-                    >
-                        Finalizar
-                    </Button>
-                ) : (
-                    <Button
-                        type="button"
-                        onClick={nextStep}
-                        className="bg-blue-500 hover:bg-blue-600 ml-auto cursor-pointer"
-                    >
-                        Siguiente
-                    </Button>
-                )}
-            </div>
-
-            {/* Modal de confirmación */}
-            <Dialog open={isSubmitting} onOpenChange={setIsSubmitting}>
-                <DialogContent className="w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto">
+    }
+    if (registro) {
+        return (
+            <Dialog open={true}>
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle className="text-center">¿Estás seguro de registrar nuevo empleado?</DialogTitle>
-                        <DialogDescription className="text-center">
-                            Revise los datos antes de confirmar el registro
-                        </DialogDescription>
+                        <DialogTitle className="text-center">Ingrese el DNI del empleado</DialogTitle>
                     </DialogHeader>
-
-                    <div className="grid gap-4 py-4">
-                        {/* Resumen de datos */}
-                        {sections.map((section, index) => (
-                            <div key={index} className="space-y-2">
-                                <h3 className="font-semibold text-gray-700 border-b pb-1">{section.title}</h3>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    {section.fields.map((field, i) => (
-                                        <div key={i}>
-                                            <p className="text-gray-500">{field.label}:</p>
-                                            <p className="font-medium">{field.value || "-"}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <InputField
+                        label="DNI*" id="dni" name="dni" value={formData.dni}
+                        onChange={handleChange} maxLength={8} error={formErrors.dni}
+                    />
                     <DialogFooter className="gap-2">
                         <Button
                             variant="outline"
-                            onClick={() => setIsSubmitting(false)}
-                            className="w-full"
-                        >
+                            onClick={() => setIsSubmitting(false)}>
                             Cancelar
                         </Button>
                         <Button
                             type="button"
-                            className="w-full bg-green-600 hover:bg-green-700"
-                            onClick={handleSubmit}
-                        >
-                            Confirmar Registro
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={Verificar}>
+                            Verificar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+        )
+    } else {
+        return (
+            <div className="w-full max-w-5xl mx-auto p-4">
+                <h1 className="text-center text-2xl font-bold mb-4">REGISTRO EMPLEADO</h1>
 
-            {/* Modal de carga */}
-            <Dialog open={isLoading}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">Procesando registro</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center py-8">
-                        <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-                        <p className="text-gray-600 text-center">Guardando los datos del empleado...</p>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Modal de éxito */}
-            <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">Datos Guardados</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center py-4">
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                            <Check className="h-8 w-8 text-green-600" />
+                {/* Slider de progreso */}
+                <div className="mb-10">
+                    <div className="relative">
+                        <div className="flex justify-between mb-4">
+                            <span className={currentStep >= 0 ? "font-medium text-blue-600" : ""}>Datos Personales</span>
+                            <span className={currentStep >= 1 ? "font-medium text-blue-600" : ""}>Dirección</span>
+                            <span className={currentStep >= 2 ? "font-medium text-blue-600" : ""}>Datos Laborales</span>
                         </div>
-                        <p className="text-gray-600 text-center">Los datos del empleado se han guardado correctamente.</p>
+
+                        <div className="h-2 bg-gray-200 rounded-full">
+                            <div
+                                className="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                                style={{ width: `${(currentStep / 2) * 100}%` }}
+                            ></div>
+                        </div>
+
+                        <div className="flex justify-between mt-1">
+                            {[0, 1, 2].map((step) => (
+                                <div
+                                    key={step}
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center -mt-5 ${currentStep >= step ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                                >
+                                    {currentStep > step ? <Check className="w-4 h-4" /> : <span className="text-xs">{step + 1}</span>}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <DialogFooter>
+                </div>
+
+                {/* Formulario */}
+                {renderStep()}
+
+                {/* Botones de navegación */}
+                <div className="flex justify-between mt-6">
+                    {currentStep > 0 && (
                         <Button
-                            className="w-full"
-                            onClick={() => {
-                                setIsSuccess(false)
-                                // Resetear formulario si es necesario
-                            }}
+                            type="button"
+                            onClick={prevStep}
+                            variant="outline"
+                            className="border-blue-300 text-blue-600 hover:bg-blue-50"
                         >
-                            Aceptar
+                            Anterior
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
-    )
+                    )}
+
+                    {currentStep === 2 ? (
+                        <Button
+                            type="button"
+                            className="bg-green-500 hover:bg-green-600 ml-auto cursor-pointer"
+                            onClick={() => setIsSubmitting(true)}
+                        >
+                            Finalizar
+                        </Button>
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={nextStep}
+                            className="bg-blue-500 hover:bg-blue-600 ml-auto cursor-pointer"
+                        >
+                            Siguiente
+                        </Button>
+                    )}
+                </div>
+
+                {/* Modal de confirmación */}
+                <Dialog open={isSubmitting} onOpenChange={setIsSubmitting}>
+                    <DialogContent className="w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">¿Estás seguro de registrar nuevo empleado?</DialogTitle>
+                            <DialogDescription className="text-center">
+                                Revise los datos antes de confirmar el registro
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-4 py-4">
+                            {/* Resumen de datos */}
+                            {sections.map((section, index) => (
+                                <div key={index} className="space-y-2">
+                                    <h3 className="font-semibold text-gray-700 border-b pb-1">{section.title}</h3>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        {section.fields.map((field, i) => (
+                                            <div key={i}>
+                                                <p className="text-gray-500">{field.label}:</p>
+                                                <p className="font-medium">{field.value || "-"}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <DialogFooter className="gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsSubmitting(false)}
+                                className="w-full"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                className="w-full bg-green-600 hover:bg-green-700"
+                                onClick={handleSubmit}
+                            >
+                                Confirmar Registro
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal de carga */}
+                <Dialog open={isLoading}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Procesando registro</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center py-8">
+                            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+                            <p className="text-gray-600 text-center">Guardando los datos del empleado...</p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal de éxito */}
+                <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Datos Guardados</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center py-4">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                                <Check className="h-8 w-8 text-green-600" />
+                            </div>
+                            <p className="text-gray-600 text-center">Los datos del empleado se han guardado correctamente.</p>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                className="w-full cursor-pointer"
+                                onClick={() => {
+                                    setIsSuccess(false)
+                                }}
+                            >
+                                Aceptar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        )
+    }
 }
