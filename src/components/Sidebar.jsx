@@ -81,6 +81,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
         },
         {
+            key: 'descuentos',
+            icon: <RestOutlined />,
+            label: <Link to="/finanzas/descuentos">Descuentos</Link>,
+        },
+        {
             key: 'comisiones',
             icon: <PercentageOutlined />,
             label: <Link to="/finanzas/comisiones">Comisiones</Link>,
