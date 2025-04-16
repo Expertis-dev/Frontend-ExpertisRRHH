@@ -6,7 +6,7 @@ import {
     MedicineBoxOutlined,
     ClockCircleOutlined,
     BankOutlined,
-    RestOutlined,
+    DollarOutlined,
     PercentageOutlined,
     ReconciliationOutlined
 } from '@ant-design/icons';
@@ -77,9 +77,27 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         },
         {
             key: 'descanso-medicos',
-            icon: <RestOutlined />,
+            icon: <MedicineBoxOutlined />,
             label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
         },
+        {
+            key: 'sub3',
+            icon: <DollarOutlined />,
+            label: "Descuentos",
+            children: [
+
+                {
+                    key: 'historico-afp',
+                    label: <Link to="/finanzas/historialDescuentos">Histórico</Link>,
+                },
+                {
+                    key: 'empleados-afp',
+                    label: <Link to="/finanzas/cargarDescuentos">Cargar Datos</Link>,
+                },                
+                
+            ],
+        },
+        
         {
             key: 'comisiones',
             icon: <PercentageOutlined />,

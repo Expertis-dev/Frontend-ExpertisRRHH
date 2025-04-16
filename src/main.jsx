@@ -15,6 +15,8 @@ import { Comisiones } from './view/Comisiones.jsx';
 import { ListarEmpleados } from './view/Empleado/ListarEmpleados.jsx';
 import { CrearEmpleado } from './view/Empleado/CrearEmpleado.jsx';
 import { CesarEmpleado } from './view/Empleado/CesarEmpleado.jsx';
+import Descuentos from './view/Descuentos/Descuentos';
+import HistorialDescuentos from './view/Descuentos/HistorialDescuentos';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -33,6 +35,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="retencion-judicial" element={ <RetencionJudicial/> } />
         <Route path="descanso-medicos" element={<DescansoMedico/>} />
         <Route path="comisiones" element={<Comisiones/>} />
+        <Route path="cargarDescuentos" element={<Descuentos/>} />
+        <Route path="historialDescuentos" element={<HistorialDescuentos/>} />
       </Route>
     </Routes>
   </BrowserRouter>
