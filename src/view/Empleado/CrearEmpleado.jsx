@@ -128,7 +128,6 @@ export const CrearEmpleado = () => {
         terminatedEmployee: false,
         registeredEmployee: false
     })
-
     // Secciones para el resumen de datos
     const sections = [
         {
@@ -158,7 +157,6 @@ export const CrearEmpleado = () => {
             fields: [
                 { label: "AFP", value: formData.afp === "0" ? "NO TIENE AFP" : formData.afp },
                 { label: "Régimen", value: formData.tipoContrato },
-                { label: "Dependientes EPS", value: formData.porcentajeAfp },
             ]
         },
         {
@@ -281,7 +279,7 @@ export const CrearEmpleado = () => {
             if (!formData.distNacimiento) errors.distNacimiento = "Distrito de nacimiento es requerido"
         }
         else if (step === 2) {
-            if (!formData.sueldo || isNaN(formData.sueldo) || formData.sueldo < 1200) errors.sueldo = "Sueldo mínimo es 1200"
+            if (!formData.sueldo || isNaN(formData.sueldo) || formData.sueldo < 500) errors.sueldo = "Sueldo mínimo es 500"
             if (!formData.afp) errors.afp = "AFP es requerida"
             if (!formData.tipoContrato) errors.tipoContrato = "Tipo contrato es requerido"
             if (!formData.tip_comision) errors.tip_comision = "Tipo de comisión es requerido"
@@ -384,10 +382,6 @@ export const CrearEmpleado = () => {
             }
         } catch (error) {
             console.error("Error al enviar datos:", error)
-        } finally {
-            setTimeout(() => {
-                    setIsSuccess(false)
-            }, 2000);
         }
     }
 
