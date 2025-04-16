@@ -285,7 +285,6 @@ export const CrearEmpleado = () => {
             if (!formData.afp) errors.afp = "AFP es requerida"
             if (!formData.tipoContrato) errors.tipoContrato = "Tipo contrato es requerido"
             if (!formData.tip_comision) errors.tip_comision = "Tipo de comisión es requerido"
-            if (!formData.porcentajeAfp || isNaN(formData.porcentajeAfp)) errors.porcentajeAfp = "Porcentaje AFP debe ser un número válido"
         }
 
         setFormErrors(errors)
@@ -349,13 +348,13 @@ export const CrearEmpleado = () => {
             documento: formData.documento,
             nombre: formData.nombre.toUpperCase(),
             apellido: `${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
-            nom_completo: `${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()} ${formData.nombre.toUpperCase()}`,
+            nom_completo: `${formData.nombre.toUpperCase()} ${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
             alias: `${formData.nombre.toUpperCase().split(" ")[0]} ${formData.apellidoPaterno.toUpperCase()}`,
             fecAlta: formData.fecIniciGestion,
             cargo: formData.cargo.toUpperCase(),
             correo: formData.correo,
             fecNacimiento: formData.fecNacimiento,
-            lugarNacimiento: `${formData.distNacimiento.toUpperCase()}, ${formData.provNacimiento.toUpperCase()}, ${formData.depNacimiento.toUpperCase()}`,
+            lugarNacimiento: `${formData.depNacimiento.toUpperCase()} - ${formData.provNacimiento.toUpperCase()} - ${formData.distNacimiento.toUpperCase()}`,
             sexo: formData.sexo.toUpperCase(),
             estadoCivil: formData.estadoCivil.toUpperCase(),
             nroHijos: formData.nroHijos,
@@ -924,7 +923,13 @@ export const CrearEmpleado = () => {
                         <Button
                             type="button"
                             className="bg-green-500 hover:bg-green-600 ml-auto cursor-pointer"
-                            onClick={() => setIsSubmitting(true)}
+                            onClick={ ()=>{
+                                const validar = validateStep(currentStep)
+                                console.log(validar)
+                                if(validar){
+                                    setIsSubmitting(true)
+                                }
+                            }}
                         >
                             Finalizar
                         </Button>
@@ -1011,7 +1016,10 @@ export const CrearEmpleado = () => {
                         <DialogFooter>
                             <Button
                                 className="w-full "
-                                onClick={() => setIsSuccess(false)}
+                                onClick={() =>{
+                                    setIsSuccess(false)
+                                    navegar("/finanzas/empleados-listar")
+                                } }
                             >
                                 Aceptar
                             </Button>
