@@ -106,9 +106,11 @@ export const ListarEmpleados = () => {
   // Formatear fecha para visualización
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-PE')
+  
+    const [year, month, day] = dateString.split('T')[0].split('-')
+    return `${day}/${month}/${year}` // Formato "DD/MM/YYYY"
   }
+  
   const HistoricoCese = async (idPersona) => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoCeses/${idPersona}`)
     console.log(response.data.data[0])
@@ -144,6 +146,7 @@ export const ListarEmpleados = () => {
   // Abrir detalles del empleado
   const openDetails = async (employee) => {
     setSelectedEmployee(employee)
+    console.log(employee)
     setDetailsOpen(true)
     setLoadingDetails(true)
 
@@ -152,7 +155,8 @@ export const ListarEmpleados = () => {
         HistoricoCese(employee.idPersona),
         HistoricoPuestos(employee.idPersona),
         HistoricoAFP(employee.idPersona),
-        HistoricoAsignacionFamiliar(employee.idPersona)
+        HistoricoAsignacionFamiliar(employee.idPersona),
+        HistoricoSueldo(employee.idPersona)
       ]);
     } catch (error) {
       console.error("Error al cargar detalles:", error)
@@ -680,18 +684,29 @@ export const ListarEmpleados = () => {
                   <h3 className="font-bold text-center mb-2 text-slate-700">
                     DATOS GENERALES
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="space-y-1">
                       <p><span className="font-semibold">Nombre:</span> {selectedEmployee.nombreCompleto}</p>
                       <p><span className="font-semibold">DNI:</span> {selectedEmployee.documento}</p>
                       <p><span className="font-semibold">Código:</span> {selectedEmployee.CODIGO}</p>
-                      <p><span className="font-semibold">Dirección:</span> {selectedEmployee.direccion || 'N/A'}</p>
+                      <p><span className="font-semibold">Edad:</span> {selectedEmployee.Edad}</p>
+                      <p><span className="font-semibold">Correo:</span> {selectedEmployee.correo}</p>
+                      <p><span className="font-semibold">Num.Hijos:</span> {selectedEmployee.nroHijos}</p>
                     </div>
                     <div className="space-y-1">
                       <p><span className="font-semibold">Ingreso:</span> {formatDate(selectedEmployee.fecIngreso)}</p>
-                      <p><span className="font-semibold">Salida:</span> {formatDate(selectedEmployee.fecCese) || 'N/A'}</p>
+                      <p><span className="font-semibold">Telefono:</span> {selectedEmployee.telefono}</p>
                       <p><span className="font-semibold">Estado:</span> {selectedEmployee.estadoLaboral}</p>
                       <p><span className="font-semibold">Motivo Cese:</span> {selectedEmployee.motivoCese || 'N/A'}</p>
+                      <p><span className="font-semibold">Estado Civil:</span> {selectedEmployee.estadoCivil}</p>
+                      <p><span className="font-semibold">Cant. Ingresos:</span> {selectedEmployee.CantidadIngresos}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p><span className="font-semibold">Dirección:</span> {selectedEmployee.direccion || 'N/A'}</p>
+                      <p><span className="font-semibold">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
+                      <p><span className="font-semibold">Provincia:</span> {selectedEmployee.provincia || 'N/A'}</p>
+                      <p><span className="font-semibold">Distrito:</span> {selectedEmployee.distrito || 'N/A'}</p>
+                      <p><span className="font-semibold">Fech. Nacimiento:</span> {formatDate(selectedEmployee.fecNacimiento)}</p>
                     </div>
                   </div>
                 </div>
@@ -768,10 +783,34 @@ export const ListarEmpleados = () => {
                   {/* Detalle de puestos */}
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS SUELDOS</h3>
-                    <p><span className="font-medium">Puesto:</span> {selectedEmployee.cargo || 'N/A'}</p>
-                    <p><span className="font-medium">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
-                    <p><span className="font-medium">Sueldo:</span> S/ {selectedEmployee.sueldo || 'N/A'}</p>
-                    <p><span className="font-medium">AFP:</span> {selectedEmployee.AFP || 'N/A'}</p>
+                    <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
+
+                      <Table>
+                        <TableHeader >
+                          <TableRow >
+                            <TableHead>SUELDO</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {datosSueldos.map((sueldo, index) => (
+                            <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
+                              <TableCell>{sueldo.CARGO}</TableCell>
+                              <TableCell>{formatDate(sueldo.mesInicio)}</TableCell>
+                              <TableCell>{formatDate(sueldo.mesFin)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {
+                        datosSueldos.length === 0 &&
+                        <div>
+                          <p className="text-center text-sm  text-gray-500">No se encontraron datos de los sueldos  </p>
+                        </div>
+                      }
+
+                    </div>
                   </div>
 
                   {/* Detalle de asignación familiar */}
