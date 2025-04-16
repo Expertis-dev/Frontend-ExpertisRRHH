@@ -1,4 +1,4 @@
-"use client"
+import { PlusCircleOutlined } from "@ant-design/icons";
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, AlertTriangle, AlertCircle, Loader2, Info , UserPlus } from "lucide-react"
+import { Check, AlertTriangle, AlertCircle, Loader2, Info, UserPlus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
@@ -73,6 +73,7 @@ const RadioField = ({ label, name, value, onValueChange, error, options, classNa
 )
 
 export const CrearEmpleado = () => {
+    const [modalCargo, setModalCargo] = useState(false)
     const navegar = useNavigate()
     // Estados iniciales
     const initialState = {
@@ -118,7 +119,7 @@ export const CrearEmpleado = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
     const [formData, setFormData] = useState(initialState)
-
+    const [nuevoCargo, setNuevoCargo] = useState("")
     // Estados para los diálogos modales
     const [dialogState, setDialogState] = useState({
         documentoInput: true,
@@ -324,51 +325,70 @@ export const CrearEmpleado = () => {
     // Navegación entre pasos
     const nextStep = () => validateStep(currentStep) && setCurrentStep(prev => Math.min(prev + 1, 2))
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0))
-
+    const AgregarNuevoCargo = ()=>{
+        const cargoRepetido = cargos.some(c => c.CARGO.toUpperCase() === nuevoCargo.toUpperCase())
+        console.log(cargoRepetido)
+        if(cargoRepetido) {
+            alert("El cargo ya existe")
+            return
+        }else{
+            setCargos(prev => [...prev, { CARGO: nuevoCargo }])
+            setModalCargo(false)
+            setFormData(prev => ({ ...prev, cargo: nuevoCargo }))
+            setNuevoCargo("")
+        }
+    }
     // Envío del formulario
     const handleSubmit = async (e) => {
+        try {
         e.preventDefault()
         setIsSubmitting(false)
         setIsLoading(true)
 
         const datos = {
             documento: formData.documento,
-            nombre: formData.nombre,
-            apellido: `${formData.apellidoPaterno} ${formData.apellidoMaterno}`,
-            nom_completo: `${formData.apellidoPaterno} ${formData.apellidoMaterno} ${formData.nombre}`,
-            alias: `${formData.nombre.split(" ")[0]} ${formData.apellidoPaterno}`,
+            nombre: formData.nombre.toUpperCase(),
+            apellido: `${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
+            nom_completo: `${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()} ${formData.nombre.toUpperCase()}`,
+            alias: `${formData.nombre.toUpperCase().split(" ")[0]} ${formData.apellidoPaterno.toUpperCase()}`,
             fecAlta: formData.fecIniciGestion,
-            cargo: formData.cargo,
+            cargo: formData.cargo.toUpperCase(),
             correo: formData.correo,
             fecNacimiento: formData.fecNacimiento,
-            lugarNacimiento: `${formData.distNacimiento}, ${formData.provNacimiento}, ${formData.depNacimiento}`,
-            sexo: formData.sexo,
-            estadoCivil: formData.estadoCivil,
+            lugarNacimiento: `${formData.distNacimiento.toUpperCase()}, ${formData.provNacimiento.toUpperCase()}, ${formData.depNacimiento.toUpperCase()}`,
+            sexo: formData.sexo.toUpperCase(),
+            estadoCivil: formData.estadoCivil.toUpperCase(),
             nroHijos: formData.nroHijos,
-            dir: formData.dir,
-            dist: formData.dist,
-            prov: formData.prov,
-            dep: formData.dep,
+            dir: formData.dir.toUpperCase(),
+            dist: formData.dist.toUpperCase(),
+            prov: formData.prov.toUpperCase(),
+            dep: formData.dep.toUpperCase(),
             telefono: formData.telefono,
             modalidad: "PRESENCIAL", // Agregar este campo si es necesario
-            fecIniciGestion: formData.fecIniciGestion,
+            fecInicioGestion: formData.fecIniciGestion,
             fecRegistro: new Date().toISOString().split("T")[0],
             sueldo: formData.sueldo,
-            afp: formData.afp,
-            tip_comision: formData.tip_comision,
-            regimen: formData.tipoContrato,
-            asignacionfamiliar: formData.asignacionfamiliar,
+            afp: formData.afp.toUpperCase(),
+            tip_comision: formData.tip_comision.toUpperCase(),
+            regimen: formData.tipoContrato.toUpperCase(),
+            asignacionfamiliar: formData.asignacionfamiliar.toUpperCase(),
             usuario: "admin"
         }
 
-        try {
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            console.log("Datos enviados:", datos)
-            setIsSuccess(true)
+        
+            const response = await axios.post("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/registrarEmpleado", datos)
+            if(response.status === 200) {
+                setIsLoading(false)
+                setIsSuccess(true)
+                
+                console.log("Empleado registrado:", response)
+            }
         } catch (error) {
             console.error("Error al enviar datos:", error)
         } finally {
-            setIsLoading(false)
+            setTimeout(() => {
+                    setIsSuccess(false)
+            }, 2000);
         }
     }
 
@@ -413,22 +433,57 @@ export const CrearEmpleado = () => {
                 label="NUM. HIJOS*" id="nroHijos" name="nroHijos" type="number"
                 min="0" max="19" value={formData.nroHijos} onChange={handleChange} error={formErrors.nroHijos}
             />
-            <SelectField
-                label="CARGO*" name="cargo" value={formData.cargo}
-                onValueChange={(name, value) => {
-                    handleSelectChange(name, value)
-                    // Resetear campos dependientes del cargo
-                    const isPracticante = value.toUpperCase().includes("PRACTICANTE")
-                    setFormData(prev => ({
-                        ...prev,
-                        tipoContrato: isPracticante ? "practicante" : "",
-                        afp: isPracticante ? "0" : "",
-                        tip_comision: "0"
-                    }))
-                }}
-                error={formErrors.cargo}
-                options={cargos.map(c => ({ value: c.CARGO, label: c.CARGO }))}
-            />
+            <div className="flex items-center gap-2">
+                <SelectField
+                    className="w-full"
+                    label="CARGO*" name="cargo" value={formData.cargo}
+                    onValueChange={(name, value) => {
+                        handleSelectChange(name, value)
+                        // Resetear campos dependientes del cargo
+                        const isPracticante = value.toUpperCase().includes("PRACTICANTE")
+                        setFormData(prev => ({
+                            ...prev,
+                            tipoContrato: isPracticante ? "practicante" : "",
+                            afp: isPracticante ? "0" : "",
+                            tip_comision: "0"
+                        }))
+                    }}
+                    error={formErrors.cargo}
+                    options={cargos.map(c => ({ value: c.CARGO, label: c.CARGO }))}
+                />
+                <Button
+                    variant="outline"
+                    className="translate-y-2"
+                    size="small"
+                    onClick={() => setModalCargo(true)}
+                >
+                    <PlusCircleOutlined className="text-white bg-green-700 p-1 rounded-md" />
+                </Button>
+                <Dialog open={modalCargo} onOpenChange={() => setModalCargo(false)} >
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Agregar nuevo cargo</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center">
+                            <Label className="text-slate-800 mb-2 text-start w-full">Nuevo Cargo*</Label>
+                            <Input
+                                value={nuevoCargo}
+                                onChange={(e) => setNuevoCargo(e.target.value.toUpperCase())}
+                            />
+                        </div>
+                        <DialogFooter className="gap-2">
+                            <Button
+                                type="button"
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={AgregarNuevoCargo}
+                            >
+                                Agregar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+
+                </Dialog>
+            </div>
             <InputField
                 label="TELÉFONO*" id="telefono" name="telefono"
                 value={formData.telefono} onChange={handleChange} error={formErrors.telefono}
@@ -452,6 +507,8 @@ export const CrearEmpleado = () => {
                     { value: "no", label: "NO" }
                 ]}
             />
+
+
         </>
     )
 
@@ -687,7 +744,7 @@ export const CrearEmpleado = () => {
         return (
             <>
                 {/* Diálogo para ingresar documento */}
-                <Dialog open={dialogState.documentoInput} onOpenChange={()=> navegar("/finanzas/empleados-listar") }>
+                <Dialog open={dialogState.documentoInput} onOpenChange={() => navegar("/finanzas/empleados-listar")}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                             <DialogTitle className="text-center">Ingrese el documento del empleado</DialogTitle>
@@ -749,7 +806,7 @@ export const CrearEmpleado = () => {
                                 <UserPlus className="h-8 w-8 text-green-600 translate-x-1" />
                             </div>
                             <p className="text-gray-600 text-center">
-                                Ingresara un nuevo empleado al sistema.
+                                Ingresará un nuevo empleado al sistema.
                             </p>
                             <Button onClick={() => setRegistro(false)} className="cursor-pointer">
                                 Continuar
@@ -789,8 +846,9 @@ export const CrearEmpleado = () => {
                         </DialogHeader>
                         <div className="flex flex-col items-center space-y-4">
                             <Info className="h-12 w-12 text-blue-500" />
-                            <p className="text-gray-600 text-center">
-                                Este empleado ya está registrado y su estado es VIGENTE.
+                            <p className="text-gray-600 text-center text-sm">
+                                Este empleado ya está registrado y su estado es <span className="font-bold text-lg"> VIGENTE.</span>
+
                             </p>
                             <Button
                                 onClick={() => {
@@ -813,6 +871,7 @@ export const CrearEmpleado = () => {
         )
     } else {
         return (
+
             <div className="w-full max-w-5xl mx-auto p-4">
                 <h1 className="text-center text-2xl font-bold mb-4">REGISTRO EMPLEADO</h1>
 
