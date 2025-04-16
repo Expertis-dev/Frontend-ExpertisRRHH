@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Check, AlertTriangle, AlertCircle, Loader2, Info , UserPlus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import axios from "axios"
-
+import { useNavigate } from "react-router-dom"
 // Componentes reutilizables
 const InputField = ({ label, id, name, type = "text", value, onChange, error, className = "", ...props }) => (
     <div className={`space-y-2 ${className}`}>
@@ -73,6 +73,7 @@ const RadioField = ({ label, name, value, onValueChange, error, options, classNa
 )
 
 export const CrearEmpleado = () => {
+    const navegar = useNavigate()
     // Estados iniciales
     const initialState = {
         documento: "",
@@ -686,7 +687,7 @@ export const CrearEmpleado = () => {
         return (
             <>
                 {/* Diálogo para ingresar documento */}
-                <Dialog open={dialogState.documentoInput} onOpenChange={closeAllDialogs}>
+                <Dialog open={dialogState.documentoInput} onOpenChange={()=> navegar("/finanzas/empleados-listar") }>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                             <DialogTitle className="text-center">Ingrese el documento del empleado</DialogTitle>
