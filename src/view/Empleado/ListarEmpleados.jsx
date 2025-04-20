@@ -55,20 +55,6 @@ export const ListarEmpleados = () => {
     obtenerEmpleados()
   }, [])
 
-  // Filtrar empleados por búsqueda
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredEmpleados(empleados)
-    } else {
-      const filtered = empleados.filter(emp =>
-        emp.documento.includes(searchQuery) ||
-        emp.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.CODIGO.includes(searchQuery)
-      )
-      setFilteredEmpleados(filtered)
-    }
-  }, [searchQuery, empleados])
-
   // Efecto para verificar si todos los pasos están completos
   useEffect(() => {
     if (selectedField) {
@@ -76,21 +62,27 @@ export const ListarEmpleados = () => {
       setAllStepsValid(fieldData.valid)
     }
   }, [formData, selectedField])
+
   useEffect(() => {
-    if (searchQuery.trim() === '') {
+    const query = searchQuery.trim().toLowerCase();
+
+    if (query === '') {
       setFilteredEmpleados(empleados);
     } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = empleados.filter(emp =>
-        emp.documento.includes(searchQuery) || // Búsqueda exacta por DNI
-        emp.nombreCompleto.toLowerCase().includes(query) || // Búsqueda parcial por nombre
-        emp.CODIGO.toLowerCase().includes(query) // Búsqueda parcial por código
-      );
+      const filtered = empleados.filter(emp => {
+        if (!emp) return false;
+        const documento = emp.documento ? emp.documento.toString().toLowerCase() : '';
+        const codigo = emp.CODIGO ? emp.CODIGO.toString().toLowerCase() : '';
+        const nombre = emp.nombreCompleto ? emp.nombreCompleto.toString().toLowerCase() : '';
+        return documento.includes(query) ||
+          codigo.includes(query) ||
+          nombre.includes(query);
+      });
       setFilteredEmpleados(filtered);
     }
+
   }, [searchQuery, empleados]);
-  // Manejo del documento de búsqueda
-  // Modificaciones en la función de manejo de búsqueda
+
   const handleSearchChange = (e) => {
     const inputValue = e.target.value;
     setSearchQuery(inputValue);
@@ -106,11 +98,11 @@ export const ListarEmpleados = () => {
   // Formatear fecha para visualización
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-  
+
     const [year, month, day] = dateString.split('T')[0].split('-')
     return `${day}/${month}/${year}` // Formato "DD/MM/YYYY"
   }
-  
+
   const HistoricoCese = async (idPersona) => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoCeses/${idPersona}`)
     console.log(response.data.data[0])
