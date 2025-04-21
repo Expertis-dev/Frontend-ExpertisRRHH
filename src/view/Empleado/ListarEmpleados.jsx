@@ -1,14 +1,14 @@
+import axios from "axios"
 import { useState, useEffect } from "react"
-import { Search, Eye, Pencil, ChevronLeft, ChevronRight, Check, X } from "lucide-react"
+import { Eye, Pencil, ChevronLeft, ChevronRight, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import axios from "axios"
 
 export const ListarEmpleados = () => {
   // Estados de búsqueda y validación
@@ -17,11 +17,16 @@ export const ListarEmpleados = () => {
   const [empleados, setEmpleados] = useState([])
   const [filteredEmpleados, setFilteredEmpleados] = useState([])
   const [datosCese, setDatosCese] = useState([])
+  const [datosPuestos, setDatosPuestos] = useState([])
+  const [datosAFP, setDatosAFP] = useState([])
+  const [datosAsigFam, setDatosAsigFam] = useState([])
+  const [datosSueldos, setDatosSueldos] = useState([])
+  const [loadingDetails, setLoadingDetails] = useState(false)
   // Estados para los diálogos
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState(null)
-
+  const [loading, setLoading] = useState(true)
   // Estados para el flujo de edición por pasos
   const [selectedField, setSelectedField] = useState(null)
   const [currentStep, setCurrentStep] = useState(1)
@@ -36,11 +41,13 @@ export const ListarEmpleados = () => {
   // Obtener empleados desde el backend
   const obtenerEmpleados = async () => {
     try {
-      const response = await axios.get('https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarEmpleados')
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`)
       setEmpleados(response.data.recordset)
       setFilteredEmpleados(response.data.recordset)
     } catch (error) {
       console.error("Error al obtener empleados:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -99,17 +106,63 @@ export const ListarEmpleados = () => {
   // Formatear fecha para visualización
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-PE')
+  
+    const [year, month, day] = dateString.split('T')[0].split('-')
+    return `${day}/${month}/${year}` // Formato "DD/MM/YYYY"
   }
+  
+  const HistoricoCese = async (idPersona) => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoCeses/${idPersona}`)
+    console.log(response.data.data[0])
+    setDatosCese(response.data.data[0])
+  }
+  const HistoricoPuestos = async (idPersona) => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoPuestoTrabajo/${idPersona}`)
+    console.log(response.data.data[0])
+    setDatosPuestos(response.data.data[0])
+
+  }
+  const HistoricoAFP = async (idPersona) => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoAFP/${idPersona}`)
+    console.log(response.data.data[0])
+    setDatosAFP(response.data.data[0])
+
+  }
+  const HistoricoAsignacionFamiliar = async (idPersona) => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoAsignacionFamiliar/${idPersona}`)
+    console.log(response.data.data[0])
+    setDatosAsigFam(response.data.data[0])
+
+  }
+
+  const HistoricoSueldo = async (idPersona) => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoSueldos/${idPersona}`)
+    console.log(response.data.data[0])
+    setDatosSueldos(response.data.data[0])
+
+  }
+
 
   // Abrir detalles del empleado
   const openDetails = async (employee) => {
     setSelectedEmployee(employee)
+    console.log(employee)
     setDetailsOpen(true)
-    const response = await axios.get(`https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/historicoCeses/${employee.idPersona}`)
-    console.log(response.data.data[0])
-    setDatosCese(response.data.data[0])
+    setLoadingDetails(true)
+
+    try {
+      await Promise.all([
+        HistoricoCese(employee.idPersona),
+        HistoricoPuestos(employee.idPersona),
+        HistoricoAFP(employee.idPersona),
+        HistoricoAsignacionFamiliar(employee.idPersona),
+        HistoricoSueldo(employee.idPersona)
+      ]);
+    } catch (error) {
+      console.error("Error al cargar detalles:", error)
+    } finally {
+      setLoadingDetails(false)
+    }
   }
 
   // Abrir edición del empleado
@@ -530,7 +583,7 @@ export const ListarEmpleados = () => {
       <h1 className="text-center text-2xl font-bold text-gray-800">MÓDULO DE EMPLEADOS</h1>
 
       {/* Barra de búsqueda */}
-      <div className="py-8 w-full md:w-1/2">
+      <div className="py-8 w-full md:w-1/3">
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="flex items-center gap-2 w-full">
             <span className="font-medium text-gray-700 whitespace-nowrap">Buscar:</span>
@@ -543,169 +596,292 @@ export const ListarEmpleados = () => {
               />
             </div>
           </div>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto transition-all cursor-pointer"
-            onClick={() => obtenerEmpleados()}
-          >
-            <Search className="h-4 w-4" />
-            Buscar
-          </Button>
         </div>
       </div>
-
-      {/* Tabla de empleados */}
-      <Card className="shadow-lg overflow-y-auto max-h-[70vh]">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10">
-              <TableRow className="bg-gray-100">
-                <TableHead className="font-bold text-gray-700">CODIGO EMPLEADO</TableHead>
-                <TableHead className="font-bold text-gray-700">NOMBRE COMPLETO</TableHead>
-                <TableHead className="font-bold text-gray-700">DNI</TableHead>
-                <TableHead className="font-bold text-gray-700">FECHA INGRESO</TableHead>
-                <TableHead className="font-bold text-gray-700">ESTADO LABORAL</TableHead>
-                <TableHead className="font-bold text-gray-700">DETALLE</TableHead>
-                <TableHead className="font-bold text-gray-700">EDITAR</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredEmpleados.map((employee) => (
-                <TableRow key={employee.idPersona} className="border-t hover:bg-blue-50 transition-colors">
-                  <TableCell>{employee.CODIGO}</TableCell>
-                  <TableCell>{employee.nombreCompleto}</TableCell>
-                  <TableCell>{employee.documento}</TableCell>
-                  <TableCell>{formatDate(employee.fecIngreso)}</TableCell>
-                  <TableCell>{employee.estadoLaboral}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 cursor-pointer"
-                      onClick={() => openDetails(employee)}
-                    >
-                      <Eye className="h-5 w-5" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-green-600 hover:text-green-800 hover:bg-green-100 cursor-pointer"
-                      onClick={() => openEdit(employee)}
-                    >
-                      <Pencil className="h-5 w-5" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      {!loading ? (
+        <>
+          {/* Tabla de empleados */}
+          < Card className="shadow-lg overflow-y-auto max-h-[70vh]">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="sticky top-0 z-10">
+                  <TableRow className="bg-gray-100">
+                    <TableHead>CODIGO EMPLEADO</TableHead>
+                    <TableHead>NOMBRE COMPLETO</TableHead>
+                    <TableHead>DNI</TableHead>
+                    <TableHead>FECHA INGRESO</TableHead>
+                    <TableHead>ESTADO LABORAL</TableHead>
+                    <TableHead>DETALLE</TableHead>
+                    <TableHead>EDITAR</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredEmpleados.map((employee) => (
+                    <TableRow key={employee.idPersona} className="border-t hover:bg-blue-50 transition-colors">
+                      <TableCell>{employee.CODIGO}</TableCell>
+                      <TableCell>{employee.nombreCompleto}</TableCell>
+                      <TableCell>{employee.documento}</TableCell>
+                      <TableCell>{formatDate(employee.fecIngreso)}</TableCell>
+                      <TableCell>{employee.estadoLaboral}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 cursor-pointer"
+                          onClick={() => openDetails(employee)}
+                        >
+                          <Eye className="h-5 w-5" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-green-600 hover:text-green-800 hover:bg-green-100 cursor-pointer"
+                          onClick={() => openEdit(employee)}
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <p className="font-semibold text-xl">Cargando los datos...</p>
         </div>
-      </Card>
-
+      )
+      }
       {/* Modal de Detalles */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center text-blue-800 border-b pb-2">
+            <DialogTitle className="text-xl font-bold text-center text-slate-800 border-b pb-2">
               DETALLES DEL EMPLEADO
             </DialogTitle>
           </DialogHeader>
 
-          {selectedEmployee && (
-            <div className="space-y-2">
-              {/* Datos generales */}
-              <div className="border border-blue-200 rounded-lg p-2 bg-blue-50">
-                <h3 className="font-bold text-center mb-2 text-blue-700">
-                  DATOS GENERALES
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p><span className="font-semibold">Nombre:</span> {selectedEmployee.nombreCompleto}</p>
-                    <p><span className="font-semibold">DNI:</span> {selectedEmployee.documento}</p>
-                    <p><span className="font-semibold">Código:</span> {selectedEmployee.CODIGO}</p>
-                    <p><span className="font-semibold">Dirección:</span> {selectedEmployee.direccion || 'N/A'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p><span className="font-semibold">Ingreso:</span> {formatDate(selectedEmployee.fecIngreso)}</p>
-                    <p><span className="font-semibold">Salida:</span> {formatDate(selectedEmployee.fecCese) || 'N/A'}</p>
-                    <p><span className="font-semibold">Estado:</span> {selectedEmployee.estadoLaboral}</p>
-                    <p><span className="font-semibold">Motivo Cese:</span> {selectedEmployee.motivoCese || 'N/A'}</p>
-                  </div>
-                </div>
+
+
+          {loadingDetails ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-blue-500 border-b-transparent border-l-transparent animate-spin"></div>
+                <div className="absolute inset-2 rounded-full border-4 border-t-blue-600 border-r-transparent border-b-transparent border-l-blue-600 spin-reverse"></div>
               </div>
-
-              {/* Secciones de detalles */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Detalle de puestos */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS PUESTOS DE TRABAJO</h3>
-                  <p><span className="font-medium">Puesto:</span> {selectedEmployee.cargo || 'N/A'}</p>
-                  <p><span className="font-medium">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
-                  <p><span className="font-medium">Sueldo:</span> S/ {selectedEmployee.sueldo || 'N/A'}</p>
-                  <p><span className="font-medium">AFP:</span> {selectedEmployee.AFP || 'N/A'}</p>
-                </div>
-
-                {/* Detalle de asignación familiar */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS AFP</h3>
-                  <p><span className="font-medium">Asignación familiar:</span> {selectedEmployee.asignacionFamiliar || 'N/A'}</p>
-                  <p><span className="font-medium">Número de hijos:</span> {selectedEmployee.numHijos || '0'}</p>
-                  <p><span className="font-medium">Monto asignado:</span> S/ {selectedEmployee.montoAsignacion || '0'}</p>
-                </div>
-                {/* Detalle de puestos */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS SUELDOS</h3>
-                  <p><span className="font-medium">Puesto:</span> {selectedEmployee.cargo || 'N/A'}</p>
-                  <p><span className="font-medium">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
-                  <p><span className="font-medium">Sueldo:</span> S/ {selectedEmployee.sueldo || 'N/A'}</p>
-                  <p><span className="font-medium">AFP:</span> {selectedEmployee.AFP || 'N/A'}</p>
-                </div>
-
-                {/* Detalle de asignación familiar */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LA ASIGNACION FAMILIAR</h3>
-                  <p><span className="font-medium">Asignación familiar:</span> {selectedEmployee.asignacionFamiliar || 'N/A'}</p>
-                  <p><span className="font-medium">Número de hijos:</span> {selectedEmployee.numHijos || '0'}</p>
-                  <p><span className="font-medium">Monto asignado:</span> S/ {selectedEmployee.montoAsignacion || '0'}</p>
-                </div>
-                {/* Detalle de asignación familiar */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">DETALLE DE LOS CESES</h3>
-
-                  <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
-                    <Table>
-                      <TableHeader >
-                        <TableRow className="bg-gray-100">
-                          <TableHead className="font-bold text-gray-700">FECHA CESE</TableHead>
-                          <TableHead className="font-bold text-gray-700">FECHA INGRESO</TableHead>
-                          <TableHead className="font-bold text-gray-700">MOTIVO</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {datosCese.map((cese, index) => (
-                          <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
-                            <TableCell>{formatDate(cese.fecCese)}</TableCell>
-                            <TableCell>{formatDate(cese.fecIngreso)}</TableCell>
-                            <TableCell>{cese.motivo}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                </div>
-              </div>
+              <p className="mt-4 text-blue-600 font-medium">Cargando detalles del empleado...</p>
             </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setDetailsOpen(false)} className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
-              Cerrar
-            </Button>
-          </DialogFooter>
+          ) : (
+            selectedEmployee && (
+              <div className="space-y-2">
+                {/* Datos generales */}
+                <div className="border border-blue-200 rounded-lg p-2 bg-neutral-100">
+                  <h3 className="font-bold text-center mb-2 text-slate-700">
+                    DATOS GENERALES
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="space-y-1">
+                      <p><span className="font-semibold">Nombre:</span> {selectedEmployee.nombreCompleto}</p>
+                      <p><span className="font-semibold">DNI:</span> {selectedEmployee.documento}</p>
+                      <p><span className="font-semibold">Código:</span> {selectedEmployee.CODIGO}</p>
+                      <p><span className="font-semibold">Edad:</span> {selectedEmployee.Edad}</p>
+                      <p><span className="font-semibold">Correo:</span> {selectedEmployee.correo}</p>
+                      <p><span className="font-semibold">Num.Hijos:</span> {selectedEmployee.nroHijos}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p><span className="font-semibold">Ingreso:</span> {formatDate(selectedEmployee.fecIngreso)}</p>
+                      <p><span className="font-semibold">Telefono:</span> {selectedEmployee.telefono}</p>
+                      <p><span className="font-semibold">Estado:</span> {selectedEmployee.estadoLaboral}</p>
+                      <p><span className="font-semibold">Motivo Cese:</span> {selectedEmployee.motivoCese || 'N/A'}</p>
+                      <p><span className="font-semibold">Estado Civil:</span> {selectedEmployee.estadoCivil}</p>
+                      <p><span className="font-semibold">Cant. Ingresos:</span> {selectedEmployee.CantidadIngresos}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p><span className="font-semibold">Dirección:</span> {selectedEmployee.direccion || 'N/A'}</p>
+                      <p><span className="font-semibold">Departamento:</span> {selectedEmployee.departamento || 'N/A'}</p>
+                      <p><span className="font-semibold">Provincia:</span> {selectedEmployee.provincia || 'N/A'}</p>
+                      <p><span className="font-semibold">Distrito:</span> {selectedEmployee.distrito || 'N/A'}</p>
+                      <p><span className="font-semibold">Fech. Nacimiento:</span> {formatDate(selectedEmployee.fecNacimiento)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Secciones de detalles */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Detalle de puestos */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS PUESTOS DE TRABAJO</h3>
+                    <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
+
+                      <Table>
+                        <TableHeader >
+                          <TableRow >
+                            <TableHead>CARGO</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {datosPuestos.map((puesto, index) => (
+                            <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
+                              <TableCell>{puesto.CARGO}</TableCell>
+                              <TableCell>{formatDate(puesto.mesInicio)}</TableCell>
+                              <TableCell>{formatDate(puesto.mesFin)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {
+                        datosPuestos.length === 0 &&
+                        <div>
+                          <p className="text-center text-sm  text-gray-500">No se encontraron datos de puestos para este empleado.</p>
+                        </div>
+                      }
+
+                    </div>
+                  </div>
+
+                  {/* Detalle de asignación familiar */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS AFP</h3>
+                    <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
+
+                      <Table>
+                        <TableHeader >
+                          <TableRow>
+                            <TableHead>SP</TableHead>
+                            <TableHead>TIPO COMISION</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {datosAFP.map((afp, index) => (
+                            <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
+                              <TableCell>{afp.SP}</TableCell>
+                              <TableCell>{afp.tipoComision}</TableCell>
+                              <TableCell>{formatDate(afp.mesInicio)}</TableCell>
+                              <TableCell>{formatDate(afp.mesFin)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {
+                        datosAFP.length === 0 &&
+                        <div>
+                          <p className="text-center text-sm  text-gray-500">No se encontraron datos de AFP para este empleado.</p>
+                        </div>
+                      }
+
+                    </div>
+                  </div>
+                  {/* Detalle de puestos */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS SUELDOS</h3>
+                    <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
+
+                      <Table>
+                        <TableHeader >
+                          <TableRow >
+                            <TableHead>SUELDO</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {datosSueldos.map((sueldo, index) => (
+                            <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
+                              <TableCell>{sueldo.CARGO}</TableCell>
+                              <TableCell>{formatDate(sueldo.mesInicio)}</TableCell>
+                              <TableCell>{formatDate(sueldo.mesFin)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {
+                        datosSueldos.length === 0 &&
+                        <div>
+                          <p className="text-center text-sm  text-gray-500">No se encontraron datos de los sueldos  </p>
+                        </div>
+                      }
+
+                    </div>
+                  </div>
+
+                  {/* Detalle de asignación familiar */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LA ASIGNACION FAMILIAR</h3>
+                    <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
+
+                      <Table>
+                        <TableHeader >
+                          <TableRow >
+                            <TableHead>ASIGNACION</TableHead>
+                            <TableHead>MES INICIO</TableHead>
+                            <TableHead>MES FIN</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {datosAsigFam.map((asig, index) => (
+                            <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
+                              <TableCell>{asig.asignacion}</TableCell>
+                              <TableCell>{formatDate(asig.mesInicio)}</TableCell>
+                              <TableCell>{formatDate(asig.mesFin)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {
+                        datosAsigFam.length === 0 &&
+                        <div>
+                          <p className="text-center text-sm  text-gray-500">No se encontraron datos de asignación familiar para este empleado.</p>
+                        </div>
+                      }
+
+                    </div>
+                  </div>
+                  {/* Detalle de asignación familiar */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">DETALLE DE LOS CESES</h3>
+
+                    <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
+
+                      <Table>
+                        <TableHeader >
+                          <TableRow >
+                            <TableHead>FECHA INGRESO</TableHead>
+                            <TableHead>FECHA CESE</TableHead>
+                            <TableHead>MOTIVO</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {datosCese.map((cese, index) => (
+                            <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
+                              <TableCell>{formatDate(cese.fecIngreso)}</TableCell>
+                              <TableCell>{formatDate(cese.fecCese)}</TableCell>
+                              <TableCell>{cese.motivo}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {
+                        datosCese.length === 0 &&
+                        <div>
+                          <p className="text-center text-sm text-gray-500">No se encontraron datos de cese para este empleado.</p>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
         </DialogContent>
       </Dialog>
-
       {/* Modal de Edición (ahora con pasos) */}
       <Dialog open={editOpen} onOpenChange={(open) => {
         if (!open) {
@@ -783,6 +959,6 @@ export const ListarEmpleados = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   )
 }

@@ -7,62 +7,136 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, Upload, AlertCircle, Loader2 } from "lucide-react"
+import { Check, AlertTriangle, AlertCircle, Loader2, Info , UserPlus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import axios from "axios"
 
+// Componentes reutilizables
+const InputField = ({ label, id, name, type = "text", value, onChange, error, className = "", ...props }) => (
+    <div className={`space-y-2 ${className}`}>
+        <Label htmlFor={id} className="text-slate-800 mb-1">{label}</Label>
+        <Input
+            id={id}
+            name={name}
+            type={type}
+            value={value}
+            onChange={onChange}
+            className={`border-gray-300 ${error ? "border-red-500" : ""}`}
+            {...props}
+        />
+        {error && (
+            <p className="text-sm text-red-500 flex items-center">
+                <AlertCircle className="h-4 w-4 mr-1" /> {error}
+            </p>
+        )}
+    </div>
+)
+
+const SelectField = ({ label, name, value, onValueChange, error, options, disabled = false, placeholder = "Seleccione", className = "" }) => (
+    <div className={`space-y-2 ${className}`}>
+        <Label className="text-slate-800 mb-1">{label}</Label>
+        <Select onValueChange={(value) => onValueChange(name, value)} value={value} disabled={disabled}>
+            <SelectTrigger className={error ? "border-red-500" : ""}>
+                <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+                {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+        {error && (
+            <p className="text-sm text-red-500 flex items-center">
+                <AlertCircle className="h-4 w-4 mr-1" /> {error}
+            </p>
+        )}
+    </div>
+)
+
+const RadioField = ({ label, name, value, onValueChange, error, options, className = "" }) => (
+    <div className={`space-y-2 ${className}`}>
+        <Label className="text-slate-800 mb-1">{label}</Label>
+        <RadioGroup value={value} onValueChange={(value) => onValueChange(name, value)} className="flex space-x-8 pt-2">
+            {options.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option.value} id={`${name}-${option.value}`} />
+                    <Label htmlFor={`${name}-${option.value}`}>{option.label}</Label>
+                </div>
+            ))}
+        </RadioGroup>
+        {error && (
+            <p className="text-sm text-red-500 flex items-center">
+                <AlertCircle className="h-4 w-4 mr-1" /> {error}
+            </p>
+        )}
+    </div>
+)
 
 export const CrearEmpleado = () => {
-    // Estados para datos de ubicación
-    const [ubigeoData, setUbigeoData] = useState([]);
-    const [departamentos, setDepartamentos] = useState([]);
-    const [provincias, setProvincias] = useState([]);
-    const [distritos, setDistritos] = useState([]);
-    const [provinciasNacimiento, setProvinciasNacimiento] = useState([]);
-    const [distritosNacimiento, setDistritosNacimiento] = useState([]);
+    // Estados iniciales
+    const initialState = {
+        documento: "",
+        apellidoPaterno: "",
+        apellidoMaterno: "",
+        nombre: "",
+        fecIniciGestion: "",
+        sexo: "",
+        estadoCivil: "",
+        cargo: "",
+        nroHijos: "",
+        correo: "",
+        telefono: "",
+        asignacionfamiliar: "",
+        dir: "",
+        dep: "",
+        prov: "",
+        dist: "",
+        fecNacimiento: "",
+        depNacimiento: "",
+        provNacimiento: "",
+        distNacimiento: "",
+        sueldo: "",
+        afp: "",
+        tipoContrato: "",
+        tip_comision: "",
+        porcentajeAfp: "",
+    }
 
-    // Estados para el formulario
+    // Estados del componente
+    const [ubigeoData, setUbigeoData] = useState([])
+    const [deps, setDeps] = useState([])
+    const [provincias, setProvs] = useState([])
+    const [distritos, setDists] = useState([])
+    const [provsNacimiento, setProvsNacimiento] = useState([])
+    const [distsNacimiento, setDistsNacimiento] = useState([])
+    const [registro, setRegistro] = useState(true)
+    const [cargos, setCargos] = useState([])
     const [currentStep, setCurrentStep] = useState(0)
     const [formErrors, setFormErrors] = useState({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
-    // Datos del formulario
-    const [formData, setFormData] = useState({
-        dni: "",
-        apellidoPaterno: "",
-        apellidoMaterno: "",
-        nombreCompleto: "",
-        fechaInicioGestion: "",
-        edad: "",
-        estadoCivil: "",
-        cargo: "",
-        numHijos: "",
-        correo: "",
-        telefono: "",
-        asignacionFamiliar: "",
-        direccion: "",
-        departamento: "",
-        provincia: "",
-        distrito: "",
-        fechaNacimientoLugar: "",
-        departamentoNacimiento: "",
-        provinciaNacimiento: "",
-        distritoNacimiento: "",
-        sueldo: "",
-        afp: "",
-        regimenPension: "",
-        tipoComision: "",
-        porcentajeAfp: "",
+    const [formData, setFormData] = useState(initialState)
+
+    // Estados para los diálogos modales
+    const [dialogState, setDialogState] = useState({
+        documentoInput: true,
+        verifying: false,
+        newEmployee: false,
+        terminatedEmployee: false,
+        registeredEmployee: false
     })
+
+    // Secciones para el resumen de datos
     const sections = [
         {
             title: "Información Personal",
             fields: [
-                { label: "Nombre", value: `${formData.nombreCompleto} ${formData.apellidoPaterno} ${formData.apellidoMaterno}` },
-                { label: "DNI", value: formData.dni },
-                { label: "Edad", value: `${formData.edad} años` },
+                { label: "Nombre", value: `${formData.nombre} ${formData.apellidoPaterno} ${formData.apellidoMaterno}` },
+                { label: "Documento", value: formData.documento },
+                { label: "Sexo", value: formData.sexo === "masculino" ? "Masculino" : "Femenino" },
                 { label: "Estado Civil", value: formData.estadoCivil },
-                { label: "N° de Hijos", value: formData.numHijos },
+                { label: "N° de Hijos", value: formData.nroHijos },
                 { label: "Teléfono", value: formData.telefono },
                 { label: "Correo", value: formData.correo },
             ]
@@ -72,222 +146,168 @@ export const CrearEmpleado = () => {
             fields: [
                 { label: "Cargo", value: formData.cargo },
                 { label: "Sueldo", value: `S/ ${formData.sueldo}` },
-                { label: "Fecha Inicio", value: formData.fechaInicioGestion },
-                { label: "Tipo Comisión", value: formData.tipoComision },
-                { label: "Asignación Familiar", value: formData.asignacionFamiliar },
+                { label: "Fecha Inicio", value: formData.fecIniciGestion },
+                { label: "Tipo Comisión", value: formData.tip_comision === "0" ? "NULA" : formData.tip_comision },
+                { label: "Asignación Familiar", value: formData.asignacionfamiliar === "si" ? "SI" : "NO" },
             ]
         },
         {
             title: "Datos de AFP",
             fields: [
-                { label: "AFP", value: formData.afp },
-                { label: "Régimen", value: formData.regimenPension },
-                { label: "Porcentaje AFP", value: `${formData.porcentajeAfp}%` },
+                { label: "AFP", value: formData.afp === "0" ? "NO TIENE AFP" : formData.afp },
+                { label: "Régimen", value: formData.tipoContrato },
+                { label: "Dependientes EPS", value: formData.porcentajeAfp },
             ]
         },
         {
             title: "Ubicación",
             fields: [
-                { label: "Dirección", value: formData.direccion },
-                { label: "Departamento", value: formData.departamento },
-                { label: "Provincia", value: formData.provincia },
-                { label: "Distrito", value: formData.distrito },
+                { label: "Dirección", value: formData.dir },
+                { label: "Departamento", value: formData.dep },
+                { label: "Provincia", value: formData.prov },
+                { label: "Distrito", value: formData.dist },
             ]
         },
         {
             title: "Datos de Nacimiento",
             fields: [
-                { label: "Fecha Nacimiento", value: formData.fechaNacimientoLugar },
-                { label: "Departamento", value: formData.departamentoNacimiento },
-                { label: "Provincia", value: formData.provinciaNacimiento },
-                { label: "Distrito", value: formData.distritoNacimiento },
+                { label: "Fecha Nacimiento", value: formData.fecNacimiento },
+                { label: "Departamento", value: formData.depNacimiento },
+                { label: "Provincia", value: formData.provNacimiento },
+                { label: "Distrito", value: formData.distNacimiento },
             ]
         }
     ]
 
-
-    // Cargar datos de ubicación
+    // Efectos para cargar datos iniciales
     useEffect(() => {
-        const fetchUbigeoData = async () => {
+        const fetchInitialData = async () => {
             try {
-                const response = await fetch("/data.json")
-                const data = await response.json()
-                setUbigeoData(data)
-                setDepartamentos(data.map(item => ({ id: item.id, name: item.name })))
+                // Cargar datos de ubigeo
+                const ubigeoResponse = await fetch("/data.json")
+                const ubigeoData = await ubigeoResponse.json()
+                setUbigeoData(ubigeoData)
+                setDeps(ubigeoData.map(item => ({ id: item.id, name: item.name })))
+
+                // Cargar datos de cargos
+                const cargosResponse = await fetch("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarCargos")
+                const cargosData = await cargosResponse.json()
+                setCargos(cargosData)
             } catch (error) {
                 console.error("Error cargando los datos:", error)
             }
         }
 
-        fetchUbigeoData()
+        fetchInitialData()
     }, [])
 
     // Efectos para cargar provincias y distritos
     useEffect(() => {
-        if (formData.departamento && ubigeoData.length > 0) {
-            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.departamento)
+        if (formData.dep && ubigeoData.length > 0) {
+            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.dep)
             if (deptoSeleccionado) {
-                setProvincias(deptoSeleccionado.provincias.map(prov => ({ id: prov.id, name: prov.name })))
-                setFormData(prev => ({ ...prev, provincia: "", distrito: "" }))
+                setProvs(deptoSeleccionado.provincias.map(prov => ({ id: prov.id, name: prov.name })))
+                setFormData(prev => ({ ...prev, prov: "", dist: "" }))
             }
         }
-    }, [formData.departamento, ubigeoData])
+    }, [formData.dep, ubigeoData])
 
     useEffect(() => {
-        if (formData.provincia && ubigeoData.length > 0) {
-            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.departamento)
+        if (formData.prov && ubigeoData.length > 0) {
+            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.dep)
             if (deptoSeleccionado) {
-                const provSeleccionada = deptoSeleccionado.provincias.find(prov => prov.name === formData.provincia)
+                const provSeleccionada = deptoSeleccionado.provincias.find(prov => prov.name === formData.prov)
                 if (provSeleccionada) {
-                    setDistritos(provSeleccionada.distritos.map(dist => ({ id: dist.id, name: dist.name })))
-                    setFormData(prev => ({ ...prev, distrito: "" }))
+                    setDists(provSeleccionada.distritos.map(dist => ({ id: dist.id, name: dist.name })))
+                    setFormData(prev => ({ ...prev, dist: "" }))
                 }
             }
         }
-    }, [formData.provincia, ubigeoData, formData.departamento])
+    }, [formData.prov, ubigeoData, formData.dep])
 
     useEffect(() => {
-        if (formData.departamentoNacimiento && ubigeoData.length > 0) {
-            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.departamentoNacimiento)
+        if (formData.depNacimiento && ubigeoData.length > 0) {
+            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.depNacimiento)
             if (deptoSeleccionado) {
-                setProvinciasNacimiento(deptoSeleccionado.provincias.map(prov => ({ id: prov.id, name: prov.name })))
-                setFormData(prev => ({ ...prev, provinciaNacimiento: "", distritoNacimiento: "" }))
+                setProvsNacimiento(deptoSeleccionado.provincias.map(prov => ({ id: prov.id, name: prov.name })))
+                setFormData(prev => ({ ...prev, provNacimiento: "", distNacimiento: "" }))
             }
         }
-    }, [formData.departamentoNacimiento, ubigeoData])
+    }, [formData.depNacimiento, ubigeoData])
 
     useEffect(() => {
-        if (formData.provinciaNacimiento && ubigeoData.length > 0) {
-            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.departamentoNacimiento)
+        if (formData.provNacimiento && ubigeoData.length > 0) {
+            const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.depNacimiento)
             if (deptoSeleccionado) {
-                const provSeleccionada = deptoSeleccionado.provincias.find(prov => prov.name === formData.provinciaNacimiento)
+                const provSeleccionada = deptoSeleccionado.provincias.find(prov => prov.name === formData.provNacimiento)
                 if (provSeleccionada) {
-                    setDistritosNacimiento(provSeleccionada.distritos.map(dist => ({ id: dist.id, name: dist.name })))
-                    setFormData(prev => ({ ...prev, distritoNacimiento: "" }))
+                    setDistsNacimiento(provSeleccionada.distritos.map(dist => ({ id: dist.id, name: dist.name })))
+                    setFormData(prev => ({ ...prev, distNacimiento: "" }))
                 }
             }
         }
-    }, [formData.provinciaNacimiento, ubigeoData, formData.departamentoNacimiento])
+    }, [formData.provNacimiento, ubigeoData, formData.depNacimiento])
 
-    // Validación del formulario
+    // Validación del formulario por pasos
     const validateStep = (step) => {
         const errors = {}
         let isValid = true
 
         if (step === 0) {
-            if (!formData.dni || !/^\d{8}$/.test(formData.dni)) {
-                errors.dni = "DNI debe tener 8 dígitos"
-                isValid = false
+            if (!formData.nombre.trim()) errors.nombre = "Nombre es requerido"
+            if (!formData.apellidoPaterno.trim()) errors.apellidoPaterno = "Apellido paterno es requerido"
+            if (!formData.apellidoMaterno.trim()) errors.apellidoMaterno = "Apellido materno es requerido"
+            if (!formData.fecIniciGestion) errors.fecIniciGestion = "Fecha de inicio es requerida"
+            if (!formData.sexo) errors.sexo = "Sexo es requerido"
+            if (!formData.estadoCivil) errors.estadoCivil = "Estado civil es requerido"
+            if (!formData.cargo.trim()) errors.cargo = "Cargo es requerido"
+            if (formData.nroHijos === "" || parseInt(formData.nroHijos) < 0 || parseInt(formData.nroHijos) >= 20) {
+                errors.nroHijos = "Debe ser un número entre 0 y 20"
             }
-            if (!formData.nombreCompleto.trim()) {
-                errors.nombreCompleto = "Nombre es requerido"
-                isValid = false
-            }
-            if (!formData.apellidoPaterno.trim()) {
-                errors.apellidoPaterno = "Apellido paterno es requerido"
-                isValid = false
-            }
-            if (!formData.apellidoMaterno.trim()) {
-                errors.apellidoMaterno = "Apellido materno es requerido"
-                isValid = false
-            }
-            if (!formData.fechaInicioGestion) {
-                errors.fechaInicioGestion = "Fecha de inicio es requerida"
-                isValid = false
-            }
-            if (!formData.edad || formData.edad < 18 || formData.edad > 65) {
-                errors.edad = "Edad debe ser entre 18 y 65 años"
-                isValid = false
-            }
-            if (!formData.estadoCivil) {
-                errors.estadoCivil = "Estado civil es requerido"
-                isValid = false
-            }
-            if (!formData.cargo.trim()) {
-                errors.cargo = "Cargo es requerido"
-                isValid = false
-            }
-            if (formData.numHijos === "" || parseInt(formData.numHijos) < 0 || parseInt(formData.numHijos) >= 20) {
-                errors.numHijos = "Debe ser un número entre 0 y 20"
-                isValid = false
-            }
-            if (!formData.telefono.trim()) {
-                errors.telefono = "Teléfono es requerido"
-                isValid = false
-            }
-            if (!formData.correo.trim() || !/^\S+@\S+\.\S+$/.test(formData.correo)) {
-                errors.correo = "Correo electrónico inválido"
-                isValid = false
-            }
-            if (!formData.asignacionFamiliar) {
-                errors.asignacionFamiliar = "Asignación familiar es requerida"
-                isValid = false
-            }
-        } else if (step === 1) {
-            if (!formData.direccion.trim()) {
-                errors.direccion = "Dirección es requerida"
-                isValid = false
-            }
-            if (!formData.fechaNacimientoLugar) {
-                errors.fechaNacimientoLugar = "Fecha de nacimiento es requerida"
-                isValid = false
-            }
-            if (!formData.departamento) {
-                errors.departamento = "Departamento es requerido"
-                isValid = false
-            }
-            if (!formData.provincia) {
-                errors.provincia = "Provincia es requerida"
-                isValid = false
-            }
-            if (!formData.distrito) {
-                errors.distrito = "Distrito es requerido"
-                isValid = false
-            }
-            if (!formData.departamentoNacimiento) {
-                errors.departamentoNacimiento = "Departamento de nacimiento es requerido"
-                isValid = false
-            }
-            if (!formData.provinciaNacimiento) {
-                errors.provinciaNacimiento = "Provincia de nacimiento es requerida"
-                isValid = false
-            }
-            if (!formData.distritoNacimiento) {
-                errors.distritoNacimiento = "Distrito de nacimiento es requerido"
-                isValid = false
-            }
-        } else if (step === 2) {
-            if (!formData.sueldo || isNaN(formData.sueldo) || formData.sueldo < 1200) {
-                errors.sueldo = "Sueldo mínimo es 1200"
-                isValid = false
-            }
-            if (!formData.afp) {
-                errors.afp = "AFP es requerida"
-                isValid = false
-            }
-            if (!formData.regimenPension) {
-                errors.regimenPension = "Régimen de pensión es requerido"
-                isValid = false
-            }
-            if (!formData.tipoComision) {
-                errors.tipoComision = "Tipo de comisión es requerido"
-                isValid = false
-            }
-            if (!formData.porcentajeAfp || isNaN(formData.porcentajeAfp)) {
-                errors.porcentajeAfp = "Porcentaje AFP debe ser un número válido"
-                isValid = false
-            }
+            if (!formData.telefono.trim()) errors.telefono = "Teléfono es requerido"
+            if (!formData.correo.trim() || !/^\S+@\S+\.\S+$/.test(formData.correo)) errors.correo = "Correo electrónico inválido"
+            if (!formData.fecNacimiento) errors.fecNacimiento = "Fecha de nacimiento es requerida"
+            if (!formData.asignacionfamiliar) errors.asignacionfamiliar = "Asignación familiar es requerida"
+        }
+        else if (step === 1) {
+            if (!formData.dir.trim()) errors.dir = "Dirección es requerida"
+            if (!formData.dep) errors.dep = "Departamento es requerido"
+            if (!formData.prov) errors.prov = "Provincia es requerida"
+            if (!formData.dist) errors.dist = "Distrito es requerido"
+            if (!formData.depNacimiento) errors.depNacimiento = "Departamento de nacimiento es requerido"
+            if (!formData.provNacimiento) errors.provNacimiento = "Provincia de nacimiento es requerida"
+            if (!formData.distNacimiento) errors.distNacimiento = "Distrito de nacimiento es requerido"
+        }
+        else if (step === 2) {
+            if (!formData.sueldo || isNaN(formData.sueldo) || formData.sueldo < 1200) errors.sueldo = "Sueldo mínimo es 1200"
+            if (!formData.afp) errors.afp = "AFP es requerida"
+            if (!formData.tipoContrato) errors.tipoContrato = "Tipo contrato es requerido"
+            if (!formData.tip_comision) errors.tip_comision = "Tipo de comisión es requerido"
+            if (!formData.porcentajeAfp || isNaN(formData.porcentajeAfp)) errors.porcentajeAfp = "Porcentaje AFP debe ser un número válido"
         }
 
         setFormErrors(errors)
-        return isValid
+        return Object.keys(errors).length === 0
     }
 
-    // Manejo de cambios en el formulario
+    // Manejadores de eventos
     const handleChange = (e) => {
         const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
-        if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: null }))
+
+        // Para campos numéricos
+        const newValue = e.target.type === 'number'
+            ? value === '' ? '' : Number(value)
+            : value
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: e.target.type === 'number' ? (isNaN(newValue) ? prev[name] : newValue) : value
+        }))
+
+        // Limpiar error si existe
+        if (formErrors[name]) {
+            setFormErrors(prev => ({ ...prev, [name]: null }))
+        }
     }
 
     const handleSelectChange = (name, value) => {
@@ -301,15 +321,8 @@ export const CrearEmpleado = () => {
     }
 
     // Navegación entre pasos
-    const nextStep = () => {
-        if (validateStep(currentStep)) {
-            setCurrentStep(prev => Math.min(prev + 1, 2))
-        }
-    }
-
-    const prevStep = () => {
-        setCurrentStep(prev => Math.max(prev - 1, 0))
-    }
+    const nextStep = () => validateStep(currentStep) && setCurrentStep(prev => Math.min(prev + 1, 2))
+    const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0))
 
     // Envío del formulario
     const handleSubmit = async (e) => {
@@ -317,17 +330,255 @@ export const CrearEmpleado = () => {
         setIsSubmitting(false)
         setIsLoading(true)
 
-        try {
-            // Simular envío a la API
-            await new Promise(resolve => setTimeout(resolve, 2000))
+        const datos = {
+            documento: formData.documento,
+            nombre: formData.nombre,
+            apellido: `${formData.apellidoPaterno} ${formData.apellidoMaterno}`,
+            nom_completo: `${formData.apellidoPaterno} ${formData.apellidoMaterno} ${formData.nombre}`,
+            alias: `${formData.nombre.split(" ")[0]} ${formData.apellidoPaterno}`,
+            fecAlta: formData.fecIniciGestion,
+            cargo: formData.cargo,
+            correo: formData.correo,
+            fecNacimiento: formData.fecNacimiento,
+            lugarNacimiento: `${formData.distNacimiento}, ${formData.provNacimiento}, ${formData.depNacimiento}`,
+            sexo: formData.sexo,
+            estadoCivil: formData.estadoCivil,
+            nroHijos: formData.nroHijos,
+            dir: formData.dir,
+            dist: formData.dist,
+            prov: formData.prov,
+            dep: formData.dep,
+            telefono: formData.telefono,
+            modalidad: "PRESENCIAL", // Agregar este campo si es necesario
+            fecIniciGestion: formData.fecIniciGestion,
+            fecRegistro: new Date().toISOString().split("T")[0],
+            sueldo: formData.sueldo,
+            afp: formData.afp,
+            tip_comision: formData.tip_comision,
+            regimen: formData.tipoContrato,
+            asignacionfamiliar: formData.asignacionfamiliar,
+            usuario: "admin"
+        }
 
-            console.log("Datos enviados:", formData)
+        try {
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            console.log("Datos enviados:", datos)
             setIsSuccess(true)
         } catch (error) {
             console.error("Error al enviar datos:", error)
         } finally {
             setIsLoading(false)
         }
+    }
+
+    // Renderizado de campos del formulario
+    const renderPersonalInfoFields = () => (
+        <>
+            <InputField
+                label="NOMBRES*" id="nombre" name="nombre"
+                value={formData.nombre} onChange={handleChange} error={formErrors.nombre}
+            />
+            <InputField
+                label="APELLIDO PATERNO*" id="apellidoPaterno" name="apellidoPaterno"
+                value={formData.apellidoPaterno} onChange={handleChange} error={formErrors.apellidoPaterno}
+            />
+            <InputField
+                label="APELLIDO MATERNO*" id="apellidoMaterno" name="apellidoMaterno"
+                value={formData.apellidoMaterno} onChange={handleChange} error={formErrors.apellidoMaterno}
+            />
+            <InputField
+                label="FECHA INICIO DE GESTIÓN*" id="fecIniciGestion" name="fecIniciGestion"
+                type="date" value={formData.fecIniciGestion} onChange={handleChange} error={formErrors.fecIniciGestion}
+            />
+            <SelectField
+                label="ESTADO CIVIL*" name="estadoCivil" value={formData.estadoCivil}
+                onValueChange={handleSelectChange} error={formErrors.estadoCivil}
+                options={[
+                    { value: "soltero", label: "Soltero" },
+                    { value: "casado", label: "Casado" },
+                    { value: "divorciado", label: "Divorciado" },
+                    { value: "viudo", label: "Viudo" }
+                ]}
+            />
+            <SelectField
+                label="SEXO*" name="sexo" value={formData.sexo}
+                onValueChange={handleSelectChange} error={formErrors.sexo}
+                options={[
+                    { value: "masculino", label: "Masculino" },
+                    { value: "femenino", label: "Femenino" },
+                ]}
+            />
+            <InputField
+                label="NUM. HIJOS*" id="nroHijos" name="nroHijos" type="number"
+                min="0" max="19" value={formData.nroHijos} onChange={handleChange} error={formErrors.nroHijos}
+            />
+            <SelectField
+                label="CARGO*" name="cargo" value={formData.cargo}
+                onValueChange={(name, value) => {
+                    handleSelectChange(name, value)
+                    // Resetear campos dependientes del cargo
+                    const isPracticante = value.toUpperCase().includes("PRACTICANTE")
+                    setFormData(prev => ({
+                        ...prev,
+                        tipoContrato: isPracticante ? "practicante" : "",
+                        afp: isPracticante ? "0" : "",
+                        tip_comision: "0"
+                    }))
+                }}
+                error={formErrors.cargo}
+                options={cargos.map(c => ({ value: c.CARGO, label: c.CARGO }))}
+            />
+            <InputField
+                label="TELÉFONO*" id="telefono" name="telefono"
+                value={formData.telefono} onChange={handleChange} error={formErrors.telefono}
+            />
+            <InputField
+                label="CORREO*" id="correo" name="correo" type="email"
+                value={formData.correo} onChange={handleChange} error={formErrors.correo}
+            />
+            <InputField
+                label="FECHA NACIMIENTO*" id="fecNacimiento" name="fecNacimiento"
+                type="date" value={formData.fecNacimiento} onChange={handleChange}
+                error={formErrors.fecNacimiento}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
+            />
+            <RadioField
+                label="ASIG. FAMILIAR*" name="asignacionfamiliar"
+                value={formData.asignacionfamiliar} onValueChange={handleRadioChange}
+                error={formErrors.asignacionfamiliar}
+                options={[
+                    { value: "si", label: "SI" },
+                    { value: "no", label: "NO" }
+                ]}
+            />
+        </>
+    )
+
+    const renderAddressFields = () => (
+        <div className="flex flex-col gap-2">
+            <InputField
+                label="DIRECCIÓN*" id="dir" name="dir"
+                value={formData.dir} onChange={handleChange} error={formErrors.dir}
+            />
+            <SelectField
+                label="DEPARTAMENTO*" name="dep" value={formData.dep}
+                onValueChange={handleSelectChange} error={formErrors.dep}
+                options={deps.map(d => ({ value: d.name, label: d.name }))}
+            />
+            <SelectField
+                label="PROVINCIA*" name="prov" value={formData.prov}
+                onValueChange={handleSelectChange} error={formErrors.prov}
+                disabled={!formData.dep}
+                options={provincias.map(p => ({ value: p.name, label: p.name }))}
+                placeholder={formData.dep ? "Seleccione provincia" : "Primero seleccione departamento"}
+            />
+            <SelectField
+                label="DISTRITO*" name="dist" value={formData.dist}
+                onValueChange={handleSelectChange} error={formErrors.dist}
+                disabled={!formData.prov}
+                options={distritos.map(d => ({ value: d.name, label: d.name }))}
+                placeholder={formData.prov ? "Seleccione distrito" : "Primero seleccione provincia"}
+            />
+        </div>
+    )
+
+    const renderBirthplaceFields = () => (
+        <div className="flex flex-col gap-2">
+            <SelectField
+                label="DEPARTAMENTO*" name="depNacimiento" value={formData.depNacimiento}
+                onValueChange={handleSelectChange} error={formErrors.depNacimiento}
+                options={deps.map(d => ({ value: d.name, label: d.name }))}
+            />
+            <SelectField
+                label="PROVINCIA*" name="provNacimiento" value={formData.provNacimiento}
+                onValueChange={handleSelectChange} error={formErrors.provNacimiento}
+                disabled={!formData.depNacimiento}
+                options={provsNacimiento.map(p => ({ value: p.name, label: p.name }))}
+                placeholder={formData.depNacimiento ? "Seleccione provincia" : "Primero seleccione departamento"}
+            />
+            <SelectField
+                label="DISTRITO*" name="distNacimiento" value={formData.distNacimiento}
+                onValueChange={handleSelectChange} error={formErrors.distNacimiento}
+                disabled={!formData.provNacimiento}
+                options={distsNacimiento.map(d => ({ value: d.name, label: d.name }))}
+                placeholder={formData.provNacimiento ? "Seleccione distrito" : "Primero seleccione provincia"}
+            />
+        </div>
+    )
+
+    const renderWorkInfoFields = () => {
+        const isPracticante = formData.cargo?.toUpperCase().includes("PRACTICANTE")
+
+        const afpOptions = isPracticante
+            ? [{ value: "0", label: "NO TIENE AFP" }]
+            : [
+                { value: "profuturo", label: "PROFUTURO" },
+                { value: "integra", label: "INTEGRA" },
+                { value: "prima", label: "PRIMA" },
+                { value: "habitat", label: "HABITAT" },
+                { value: "ONP", label: "ONP" }
+            ]
+
+        const comisionOptions = (!isPracticante && formData.afp !== "ONP" && formData.afp !== "0")
+            ? [
+                { value: "mixta", label: "MIXTA" },
+                { value: "comision", label: "COMISIÓN" }
+            ]
+            : [{ value: "0", label: "NULA" }]
+
+        return (
+            <div className="grid grid-cols-2 gap-6">
+                <InputField
+                    label="SUELDO*" id="sueldo" name="sueldo" type="number"
+                    min={1200} value={formData.sueldo} onChange={handleChange} error={formErrors.sueldo}
+                />
+
+                <SelectField
+                    label="TIPO CONTRATO*" name="tipoContrato" value={formData.tipoContrato}
+                    onValueChange={(name, value) => {
+                        handleSelectChange(name, value)
+                        // Resetear valores dependientes
+                        setFormData(prev => ({
+                            ...prev,
+                            afp: isPracticante ? "0" : "",
+                            tip_comision: "0"
+                        }))
+                    }}
+                    error={formErrors.tipoContrato}
+                    options={isPracticante
+                        ? [{ value: "practicante", label: "PRACTICANTE" }]
+                        : [
+                            { value: "ria", label: "RIA" },
+                            { value: "regular", label: "REGULAR" }
+                        ]
+                    }
+                    disabled={!formData.cargo}
+                />
+
+                <SelectField
+                    label="AFP*" name="afp" value={formData.afp}
+                    onValueChange={(name, value) => {
+                        handleSelectChange(name, value)
+                        // Resetear comisión si es ONP o NO TIENE AFP
+                        if (value === "ONP" || value === "0") {
+                            setFormData(prev => ({ ...prev, tip_comision: "0" }))
+                        }
+                    }}
+                    error={formErrors.afp}
+                    options={afpOptions}
+                    disabled={!formData.tipoContrato}
+                />
+
+                <SelectField
+                    label="TIPO COMISIÓN*" name="tip_comision" value={formData.tip_comision}
+                    onValueChange={handleSelectChange}
+                    error={formErrors.tip_comision}
+                    options={comisionOptions}
+                    disabled={isPracticante || formData.afp === "" || formData.afp === "ONP" || formData.afp === "0"}
+                />
+
+            </div>
+        )
     }
 
     // Renderizado del formulario por pasos
@@ -338,7 +589,6 @@ export const CrearEmpleado = () => {
                     <Card>
                         <CardContent className="pt-4">
                             <div className="grid grid-cols-2 gap-4">
-                                {/* Campos del paso 1 */}
                                 {renderPersonalInfoFields()}
                             </div>
                         </CardContent>
@@ -375,392 +625,340 @@ export const CrearEmpleado = () => {
         }
     }
 
-    // Componentes para cada sección de campos
-    const renderPersonalInfoFields = () => (
-        <>
-            <InputField
-                label="DNI*" id="dni" name="dni" value={formData.dni}
-                onChange={handleChange} maxLength={8} error={formErrors.dni}
-            />
-            <InputField
-                label="NOMBRES*" id="nombreCompleto" name="nombreCompleto"
-                value={formData.nombreCompleto} onChange={handleChange} error={formErrors.nombreCompleto}
-            />
-            <InputField
-                label="APELLIDO PATERNO*" id="apellidoPaterno" name="apellidoPaterno"
-                value={formData.apellidoPaterno} onChange={handleChange} error={formErrors.apellidoPaterno}
-            />
-            <InputField
-                label="APELLIDO MATERNO*" id="apellidoMaterno" name="apellidoMaterno"
-                value={formData.apellidoMaterno} onChange={handleChange} error={formErrors.apellidoMaterno}
-            />
-            <InputField
-                label="FECHA INICIO DE GESTIÓN*" id="fechaInicioGestion" name="fechaInicioGestion"
-                type="date" value={formData.fechaInicioGestion} onChange={handleChange} error={formErrors.fechaInicioGestion}
-            />
-            <SelectField
-                label="ESTADO CIVIL*" name="estadoCivil" value={formData.estadoCivil}
-                onValueChange={handleSelectChange} error={formErrors.estadoCivil}
-                options={[
-                    { value: "soltero", label: "Soltero" },
-                    { value: "casado", label: "Casado" },
-                    { value: "divorciado", label: "Divorciado" },
-                    { value: "viudo", label: "Viudo" }
-                ]}
-            />
-            <InputField
-                label="EDAD*" id="edad" name="edad" type="number"
-                value={formData.edad} onChange={handleChange} error={formErrors.edad}
-            />
-            <InputField
-                label="NUM. HIJOS*" id="numHijos" name="numHijos" type="number"
-                min="0" max="19" value={formData.numHijos} onChange={handleChange} error={formErrors.numHijos}
-            />
-            <InputField
-                label="CARGO*" id="cargo" name="cargo"
-                value={formData.cargo} onChange={handleChange} error={formErrors.cargo}
-            />
-            <InputField
-                label="TELÉFONO*" id="telefono" name="telefono"
-                value={formData.telefono} onChange={handleChange} error={formErrors.telefono}
-            />
-            <InputField
-                label="CORREO*" id="correo" name="correo" type="email"
-                value={formData.correo} onChange={handleChange} error={formErrors.correo}
-            />
-            <RadioField
-                label="ASIG. FAMILIAR*" name="asignacionFamiliar"
-                value={formData.asignacionFamiliar} onValueChange={handleRadioChange}
-                error={formErrors.asignacionFamiliar}
-                options={[
-                    { value: "si", label: "SI" },
-                    { value: "no", label: "NO" }
-                ]}
-            />
-        </>
-    )
+    // Manejo de diálogos
+    const closeAllDialogs = () => {
+        setDialogState({
+            documentoInput: true,
+            verifying: false,
+            newEmployee: false,
+            terminatedEmployee: false,
+            registeredEmployee: false
+        })
+    }
 
-    const renderAddressFields = () => (
-        <>
-            <InputField
-                label="DIRECCIÓN*" id="direccion" name="direccion"
-                value={formData.direccion} onChange={handleChange} error={formErrors.direccion}
-            />
-            <SelectField
-                label="DEPARTAMENTO*" name="departamento" value={formData.departamento}
-                onValueChange={handleSelectChange} error={formErrors.departamento}
-                options={departamentos.map(d => ({ value: d.name, label: d.name }))}
-            />
-            <SelectField
-                label="PROVINCIA*" name="provincia" value={formData.provincia}
-                onValueChange={handleSelectChange} error={formErrors.provincia}
-                disabled={!formData.departamento}
-                options={provincias.map(p => ({ value: p.name, label: p.name }))}
-                placeholder={formData.departamento ? "Seleccione provincia" : "Primero seleccione departamento"}
-            />
-            <SelectField
-                label="DISTRITO*" name="distrito" value={formData.distrito}
-                onValueChange={handleSelectChange} error={formErrors.distrito}
-                disabled={!formData.provincia}
-                options={distritos.map(d => ({ value: d.name, label: d.name }))}
-                placeholder={formData.provincia ? "Seleccione distrito" : "Primero seleccione provincia"}
-            />
-        </>
-    )
+    const showDialog = (dialogName) => {
+        closeAllDialogs()
+        setDialogState(prev => ({ ...prev, [dialogName]: true }))
+    }
 
-    const renderBirthplaceFields = () => (
-        <>
-            <InputField
-                label="FECHA NACIMIENTO*" id="fechaNacimientoLugar" name="fechaNacimientoLugar"
-                type="date" value={formData.fechaNacimientoLugar} onChange={handleChange}
-                error={formErrors.fechaNacimientoLugar}
-                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
-            />
-            <SelectField
-                label="DEPARTAMENTO*" name="departamentoNacimiento" value={formData.departamentoNacimiento}
-                onValueChange={handleSelectChange} error={formErrors.departamentoNacimiento}
-                options={departamentos.map(d => ({ value: d.name, label: d.name }))}
-            />
-            <SelectField
-                label="PROVINCIA*" name="provinciaNacimiento" value={formData.provinciaNacimiento}
-                onValueChange={handleSelectChange} error={formErrors.provinciaNacimiento}
-                disabled={!formData.departamentoNacimiento}
-                options={provinciasNacimiento.map(p => ({ value: p.name, label: p.name }))}
-                placeholder={formData.departamentoNacimiento ? "Seleccione provincia" : "Primero seleccione departamento"}
-            />
-            <SelectField
-                label="DISTRITO*" name="distritoNacimiento" value={formData.distritoNacimiento}
-                onValueChange={handleSelectChange} error={formErrors.distritoNacimiento}
-                disabled={!formData.provinciaNacimiento}
-                options={distritosNacimiento.map(d => ({ value: d.name, label: d.name }))}
-                placeholder={formData.provinciaNacimiento ? "Seleccione distrito" : "Primero seleccione provincia"}
-            />
-        </>
-    )
+    const validateDocumento = () => {
+        const errors = {}
+        if (!formData.documento) errors.documento = "Documento es requerido"
+        else if (!/^\d{8}$/.test(formData.documento)) errors.documento = "Documento debe tener 8 dígitos"
 
-    const renderWorkInfoFields = () => (
-        <div className="grid grid-cols-2 gap-6">
-            <InputField
-                label="SUELDO*" id="sueldo" name="sueldo" type="number"
-                min={1200} value={formData.sueldo} onChange={handleChange} error={formErrors.sueldo}
-            />
-            <SelectField
-                label="AFP*" name="afp" value={formData.afp}
-                onValueChange={handleSelectChange} error={formErrors.afp}
-                options={[
-                    { value: "profuturo", label: "PROFUTURO" },
-                    { value: "integra", label: "INTEGRA" },
-                    { value: "prima", label: "PRIMA" },
-                    { value: "habitat", label: "HABITAT" }
-                ]}
-            />
-            <SelectField
-                label="RÉGIMEN DE PENSIÓN*" name="regimenPension" value={formData.regimenPension}
-                onValueChange={handleSelectChange} error={formErrors.regimenPension}
-                options={[
-                    { value: "regular", label: "REGULAR" },
-                    { value: "especial", label: "ESPECIAL" }
-                ]}
-            />
-            <SelectField
-                label="TIPO DE COMISIÓN*" name="tipoComision" value={formData.tipoComision}
-                onValueChange={handleSelectChange} error={formErrors.tipoComision}
-                options={[
-                    { value: "flujo", label: "FLUJO" },
-                    { value: "mixta", label: "MIXTA" }
-                ]}
-            />
-            <InputField
-                label="DEPENDIENTES EPS (conyugue e hijos)*" id="porcentajeAfp" name="porcentajeAfp"
-                type="number" value={formData.porcentajeAfp} min={0} max={20}
-                onChange={handleChange} error={formErrors.porcentajeAfp}
-                className="col-span-2"
-            />
-        </div>
-    )
+        setFormErrors(errors)
+        return Object.keys(errors).length === 0
+    }
 
-    // Componentes reutilizables
-    const InputField = ({ label, id, name, type = "text", value, onChange, error, className = "", ...props }) => (
-        <div className={`space-y-2 ${className}`}>
-            <Label htmlFor={id} className="text-slate-800 mb-1">{label}</Label>
-            <Input
-                id={id}
-                name={name}
-                type={type}
-                value={value}
-                onChange={onChange}
-                className={`border-gray-300 ${error ? "border-red-500" : ""}`}
-                {...props}
-            />
-            {error && (
-                <p className="text-sm text-red-500 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" /> {error}
-                </p>
-            )}
-        </div>
-    )
+    const verifyEmployee = async () => {
+        if (!validateDocumento()) return
 
-    const SelectField = ({ label, name, value, onValueChange, error, options, disabled = false, placeholder = "Seleccione", className = "" }) => (
-        <div className={`space-y-2 ${className}`}>
-            <Label className="text-slate-800 mb-1">{label}</Label>
-            <Select
-                onValueChange={(value) => onValueChange(name, value)}
-                value={value}
-                disabled={disabled}
-            >
-                <SelectTrigger className={error ? "border-red-500" : ""}>
-                    <SelectValue placeholder={placeholder} />
-                </SelectTrigger>
-                <SelectContent>
-                    {options.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            {error && (
-                <p className="text-sm text-red-500 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" /> {error}
-                </p>
-            )}
-        </div>
-    )
+        try {
+            showDialog('verifying')
+            const response = await axios.get(
+                `https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/validarEmpleado/${formData.documento}`
+            )
+            const employeeData = response.data.data[0]
 
-    const RadioField = ({ label, name, value, onValueChange, error, options, className = "" }) => (
-        <div className={`space-y-2 ${className}`}>
-            <Label className="text-slate-800 mb-1">{label}</Label>
-            <RadioGroup
-                value={value}
-                onValueChange={(value) => onValueChange(name, value)}
-                className="flex space-x-8 pt-2"
-            >
-                {options.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2">
-                        <RadioGroupItem value={option.value} id={`${name}-${option.value}`} />
-                        <Label htmlFor={`${name}-${option.value}`}>{option.label}</Label>
-                    </div>
-                ))}
-            </RadioGroup>
-            {error && (
-                <p className="text-sm text-red-500 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" /> {error}
-                </p>
-            )}
-        </div>
-    )
+            if (!employeeData) {
+                showDialog('newEmployee')
+            } else {
+                switch (employeeData.estadoLaboral) {
+                    case "VIGENTE":
+                        showDialog('registeredEmployee')
+                        setRegistro(true)
+                        break
+                    case "CESADO":
+                        showDialog('terminatedEmployee')
+                        break
+                    default:
+                        showDialog('newEmployee')
+                }
+            }
+        } catch (error) {
+            console.error("Error al verificar empleado:", error)
+            // Aquí podrías mostrar un diálogo de error
+        }
+    }
 
-    return (
-        <div className="w-full max-w-5xl mx-auto p-4">
-            <h1 className="text-center text-2xl font-bold mb-4">REGISTRO EMPLEADO</h1>
-
-            {/* Slider de progreso */}
-            <div className="mb-10">
-                <div className="relative">
-                    <div className="flex justify-between mb-4">
-                        <span className={currentStep >= 0 ? "font-medium text-blue-600" : ""}>Datos Personales</span>
-                        <span className={currentStep >= 1 ? "font-medium text-blue-600" : ""}>Dirección</span>
-                        <span className={currentStep >= 2 ? "font-medium text-blue-600" : ""}>Datos Laborales</span>
-                    </div>
-
-                    <div className="h-2 bg-gray-200 rounded-full">
-                        <div
-                            className="h-2 bg-blue-500 rounded-full transition-all duration-300"
-                            style={{ width: `${(currentStep / 2) * 100}%` }}
-                        ></div>
-                    </div>
-
-                    <div className="flex justify-between mt-1">
-                        {[0, 1, 2].map((step) => (
-                            <div
-                                key={step}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center -mt-5 ${currentStep >= step ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}
+    // Renderizado principal
+    if (registro) {
+        return (
+            <>
+                {/* Diálogo para ingresar documento */}
+                <Dialog open={dialogState.documentoInput} onOpenChange={closeAllDialogs}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Ingrese el documento del empleado</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-2">
+                            <Label htmlFor="documento" className="text-slate-800 mb-1">
+                                Documento*
+                            </Label>
+                            <Input
+                                id="documento"
+                                name="documento"
+                                type="text"
+                                inputMode="numeric"
+                                value={formData.documento}
+                                onChange={handleChange}
+                                maxLength={8}
+                                className={`border-gray-300 ${formErrors.documento ? "border-red-500" : ""}`}
+                                placeholder="Ingrese 8 dígitos"
+                            />
+                            {formErrors.documento && (
+                                <p className="text-sm text-red-500 flex items-center">
+                                    <AlertCircle className="h-4 w-4 mr-1" /> {formErrors.documento}
+                                </p>
+                            )}
+                        </div>
+                        <DialogFooter className="gap-2">
+                            <Button
+                                type="button"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={verifyEmployee}
                             >
-                                {currentStep > step ? <Check className="w-4 h-4" /> : <span className="text-xs">{step + 1}</span>}
+                                Verificar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Diálogo de verificación en progreso */}
+                <Dialog open={dialogState.verifying}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Verificando Documento</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center py-8">
+                            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+                            <p className="text-gray-600 text-center">Buscando empleado...</p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Diálogo para empleado nuevo */}
+                <Dialog open={dialogState.newEmployee}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Nuevo empleado</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center space-y-4">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                                <UserPlus className="h-8 w-8 text-green-600 translate-x-1" />
                             </div>
-                        ))}
+                            <p className="text-gray-600 text-center">
+                                Ingresara un nuevo empleado al sistema.
+                            </p>
+                            <Button onClick={() => setRegistro(false)} className="cursor-pointer">
+                                Continuar
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Diálogo para empleado cesado */}
+                <Dialog open={dialogState.terminatedEmployee}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Reingreso del Empleado</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center space-y-4">
+                            <AlertTriangle className="h-12 w-12 text-yellow-500" />
+                            <p className="text-gray-600 text-center">
+                                Este empleado está registrado pero su estado es CESADO.
+                            </p>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={closeAllDialogs}>
+                                    Cancelar
+                                </Button>
+                                <Button onClick={() => setRegistro(false)} className="cursor-pointer">
+                                    Proceder con reingreso
+                                </Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Diálogo para empleado registrado */}
+                <Dialog open={dialogState.registeredEmployee}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Empleado registrado</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center space-y-4">
+                            <Info className="h-12 w-12 text-blue-500" />
+                            <p className="text-gray-600 text-center">
+                                Este empleado ya está registrado y su estado es VIGENTE.
+                            </p>
+                            <Button
+                                onClick={() => {
+                                    setDialogState({
+                                        documentoInput: true,
+                                        verifying: false,
+                                        newEmployee: false,
+                                        terminatedEmployee: false,
+                                        registeredEmployee: false
+                                    })
+                                }}
+                                className="cursor-pointer"
+                            >
+                                Aceptar
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </>
+        )
+    } else {
+        return (
+            <div className="w-full max-w-5xl mx-auto p-4">
+                <h1 className="text-center text-2xl font-bold mb-4">REGISTRO EMPLEADO</h1>
+
+                {/* Slider de progreso */}
+                <div className="mb-10">
+                    <div className="relative">
+                        <div className="flex justify-between mb-4">
+                            <span className={currentStep >= 0 ? "font-medium text-blue-600" : ""}>Datos Personales</span>
+                            <span className={currentStep >= 1 ? "font-medium text-blue-600" : ""}>Dirección</span>
+                            <span className={currentStep >= 2 ? "font-medium text-blue-600" : ""}>Datos Laborales</span>
+                        </div>
+
+                        <div className="h-2 bg-gray-200 rounded-full">
+                            <div
+                                className="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                                style={{ width: `${(currentStep / 2) * 100}%` }}
+                            ></div>
+                        </div>
+
+                        <div className="flex justify-between mt-1">
+                            {[0, 1, 2].map((step) => (
+                                <div
+                                    key={step}
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center -mt-5 ${currentStep >= step ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                                >
+                                    {currentStep > step ? <Check className="w-4 h-4" /> : <span className="text-xs">{step + 1}</span>}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Formulario */}
-            {renderStep()}
+                {/* Formulario */}
+                {renderStep()}
 
-            {/* Botones de navegación */}
-            <div className="flex justify-between mt-6">
-                {currentStep > 0 && (
-                    <Button
-                        type="button"
-                        onClick={prevStep}
-                        variant="outline"
-                        className="border-blue-300 text-blue-600 hover:bg-blue-50"
-                    >
-                        Anterior
-                    </Button>
-                )}
-
-                {currentStep === 2 ? (
-                    <Button
-                        type="button"
-                        className="bg-green-500 hover:bg-green-600 ml-auto cursor-pointer"
-                        onClick={() => setIsSubmitting(true)}
-                    >
-                        Finalizar
-                    </Button>
-                ) : (
-                    <Button
-                        type="button"
-                        onClick={nextStep}
-                        className="bg-blue-500 hover:bg-blue-600 ml-auto cursor-pointer"
-                    >
-                        Siguiente
-                    </Button>
-                )}
-            </div>
-
-            {/* Modal de confirmación */}
-            <Dialog open={isSubmitting} onOpenChange={setIsSubmitting}>
-                <DialogContent className="w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">¿Estás seguro de registrar nuevo empleado?</DialogTitle>
-                        <DialogDescription className="text-center">
-                            Revise los datos antes de confirmar el registro
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="grid gap-4 py-4">
-                        {/* Resumen de datos */}
-                        {sections.map((section, index) => (
-                            <div key={index} className="space-y-2">
-                                <h3 className="font-semibold text-gray-700 border-b pb-1">{section.title}</h3>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    {section.fields.map((field, i) => (
-                                        <div key={i}>
-                                            <p className="text-gray-500">{field.label}:</p>
-                                            <p className="font-medium">{field.value || "-"}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <DialogFooter className="gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsSubmitting(false)}
-                            className="w-full"
-                        >
-                            Cancelar
-                        </Button>
+                {/* Botones de navegación */}
+                <div className="flex justify-between mt-6">
+                    {currentStep > 0 && (
                         <Button
                             type="button"
-                            className="w-full bg-green-600 hover:bg-green-700"
-                            onClick={handleSubmit}
+                            onClick={prevStep}
+                            variant="outline"
+                            className="border-blue-300 text-blue-600 hover:bg-blue-50"
                         >
-                            Confirmar Registro
+                            Anterior
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    )}
 
-            {/* Modal de carga */}
-            <Dialog open={isLoading}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">Procesando registro</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center py-8">
-                        <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-                        <p className="text-gray-600 text-center">Guardando los datos del empleado...</p>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Modal de éxito */}
-            <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">Datos Guardados</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center py-4">
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                            <Check className="h-8 w-8 text-green-600" />
-                        </div>
-                        <p className="text-gray-600 text-center">Los datos del empleado se han guardado correctamente.</p>
-                    </div>
-                    <DialogFooter>
+                    {currentStep === 2 ? (
                         <Button
-                            className="w-full"
-                            onClick={() => {
-                                setIsSuccess(false)
-                                // Resetear formulario si es necesario
-                            }}
+                            type="button"
+                            className="bg-green-500 hover:bg-green-600 ml-auto cursor-pointer"
+                            onClick={() => setIsSubmitting(true)}
                         >
-                            Aceptar
+                            Finalizar
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
-    )
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={nextStep}
+                            className="bg-blue-500 hover:bg-blue-600 ml-auto cursor-pointer"
+                        >
+                            Siguiente
+                        </Button>
+                    )}
+                </div>
+
+                {/* Modal de confirmación */}
+                <Dialog open={isSubmitting} onOpenChange={setIsSubmitting}>
+                    <DialogContent className="w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">¿Estás seguro de registrar nuevo empleado?</DialogTitle>
+                            <DialogDescription className="text-center">
+                                Revise los datos antes de confirmar el registro
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-4 py-4">
+                            {sections.map((section, index) => (
+                                <div key={index} className="space-y-2">
+                                    <h3 className="font-bold text-gray-700 border-b-2 pb-1">{section.title}</h3>
+                                    <div className="grid grid-cols-2 gap-1 text-sm">
+                                        {section.fields.map((field, i) => (
+                                            <div key={i} className="flex gap-2">
+                                                <p className="font-medium">{field.label}:</p>
+                                                <p className="text-gray-700">{field.value || "-"}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <DialogFooter className="gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsSubmitting(false)}
+                                className="w-full"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                className="w-full bg-green-600 hover:bg-green-700"
+                                onClick={handleSubmit}
+                            >
+                                Confirmar Registro
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal de carga */}
+                <Dialog open={isLoading}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Procesando registro</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center py-8">
+                            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+                            <p className="text-gray-600 text-center">Guardando los datos del empleado...</p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal de éxito */}
+                <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Datos Guardados</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center py-4">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                                <Check className="h-8 w-8 text-green-600" />
+                            </div>
+                            <p className="text-gray-600 text-center">Los datos del empleado se han guardado correctamente.</p>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                className="w-full "
+                                onClick={() => setIsSuccess(false)}
+                            >
+                                Aceptar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        )
+    }
 }
