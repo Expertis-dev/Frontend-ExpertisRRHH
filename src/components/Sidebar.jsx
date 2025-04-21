@@ -37,26 +37,6 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             ]
         },
         {
-            key: 'contrato',
-            icon: <FileTextOutlined />,
-            label: <Link to="/finanzas/contrato">Contratos</Link>,
-        },
-        {
-            key: 'eps',
-            icon: <MedicineBoxOutlined />,
-            label: <Link to="/finanzas/eps">EPS</Link>,
-        },
-        {
-            key: 'horas-extra',
-            icon: <ClockCircleOutlined />,
-            label: <Link to="/finanzas/horas-extra">Horas Extra</Link>,
-        },
-        {
-            key: 'retencion-judicial',
-            icon: <BankOutlined />,
-            label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
-        },
-        {
             key: 'sub1',
             icon: <ReconciliationOutlined />,
             label: "AFP",
@@ -80,6 +60,27 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             icon: <MedicineBoxOutlined />,
             label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
         },
+        {
+            key: 'contrato',
+            icon: <FileTextOutlined />,
+            label: <Link to="/finanzas/contrato">Contratos</Link>,
+        },
+        {
+            key: 'eps',
+            icon: <MedicineBoxOutlined />,
+            label: <Link to="/finanzas/eps">EPS</Link>,
+        },
+        {
+            key: 'horas-extra',
+            icon: <ClockCircleOutlined />,
+            label: <Link to="/finanzas/horas-extra">Horas Extra</Link>,
+        },
+        {
+            key: 'retencion-judicial',
+            icon: <BankOutlined />,
+            label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
+        },
+       
         {
             key: 'sub3',
             icon: <DollarOutlined />,
