@@ -18,7 +18,7 @@ const { Sider } = Layout;
 export const Sidebar = ({ collapsed, onCollapse }) => {
     const items = [
         {
-            key: 'sub2',
+            key: 'sub1',
             icon: <TeamOutlined />,
             label: "Empleados",
             children: [
@@ -57,7 +57,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
         },
         {
-            key: 'sub1',
+            key: 'sub2',
             icon: <ReconciliationOutlined />,
             label: "AFP",
             children: [
@@ -70,7 +70,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     label: <Link to="/finanzas/cambios-afp">Cambios AFP</Link>,
                 },
                 {
-                    key: 'historico-afp',
+                    key: 'info-afp',
                     label: <Link to="/finanzas/info-afp">Info. AFP</Link>,
                 },
             ],
@@ -87,7 +87,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             children: [
 
                 {
-                    key: 'historico-afp',
+                    key: 'historico-descuento',
                     label: <Link to="/finanzas/historialDescuentos">Histórico</Link>,
                 },
                 {

@@ -369,7 +369,7 @@ export const CrearEmpleado = () => {
             tip_comision: formData.tip_comision.toUpperCase(),
             regimen: formData.tipoContrato.toUpperCase(),
             asignacionfamiliar: formData.asignacionfamiliar.toUpperCase(),
-            usuario: "admin"
+            usuario: "ADMIN"
         }
 
         
@@ -573,7 +573,7 @@ export const CrearEmpleado = () => {
         const comisionOptions = (!isPracticante && formData.afp !== "ONP" && formData.afp !== "0")
             ? [
                 { value: "mixta", label: "MIXTA" },
-                { value: "comision", label: "COMISIÓN" }
+                { value: "flujo", label: "FLUJO" }
             ]
             : [{ value: "0", label: "NULA" }]
 

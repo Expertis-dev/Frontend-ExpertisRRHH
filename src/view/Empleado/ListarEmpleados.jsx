@@ -4,13 +4,37 @@ import { Eye, Pencil, ChevronLeft, ChevronRight, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-
+import { DatePickerFirstDay } from "@/components/ui/MesInputs"
+import { PlusCircleOutlined } from "@ant-design/icons";
+const SelectField = ({ label, name, value, onValueChange, error, options, disabled = false, placeholder = "Seleccione", className = "" }) => (
+  <div className={`space-y-2 ${className}`}>
+    <Label className="text-slate-800 mb-1">{label}</Label>
+    <Select onValueChange={(value) => onValueChange(name, value)} value={value} disabled={disabled}>
+      <SelectTrigger className={error ? "border-red-500" : ""}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    {error && (
+      <p className="text-sm text-red-500 flex items-center">
+        <AlertCircle className="h-4 w-4 mr-1" /> {error}
+      </p>
+    )}
+  </div>
+)
 export const ListarEmpleados = () => {
+  const [modalCargo, setModalCargo] = useState(false);
+  const [nuevoCargo, setNuevoCargo] = useState("");
   // Estados de búsqueda y validación
   const [searchQuery, setSearchQuery] = useState("")
   const [isValid, setIsValid] = useState(false)
@@ -22,6 +46,7 @@ export const ListarEmpleados = () => {
   const [datosAsigFam, setDatosAsigFam] = useState([])
   const [datosSueldos, setDatosSueldos] = useState([])
   const [loadingDetails, setLoadingDetails] = useState(false)
+  const [cargos, setCargos] = useState([])
   // Estados para los diálogos
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -31,19 +56,23 @@ export const ListarEmpleados = () => {
   const [selectedField, setSelectedField] = useState(null)
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
-    salary: { amount: '', currency: 'PEN', valid: false },
-    position: { title: '', department: '', startDate: '', valid: false },
+    salary: { amount: '', valid: false, cod_mes: "" },
+    position: { title: '', cod_mes: '', valid: false },
     familyAllowance: { hasAllowance: false, dependents: 0, amount: 0, valid: false },
     personalData: { fullName: '', dni: '', address: '', photo: null, valid: false }
   })
   const [allStepsValid, setAllStepsValid] = useState(false)
-
+  const currentSalary = 1500; // Este valor debería venir de tus datos actuales
   // Obtener empleados desde el backend
   const obtenerEmpleados = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`)
       setEmpleados(response.data.recordset)
       setFilteredEmpleados(response.data.recordset)
+      console.log(response.data.recordset)
+      const cargosResponse = await fetch("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarCargos")
+      const cargosData = await cargosResponse.json()
+      setCargos(cargosData)
     } catch (error) {
       console.error("Error al obtener empleados:", error)
     } finally {
@@ -52,6 +81,7 @@ export const ListarEmpleados = () => {
   }
 
   useEffect(() => {
+
     obtenerEmpleados()
   }, [])
 
@@ -156,7 +186,40 @@ export const ListarEmpleados = () => {
       setLoadingDetails(false)
     }
   }
+  const AgregarNuevoCargo = async () => {
+    if (!nuevoCargo.trim()) {
+      alert("Por favor ingrese un nombre de cargo");
+      return;
+    }
 
+    const cargoRepetido = cargos.some(c => c.CARGO.toUpperCase() === nuevoCargo.toUpperCase());
+
+    if (cargoRepetido) {
+      alert("El cargo ya existe");
+      return;
+    }
+
+    try {
+      // Aquí deberías hacer la llamada API para guardar el nuevo cargo
+      // await axios.post('/api/cargos', { cargo: nuevoCargo });
+
+      // Actualizar estado local
+      setCargos(prev => [...prev, { CARGO: nuevoCargo }]);
+      setFormData(prev => ({
+        ...prev,
+        position: {
+          ...prev.position,
+          title: nuevoCargo,
+          valid: !!prev.position.startDate
+        }
+      }));
+      setModalCargo(false);
+      setNuevoCargo("");
+    } catch (error) {
+      console.error("Error al agregar cargo:", error);
+      alert("Ocurrió un error al agregar el cargo");
+    }
+  }
   // Abrir edición del empleado
   const openEdit = (employee) => {
     setSelectedEmployee(employee)
@@ -168,27 +231,26 @@ export const ListarEmpleados = () => {
     setFormData({
       salary: {
         amount: employee.sueldo?.toString() || '',
-        currency: 'PEN',
-        valid: true
+        cod_mes: "",
+        valid: false
       },
       position: {
         title: employee.cargo || '',
-        department: employee.departamento || '',
-        startDate: employee.fecIngreso || '',
-        valid: true
+        cod_mes: employee.fecIngreso || '', // Cambiado de startDate a cod_mes
+        valid: false
       },
       familyAllowance: {
         hasAllowance: employee.asignacionFamiliar === 'Sí',
         dependents: employee.numHijos || 0,
         amount: employee.montoAsignacion || 0,
-        valid: true
+        valid: false
       },
       personalData: {
         fullName: employee.nombreCompleto || '',
         dni: employee.documento || '',
         address: employee.direccion || '',
         photo: null,
-        valid: true
+        valid: false
       }
     })
   }
@@ -209,9 +271,9 @@ export const ListarEmpleados = () => {
   const validateStep = (field, data) => {
     switch (field) {
       case 'salary':
-        return !!data.amount && !isNaN(data.amount)
+        return !!data.amount && !isNaN(data.amount) && data.cod_mes !== "";
       case 'position':
-        return !!data.title && !!data.department && !!data.startDate
+        return !!data.title && !!data.cod_mes;
       case 'familyAllowance':
         return true // Todos los campos son opcionales
       case 'personalData':
@@ -235,33 +297,86 @@ export const ListarEmpleados = () => {
   // Enviar datos actualizados al backend
   const handleSubmit = async () => {
     try {
-      const payload = {
-        idPersona: selectedEmployee.idPersona,
-        [selectedField]: formData[selectedField]
+      if (!selectedField || !formData[selectedField].valid) {
+        alert("Por favor complete todos los campos correctamente");
+        return;
       }
-
-      // Aquí iría la llamada real al backend
-      console.log('Datos a enviar:', payload)
-
-      // Ejemplo de llamada API (descomentar cuando esté listo el endpoint)
-      // const response = await axios.put('/api/empleados/actualizar', payload)
-      // console.log('Respuesta del servidor:', response.data)
-
-      // Actualizar localmente los datos (esto sería reemplazado por la respuesta del backend)
+  
+      // Datos comunes para todos los casos
+      const basePayload = {
+        idPersona: selectedEmployee.idPersona
+      };
+  
+      // Datos específicos según el campo
+      let endpoint = '';
+      let requestData = {};
+      
+      switch (selectedField) {
+        case 'salary':
+          endpoint = '/api/empleados/actualizar-salario';
+          requestData = {
+            ...basePayload,
+            nuevoMonto: formData.salary.amount,
+            cod_mes: formData.salary.cod_mes
+          };
+          break;
+          
+        case 'position':
+          endpoint = '/api/empleados/actualizar-puesto';
+          requestData = {
+            ...basePayload,
+            nuevoPuesto: formData.position.title,
+            cod_mes: formData.position.cod_mes
+          };
+          break;
+          
+        case 'familyAllowance':
+          endpoint = '/api/empleados/actualizar-asignacion';
+          requestData = {
+            ...basePayload,
+            tieneAsignacion: formData.familyAllowance.hasAllowance,
+            dependientes: formData.familyAllowance.dependents,
+            monto: formData.familyAllowance.amount
+          };
+          break;
+          
+        case 'personalData':
+          endpoint = '/api/empleados/actualizar-datos';
+          requestData = {
+            ...basePayload,
+            nombreCompleto: formData.personalData.fullName,
+            dni: formData.personalData.dni,
+            direccion: formData.personalData.address
+            // foto sería manejada aparte como FormData
+          };
+          break;
+          
+        default:
+          throw new Error('Campo no válido');
+      }
+  
+      console.log('Enviando datos:', requestData);
+      // Descomentar cuando el endpoint esté listo:
+      // const response = await axios.put(endpoint, requestData);
+      // console.log('Respuesta:', response.data);
+  
+      // Actualizar estado local
       const updatedEmpleados = empleados.map(emp =>
         emp.idPersona === selectedEmployee.idPersona
           ? { ...emp, ...mapFormDataToEmployee(formData) }
           : emp
-      )
-
-      setEmpleados(updatedEmpleados)
-      setFilteredEmpleados(updatedEmpleados)
-      setEditOpen(false)
-
+      );
+  
+      setEmpleados(updatedEmpleados);
+      setFilteredEmpleados(updatedEmpleados);
+      setEditOpen(false);
+      //alert("Cambios guardados exitosamente");
+  
     } catch (error) {
-      console.error("Error al actualizar empleado:", error)
+      console.error("Error al actualizar empleado:", error);
+      alert("Ocurrió un error al guardar los cambios");
     }
-  }
+  };
 
   // Mapear datos del formulario a estructura de empleado
   const mapFormDataToEmployee = (formData) => {
@@ -271,8 +386,7 @@ export const ListarEmpleados = () => {
       }),
       ...(selectedField === 'position' && {
         cargo: formData.position.title,
-        departamento: formData.position.department,
-        fecIngreso: formData.position.startDate
+        fecIngreso: formData.position.cod_mes // Cambiado para usar cod_mes
       }),
       ...(selectedField === 'familyAllowance' && {
         asignacionFamiliar: formData.familyAllowance.hasAllowance ? 'Sí' : 'No',
@@ -357,7 +471,7 @@ export const ListarEmpleados = () => {
         )
       case 2:
         return (
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 ">
             <DialogDescription className="text-center">
               Complete los datos para modificar {selectedField === 'salary' ? 'el sueldo' :
                 selectedField === 'position' ? 'el puesto' :
@@ -366,65 +480,170 @@ export const ListarEmpleados = () => {
 
             {selectedField === 'salary' && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Monto</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      value={formData.salary.amount}
-                      onChange={(e) => handleFieldChange('salary', { amount: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="currency">Moneda</Label>
-                    <select
-                      id="currency"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      value={formData.salary.currency}
-                      onChange={(e) => handleFieldChange('salary', { currency: e.target.value })}
-                    >
-                      <option value="PEN">Soles (PEN)</option>
-                      <option value="USD">Dólares (USD)</option>
-                    </select>
+                <div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="amount">Nuevo Sueldo</Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        min="500"
+                        step="100"
+                        value={formData.salary.amount}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          let isValid = false;
+
+                          if (inputValue !== '') {
+                            const numericValue = parseFloat(inputValue);
+                            isValid = !isNaN(numericValue) && numericValue >= 500 && numericValue !== currentSalary;
+                          }
+
+                          setFormData(prev => ({
+                            ...prev,
+                            salary: {
+                              ...prev.salary,
+                              amount: inputValue,
+                              valid: isValid && prev.salary.cod_mes !== "" // Solo válido si también hay fecha
+                            }
+                          }));
+                        }}
+                        className={!formData.salary.valid && formData.salary.amount !== '' ? 'border-red-500' : ''}
+                      />
+                      {formData.salary.amount !== '' && !formData.salary.valid && (
+                        <p className="text-sm text-red-500">
+                          {parseFloat(formData.salary.amount) === currentSalary
+                            ? 'El sueldo que quiere ingresar es el mismo al sueldo actual'
+                            : 'El monto mínimo permitido es 500'}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Codigo Mes</Label>
+                      <div className="flex  flex-col items-center justify-center">
+                        <DatePickerFirstDay
+                          handleDateChange={(date) => {
+                            const hasDate = !!date;
+
+                            setFormData(prev => ({
+                              ...prev,
+                              salary: {
+                                ...prev.salary,
+                                cod_mes: date ? date.toISOString().split("T")[0] : "",
+                                valid: prev.salary.amount !== "" &&
+                                  parseFloat(prev.salary.amount) >= 500 &&
+                                  parseFloat(prev.salary.amount) !== currentSalary &&
+                                  hasDate
+                              }
+                            }));
+                          }}
+                        />
+                        {formData.salary.cod_mes === "" && (
+                          <p className="text-sm text-red-500">
+                            Por favor seleccione una fecha válida
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {!formData.salary.valid && (
-                  <p className="text-sm text-red-500">Por favor ingrese un monto válido</p>
-                )}
               </div>
             )}
 
             {selectedField === 'position' && (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título del puesto</Label>
-                  <Input
-                    id="title"
+                <div className="flex items-center gap-2">
+                  <SelectField
+                    className="w-full"
+                    label="CARGO*"
+                    name="cargo"
                     value={formData.position.title}
-                    onChange={(e) => handleFieldChange('position', { title: e.target.value })}
+                    onValueChange={(name, value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        position: {
+                          ...prev.position,
+                          title: value,
+                          valid: !!value && !!prev.position.cod_mes
+                        }
+                      }));
+                    }}
+                    options={cargos.map(c => ({ value: c.CARGO, label: c.CARGO }))}
                   />
+                  <Button
+                    variant="outline"
+                    className="translate-y-3"
+                    size="small"
+                    onClick={() => setModalCargo(true)}
+                  >
+                    <PlusCircleOutlined className="text-white bg-green-700 p-1 rounded-md" />
+                  </Button>
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="department">Departamento</Label>
-                  <Input
-                    id="department"
-                    value={formData.position.department}
-                    onChange={(e) => handleFieldChange('position', { department: e.target.value })}
-                  />
+                  <Label>Codigo Mes*</Label>
+                  <div className="flex items-center justify-center">
+                    <DatePickerFirstDay
+                      handleDateChange={(date) => {
+                        const hasDate = !!date;
+                        setFormData(prev => ({
+                          ...prev,
+                          position: {
+                            ...prev.position,
+                            cod_mes: date ? date.toISOString().split("T")[0] : "",
+                            valid: !!prev.position.title && hasDate
+                          }
+                        }));
+                      }}
+                    />
+                  </div>
+                  {formData.position.cod_mes === "" && (
+                    <p className="text-sm text-red-500">Por favor seleccione una fecha válida</p>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Fecha de inicio</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.position.startDate}
-                    onChange={(e) => handleFieldChange('position', { startDate: e.target.value })}
-                  />
-                </div>
+
                 {!formData.position.valid && (
-                  <p className="text-sm text-red-500">Por favor complete todos los campos</p>
+                  <p className="text-sm text-red-500">
+                    {!formData.position.title ? 'Por favor seleccione un cargo' :
+                      !formData.position.cod_mes ? 'Por favor seleccione una fecha' :
+                        'Complete todos los campos requeridos'}
+                  </p>
                 )}
+                <Dialog open={modalCargo} onOpenChange={() => setModalCargo(false)}>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-center">Agregar nuevo cargo</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center">
+                      <Label className="text-slate-800 mb-2 text-start w-full">Nuevo Cargo*</Label>
+                      <Input
+                        value={nuevoCargo}
+                        onChange={(e) => setNuevoCargo(e.target.value.toUpperCase())}
+                        placeholder="Ingrese el nombre del cargo"
+                      />
+                      {!nuevoCargo.trim() && (
+                        <p className="text-sm text-red-500 w-full mt-1">Por favor ingrese un nombre de cargo</p>
+                      )}
+                    </div>
+                    <DialogFooter className="gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setModalCargo(false)}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="button"
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={AgregarNuevoCargo}
+                        disabled={!nuevoCargo.trim()}
+                      >
+                        Agregar
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             )}
 
@@ -525,20 +744,22 @@ export const ListarEmpleados = () => {
               Revise los cambios antes de enviar
             </DialogDescription>
 
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Resumen de cambios:</h3>
+            <div className="border rounded-lg p-2">
+              <h3 className="font-semibold text-center">Resumen de cambios:</h3>
+              <hr className="py-1" />
               {selectedField === 'salary' && (
                 <>
-                  <p><span className="font-medium">Nuevo sueldo:</span> {formData.salary.currency} {formData.salary.amount}</p>
-                  <p><span className="font-medium">Anterior:</span> PEN {selectedEmployee.sueldo || 'N/A'}</p>
+                  <div className="flex justify-between">
+                    <p><span className="font-medium">Anterior sueldo:</span>{currentSalary} </p>
+                    <p><span className="font-medium">Nuevo sueldo:</span> {formData.salary.currency} {formData.salary.amount}</p>
+                  </div>
+                  <div><p><span className="font-medium">Codigo Mes: </span>{formData.salary.cod_mes} </p></div>
                 </>
               )}
               {selectedField === 'position' && (
                 <>
                   <p><span className="font-medium">Nuevo puesto:</span> {formData.position.title}</p>
-                  <p><span className="font-medium">Departamento:</span> {formData.position.department}</p>
-                  <p><span className="font-medium">Fecha inicio:</span> {formData.position.startDate}</p>
-                  <p><span className="font-medium">Anterior:</span> {selectedEmployee.cargo || 'N/A'}</p>
+                  <p><span className="font-medium">Mes inicio:</span> {formData.position.cod_mes}</p>
                 </>
               )}
               {selectedField === 'familyAllowance' && (
@@ -788,7 +1009,7 @@ export const ListarEmpleados = () => {
                         <TableBody>
                           {datosSueldos.map((sueldo, index) => (
                             <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
-                              <TableCell>{sueldo.CARGO}</TableCell>
+                              <TableCell>{sueldo.sueldoFijo}</TableCell>
                               <TableCell>{formatDate(sueldo.mesInicio)}</TableCell>
                               <TableCell>{formatDate(sueldo.mesFin)}</TableCell>
                             </TableRow>
@@ -882,7 +1103,7 @@ export const ListarEmpleados = () => {
           setSelectedField(null)
         }
       }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[95vh]  overflow-y-scroll">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center text-yellow-800">
               {currentStep === 1 ? '¿QUÉ CAMPO REQUIERE MODIFICAR?' :

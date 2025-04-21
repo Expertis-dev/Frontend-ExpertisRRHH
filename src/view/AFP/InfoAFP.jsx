@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+
+
 const afps = [
   {
     cod_mes_inicio: "001",
@@ -62,21 +64,10 @@ const afps = [
     seguroTope: "0.8%",
     columna1: "Columna 1 Data"
   },
-  {
-    cod_mes_inicio: "011",
-    cod_mes_fin: "012",
-    afp: "AFP Integra",
-    tipoComision: "Comisión Mixta",
-    aportaciones: "10%",
-    comision: "10%",
-    seguro: "1.5%",
-    seguroTope: "0.5%",
-    columna1: "Columna 1 Data"
-  },
 ]
 export const InfoAFP = () => {
-  const [searchQuery, setSearchQuery] = useState("")
   const [afpList, setAfpList] = useState(afps)
+  const [filtroAFP, setFiltroAFP] = useState(afps)
   const [selectedAfp, setSelectedAfp] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -93,10 +84,16 @@ export const InfoAFP = () => {
     seguroTope: "",
     columna1: ""
   })
+  useEffect(() => {
+    if (selectedAfp != "" && selectedAfp != "Todos") {
+      const filtrados = afpList.filter((afp) => afp.afp === selectedAfp)
+      setFiltroAFP(filtrados)
+    } else {
+      setFiltroAFP(afpList)
+    }
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value)
-  }
+  }, [selectedAfp])
+
 
   const handleAddAfp = () => {
     setShowAddModal(true)
@@ -140,7 +137,7 @@ export const InfoAFP = () => {
       columna1: ""
     })
   }
-  
+
   return (
     <div className="w-full px-4">
       <h1 className="text-center text-xl font-bold text-gray-800">INFORMACION AFP</h1>
@@ -156,6 +153,7 @@ export const InfoAFP = () => {
               <SelectValue placeholder="Seleccione AFP" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="Todos">Todos</SelectItem>
               {afps.map((afp, index) => (
                 <SelectItem key={index} value={afp.afp}>{afp.afp}</SelectItem>
               ))}
@@ -189,7 +187,7 @@ export const InfoAFP = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {afpList.map((afp, key) => (
+              {filtroAFP.map((afp, key) => (
                 <TableRow key={key} className="border-t hover:bg-blue-50 transition-colors">
                   <TableCell>{afp.cod_mes_inicio}</TableCell>
                   <TableCell>{afp.cod_mes_fin}</TableCell>
@@ -215,24 +213,9 @@ export const InfoAFP = () => {
               INGRESAR NUEVO AFP
             </DialogTitle>
           </DialogHeader>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label>COD_MES_INICIO</Label>
-              <Input
-                name="cod_mes_inicio"
-                value={newAfp.cod_mes_inicio}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>COD_MES_FIN</Label>
-              <Input
-                name="cod_mes_fin"
-                value={newAfp.cod_mes_fin}
-                onChange={handleInputChange}
-              />
+          <div className='max-h-[70vh]'>
+            <div className='flex gap-10'>
+              
             </div>
 
             <div className="space-y-2">
@@ -369,26 +352,18 @@ export const InfoAFP = () => {
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-center">¡Completado!</DialogTitle>
+            <DialogTitle className="text-center text-xl font-bold">¡Completado!</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center py-8">
+          <div className="flex flex-col items-center ">
             <div className="rounded-full h-12 w-12 bg-green-100 flex items-center justify-center mb-4">
               <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-center">La nueva AFP ha sido registrada exitosamente.</p>
+            <p className="text-center text-lg">La nueva AFP ha sido registrada exitosamente.</p>
           </div>
-          <DialogFooter className="justify-center">
-            <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => setShowSuccessModal(false)}
-            >
-              Aceptar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   )
 }
