@@ -62,7 +62,7 @@ export const ListarEmpleados = () => {
     personalData: { fullName: '', dni: '', address: '', photo: null, valid: false }
   })
   const [allStepsValid, setAllStepsValid] = useState(false)
-  const currentSalary = 1500; // Este valor debería venir de tus datos actuales
+  const salarioActualPrueba = 1500; // Este valor debería venir de tus datos actuales
   // Obtener empleados desde el backend
   const obtenerEmpleados = async () => {
     try {
@@ -496,7 +496,7 @@ export const ListarEmpleados = () => {
 
                           if (inputValue !== '') {
                             const numericValue = parseFloat(inputValue);
-                            isValid = !isNaN(numericValue) && numericValue >= 500 && numericValue !== currentSalary;
+                            isValid = !isNaN(numericValue) && numericValue >= 500 && numericValue !== salarioActualPrueba;
                           }
 
                           setFormData(prev => ({
@@ -512,7 +512,7 @@ export const ListarEmpleados = () => {
                       />
                       {formData.salary.amount !== '' && !formData.salary.valid && (
                         <p className="text-sm text-red-500">
-                          {parseFloat(formData.salary.amount) === currentSalary
+                          {parseFloat(formData.salary.amount) === salarioActualPrueba
                             ? 'El sueldo que quiere ingresar es el mismo al sueldo actual'
                             : 'El monto mínimo permitido es 500'}
                         </p>
@@ -532,7 +532,7 @@ export const ListarEmpleados = () => {
                                 cod_mes: date ? date.toISOString().split("T")[0] : "",
                                 valid: prev.salary.amount !== "" &&
                                   parseFloat(prev.salary.amount) >= 500 &&
-                                  parseFloat(prev.salary.amount) !== currentSalary &&
+                                  parseFloat(prev.salary.amount) !== salarioActualPrueba &&
                                   hasDate
                               }
                             }));
@@ -750,7 +750,7 @@ export const ListarEmpleados = () => {
               {selectedField === 'salary' && (
                 <>
                   <div className="flex justify-between">
-                    <p><span className="font-medium">Anterior sueldo:</span>{currentSalary} </p>
+                    <p><span className="font-medium">Anterior sueldo:</span>{salarioActualPrueba} </p>
                     <p><span className="font-medium">Nuevo sueldo:</span> {formData.salary.currency} {formData.salary.amount}</p>
                   </div>
                   <div><p><span className="font-medium">Codigo Mes: </span>{formData.salary.cod_mes} </p></div>
