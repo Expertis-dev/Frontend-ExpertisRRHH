@@ -55,35 +55,50 @@ export const ListarEmpleados = () => {
   // Estados para el flujo de edición por pasos
   const [selectedField, setSelectedField] = useState(null)
   const [currentStep, setCurrentStep] = useState(1)
-  const [formData, setFormData] = useState({
-    salary: { amount: '', valid: false, cod_mes: "" },
-    position: { title: '', cod_mes: '', valid: false },
-    familyAllowance: { hasAllowance: false, dependents: 0, amount: 0, valid: false },
-    personalData: { fullName: '', dni: '', address: '', photo: null, valid: false }
-  })
+ // Datos del formulario
+ const [formData, setFormData] = useState({
+  salary: { amount: '', valid: false, cod_mes: "" },
+  position: { title: '', cod_mes: '', valid: false },
+  familyAllowance: { hasAllowance: false, cod_mes: '', valid: false },
+  personalData: { 
+    codigo: '',
+    nombreCompleto: '',
+    dni: '',
+    direccion: '',
+    telefono: '',
+    correo: '',
+    fecNacimiento: '',
+    estadoCivil: '',
+    nroHijos: 0,
+    departamento: '',
+    provincia: '',
+    distrito: '',
+    foto: null,
+    valid: false
+  }
+});
   const [allStepsValid, setAllStepsValid] = useState(false)
   const salarioActualPrueba = 1500; // Este valor debería venir de tus datos actuales
   // Obtener empleados desde el backend
   const obtenerEmpleados = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`)
-      setEmpleados(response.data.recordset)
-      setFilteredEmpleados(response.data.recordset)
-      console.log(response.data.recordset)
-      const cargosResponse = await fetch("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarCargos")
-      const cargosData = await cargosResponse.json()
-      setCargos(cargosData)
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
+      setEmpleados(response.data.recordset);
+      setFilteredEmpleados(response.data.recordset);
+      
+      const cargosResponse = await axios.get("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarCargos");
+      setCargos(cargosResponse.data);
     } catch (error) {
-      console.error("Error al obtener empleados:", error)
+      console.error("Error al obtener empleados:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
+    obtenerEmpleados();
+  }, []);
 
-    obtenerEmpleados()
-  }, [])
 
   // Efecto para verificar si todos los pasos están completos
   useEffect(() => {
@@ -236,36 +251,44 @@ export const ListarEmpleados = () => {
       },
       position: {
         title: employee.cargo || '',
-        cod_mes: employee.fecIngreso || '', // Cambiado de startDate a cod_mes
+        cod_mes: employee.fecIngreso || '',
         valid: false
       },
       familyAllowance: {
         hasAllowance: employee.asignacionFamiliar === 'Sí',
-        dependents: employee.numHijos || 0,
-        amount: employee.montoAsignacion || 0,
+        cod_mes: '',
         valid: false
       },
       personalData: {
-        fullName: employee.nombreCompleto || '',
+        codigo: employee.CODIGO || '',
+        nombreCompleto: employee.nombreCompleto || '',
         dni: employee.documento || '',
-        address: employee.direccion || '',
-        photo: null,
+        direccion: employee.direccion || '',
+        telefono: employee.telefono || '',
+        correo: employee.correo || '',
+        fecNacimiento: employee.fecNacimiento || '',
+        estadoCivil: employee.estadoCivil || '',
+        nroHijos: employee.nroHijos || 0,
+        departamento: employee.departamento || '',
+        provincia: employee.provincia || '',
+        distrito: employee.distrito || '',
+        foto: null,
         valid: false
       }
-    })
-  }
+    });
+  };
 
   // Manejar cambio en los campos del formulario
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (field, updates) => {
     setFormData(prev => ({
       ...prev,
-      [selectedField]: {
-        ...prev[selectedField],
-        ...value,
-        valid: validateStep(selectedField, { ...prev[selectedField], ...value })
+      [field]: {
+        ...prev[field],
+        ...updates,
+        valid: validateStep(field, { ...prev[field], ...updates })
       }
-    }))
-  }
+    }));
+  };
 
   // Validar el paso actual
   const validateStep = (field, data) => {
@@ -275,13 +298,13 @@ export const ListarEmpleados = () => {
       case 'position':
         return !!data.title && !!data.cod_mes;
       case 'familyAllowance':
-        return true // Todos los campos son opcionales
+        return data.cod_mes !== ""; // Solo validamos que tenga código de mes
       case 'personalData':
-        return !!data.fullName && !!data.dni // Foto es opcional
+        return !!data.nombreCompleto && !!data.dni && !!data.direccion;
       default:
-        return false
+        return false;
     }
-  }
+  };
 
   // Avanzar al siguiente paso
   const handleNextStep = () => {
@@ -301,16 +324,16 @@ export const ListarEmpleados = () => {
         alert("Por favor complete todos los campos correctamente");
         return;
       }
-  
+
       // Datos comunes para todos los casos
       const basePayload = {
         idPersona: selectedEmployee.idPersona
       };
-  
+
       // Datos específicos según el campo
       let endpoint = '';
       let requestData = {};
-      
+
       switch (selectedField) {
         case 'salary':
           endpoint = '/api/empleados/actualizar-salario';
@@ -320,7 +343,7 @@ export const ListarEmpleados = () => {
             cod_mes: formData.salary.cod_mes
           };
           break;
-          
+
         case 'position':
           endpoint = '/api/empleados/actualizar-puesto';
           requestData = {
@@ -329,7 +352,7 @@ export const ListarEmpleados = () => {
             cod_mes: formData.position.cod_mes
           };
           break;
-          
+
         case 'familyAllowance':
           endpoint = '/api/empleados/actualizar-asignacion';
           requestData = {
@@ -339,7 +362,7 @@ export const ListarEmpleados = () => {
             monto: formData.familyAllowance.amount
           };
           break;
-          
+
         case 'personalData':
           endpoint = '/api/empleados/actualizar-datos';
           requestData = {
@@ -350,28 +373,28 @@ export const ListarEmpleados = () => {
             // foto sería manejada aparte como FormData
           };
           break;
-          
+
         default:
           throw new Error('Campo no válido');
       }
-  
+
       console.log('Enviando datos:', requestData);
       // Descomentar cuando el endpoint esté listo:
       // const response = await axios.put(endpoint, requestData);
       // console.log('Respuesta:', response.data);
-  
+
       // Actualizar estado local
       const updatedEmpleados = empleados.map(emp =>
         emp.idPersona === selectedEmployee.idPersona
           ? { ...emp, ...mapFormDataToEmployee(formData) }
           : emp
       );
-  
+
       setEmpleados(updatedEmpleados);
       setFilteredEmpleados(updatedEmpleados);
       setEditOpen(false);
       //alert("Cambios guardados exitosamente");
-  
+
     } catch (error) {
       console.error("Error al actualizar empleado:", error);
       alert("Ocurrió un error al guardar los cambios");
@@ -647,94 +670,93 @@ export const ListarEmpleados = () => {
               </div>
             )}
 
-            {selectedField === 'familyAllowance' && (
+{selectedField === 'familyAllowance' && (
               <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasAllowance"
-                    checked={formData.familyAllowance.hasAllowance}
-                    onCheckedChange={(checked) =>
-                      handleFieldChange('familyAllowance', { hasAllowance: checked })
-                    }
-                  />
-                  <Label htmlFor="hasAllowance">Recibe asignación familiar</Label>
+                <div className="space-y-2">
+                  <Label>¿Recibe asignación familiar?</Label>
+                  <div className="flex gap-4">
+                    <Button
+                      variant={formData.familyAllowance.hasAllowance ? "default" : "outline"}
+                      onClick={() => handleFieldChange('familyAllowance', { 
+                        hasAllowance: true,
+                        valid: formData.familyAllowance.cod_mes !== ""
+                      })}
+                    >
+                      Sí
+                    </Button>
+                    <Button
+                      variant={!formData.familyAllowance.hasAllowance ? "default" : "outline"}
+                      onClick={() => handleFieldChange('familyAllowance', { 
+                        hasAllowance: false,
+                        valid: formData.familyAllowance.cod_mes !== ""
+                      })}
+                    >
+                      No
+                    </Button>
+                  </div>
                 </div>
 
-                {formData.familyAllowance.hasAllowance && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="dependents">Número de dependientes</Label>
-                      <Input
-                        id="dependents"
-                        type="number"
-                        min="0"
-                        value={formData.familyAllowance.dependents}
-                        onChange={(e) => handleFieldChange('familyAllowance', {
-                          dependents: parseInt(e.target.value) || 0
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="amount">Monto asignado</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        min="0"
-                        value={formData.familyAllowance.amount}
-                        onChange={(e) => handleFieldChange('familyAllowance', {
-                          amount: parseFloat(e.target.value) || 0
-                        })}
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="space-y-2">
+                  <Label>Código Mes*</Label>
+                  <DatePickerFirstDay
+                    handleDateChange={(date) => {
+                      const hasDate = !!date;
+                      handleFieldChange('familyAllowance', {
+                        cod_mes: date ? date.toISOString().split("T")[0] : "",
+                        valid: hasDate
+                      });
+                    }}
+                  />
+                  {!formData.familyAllowance.cod_mes && (
+                    <p className="text-sm text-red-500">Por favor seleccione una fecha</p>
+                  )}
+                </div>
               </div>
             )}
 
             {selectedField === 'personalData' && (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Nombre completo</Label>
-                  <Input
-                    id="fullName"
-                    value={formData.personalData.fullName}
-                    onChange={(e) => handleFieldChange('personalData', { fullName: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dni">DNI</Label>
-                  <Input
-                    id="dni"
-                    value={formData.personalData.dni}
-                    onChange={(e) => handleFieldChange('personalData', { dni: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Dirección</Label>
-                  <Input
-                    id="address"
-                    value={formData.personalData.address}
-                    onChange={(e) => handleFieldChange('personalData', { address: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="photo">Foto (opcional)</Label>
-                  <Input
-                    id="photo"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        handleFieldChange('personalData', { photo: e.target.files[0] })
-                      }
-                    }}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="codigo">Código</Label>
+                    <Input
+                      id="codigo"
+                      value={formData.personalData.codigo}
+                      onChange={(e) => handleFieldChange('personalData', { codigo: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nombreCompleto">Nombre Completo*</Label>
+                    <Input
+                      id="nombreCompleto"
+                      value={formData.personalData.nombreCompleto}
+                      onChange={(e) => handleFieldChange('personalData', { nombreCompleto: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dni">DNI*</Label>
+                    <Input
+                      id="dni"
+                      value={formData.personalData.dni}
+                      onChange={(e) => handleFieldChange('personalData', { dni: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="direccion">Dirección*</Label>
+                    <Input
+                      id="direccion"
+                      value={formData.personalData.direccion}
+                      onChange={(e) => handleFieldChange('personalData', { direccion: e.target.value })}
+                    />
+                  </div>
+                  {/* Agrega más campos según sea necesario */}
                 </div>
                 {!formData.personalData.valid && (
                   <p className="text-sm text-red-500">Por favor complete los campos requeridos</p>
                 )}
               </div>
             )}
+          
           </div>
         )
       case 3:
@@ -765,13 +787,7 @@ export const ListarEmpleados = () => {
               {selectedField === 'familyAllowance' && (
                 <>
                   <p><span className="font-medium">Asignación familiar:</span> {formData.familyAllowance.hasAllowance ? 'Sí' : 'No'}</p>
-                  {formData.familyAllowance.hasAllowance && (
-                    <>
-                      <p><span className="font-medium">Dependientes:</span> {formData.familyAllowance.dependents}</p>
-                      <p><span className="font-medium">Monto:</span> {formData.familyAllowance.amount}</p>
-                    </>
-                  )}
-                  <p><span className="font-medium">Anterior:</span> {selectedEmployee.asignacionFamiliar || 'N/A'}</p>
+                  <p><span className="font-medium">Anterior:</span> { formData.familyAllowance.cod_mes}</p>
                 </>
               )}
               {selectedField === 'personalData' && (
