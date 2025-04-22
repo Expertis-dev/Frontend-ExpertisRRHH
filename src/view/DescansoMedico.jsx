@@ -128,7 +128,12 @@ const DescansoMedicoTable = () => {
             label="CodMes"
             rules={[{ required: true, message: "Este campo es obligatorio" }]}
           >
-            <Input />
+            <DatePicker
+              format="YYYY-MM"
+              picker="month"
+              style={{ width: "100%" }}
+              placeholder="Selecciona el primer día del mes"
+            />
           </Form.Item>
           <Form.Item
             name="Asesor"

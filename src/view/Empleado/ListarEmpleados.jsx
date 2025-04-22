@@ -35,6 +35,9 @@ const SelectField = ({ label, name, value, onValueChange, error, options, disabl
 export const ListarEmpleados = () => {
   const [modalCargo, setModalCargo] = useState(false);
   const [nuevoCargo, setNuevoCargo] = useState("");
+  const [ultimoSueldo, setUltimoSueldo] = useState({})
+  const [ultimoAsigFam, setUltimoAsigFam] = useState({})
+  const [ultimoPuesto, setUltimoPuesto] = useState({})
   // Estados de búsqueda y validación
   const [searchQuery, setSearchQuery] = useState("")
   const [isValid, setIsValid] = useState(false)
@@ -55,28 +58,28 @@ export const ListarEmpleados = () => {
   // Estados para el flujo de edición por pasos
   const [selectedField, setSelectedField] = useState(null)
   const [currentStep, setCurrentStep] = useState(1)
- // Datos del formulario
- const [formData, setFormData] = useState({
-  salary: { amount: '', valid: false, cod_mes: "" },
-  position: { title: '', cod_mes: '', valid: false },
-  familyAllowance: { hasAllowance: false, cod_mes: '', valid: false },
-  personalData: { 
-    codigo: '',
-    nombreCompleto: '',
-    dni: '',
-    direccion: '',
-    telefono: '',
-    correo: '',
-    fecNacimiento: '',
-    estadoCivil: '',
-    nroHijos: 0,
-    departamento: '',
-    provincia: '',
-    distrito: '',
-    foto: null,
-    valid: false
-  }
-});
+  // Datos del formulario
+  const [formData, setFormData] = useState({
+    salary: { amount: '', valid: false, cod_mes: "" },
+    position: { title: '', cod_mes: '', valid: false },
+    familyAllowance: { hasAllowance: false, cod_mes: '', valid: false },
+    personalData: {
+      codigo: '',
+      nombreCompleto: '',
+      dni: '',
+      direccion: '',
+      telefono: '',
+      correo: '',
+      fecNacimiento: '',
+      estadoCivil: '',
+      nroHijos: 0,
+      departamento: '',
+      provincia: '',
+      distrito: '',
+      foto: null,
+      valid: false
+    }
+  });
   const [allStepsValid, setAllStepsValid] = useState(false)
   const salarioActualPrueba = 1500; // Este valor debería venir de tus datos actuales
   // Obtener empleados desde el backend
@@ -85,8 +88,8 @@ export const ListarEmpleados = () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
       setEmpleados(response.data.recordset);
       setFilteredEmpleados(response.data.recordset);
-      
-      const cargosResponse = await axios.get("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarCargos");
+
+      const cargosResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarCargos`);
       setCargos(cargosResponse.data);
     } catch (error) {
       console.error("Error al obtener empleados:", error);
@@ -147,36 +150,49 @@ export const ListarEmpleados = () => {
     const [year, month, day] = dateString.split('T')[0].split('-')
     return `${day}/${month}/${year}` // Formato "DD/MM/YYYY"
   }
+  const ObtenerUltimo = (datos) => {
+    const ultimo = datos.find(dato => dato.mesFin === null);
+    if (ultimo) {
+      console.log(ultimo);
+    }
+    return ultimo;
+  };
+
 
   const HistoricoCese = async (idPersona) => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoCeses/${idPersona}`)
-    console.log(response.data.data[0])
-    setDatosCese(response.data.data[0])
+    const historicoCese = response.data.data[0]
+    console.log(historicoCese)
+    setDatosCese(historicoCese)
   }
   const HistoricoPuestos = async (idPersona) => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoPuestoTrabajo/${idPersona}`)
-    console.log(response.data.data[0])
-    setDatosPuestos(response.data.data[0])
-
+    const historicoPuestos = response.data.data[0]
+    console.log(historicoPuestos)
+    setDatosPuestos(historicoPuestos)
+    setUltimoPuesto(ObtenerUltimo(historicoPuestos))
   }
   const HistoricoAFP = async (idPersona) => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoAFP/${idPersona}`)
-    console.log(response.data.data[0])
-    setDatosAFP(response.data.data[0])
+    const historicoAFP = response.data.data[0]
+    console.log(historicoAFP)
+    setDatosAFP(historicoAFP)
 
   }
   const HistoricoAsignacionFamiliar = async (idPersona) => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoAsignacionFamiliar/${idPersona}`)
-    console.log(response.data.data[0])
-    setDatosAsigFam(response.data.data[0])
-
+    const historicoAsigFam = response.data.data[0]
+    console.log(historicoAsigFam)
+    setDatosAsigFam(historicoAsigFam)
+    setUltimoAsigFam(ObtenerUltimo(historicoAsigFam))
   }
 
   const HistoricoSueldo = async (idPersona) => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoSueldos/${idPersona}`)
-    console.log(response.data.data[0])
-    setDatosSueldos(response.data.data[0])
-
+    const historicoSueldo = response.data.data[0]
+    console.log(historicoSueldo)
+    setDatosSueldos(historicoSueldo)
+    setUltimoSueldo(ObtenerUltimo(historicoSueldo))
   }
 
 
@@ -188,13 +204,12 @@ export const ListarEmpleados = () => {
     setLoadingDetails(true)
 
     try {
-      await Promise.all([
-        HistoricoCese(employee.idPersona),
-        HistoricoPuestos(employee.idPersona),
-        HistoricoAFP(employee.idPersona),
-        HistoricoAsignacionFamiliar(employee.idPersona),
-        HistoricoSueldo(employee.idPersona)
-      ]);
+      await HistoricoCese(employee.idPersona),
+        await HistoricoPuestos(employee.idPersona),
+        await HistoricoAFP(employee.idPersona),
+        await HistoricoAsignacionFamiliar(employee.idPersona),
+        await HistoricoSueldo(employee.idPersona)
+
     } catch (error) {
       console.error("Error al cargar detalles:", error)
     } finally {
@@ -236,12 +251,18 @@ export const ListarEmpleados = () => {
     }
   }
   // Abrir edición del empleado
-  const openEdit = (employee) => {
+  const openEdit = async (employee) => {
     setSelectedEmployee(employee)
     setSelectedField(null)
     setCurrentStep(1)
     setEditOpen(true)
-
+    try {
+      await HistoricoPuestos(employee.idPersona),
+      await HistoricoSueldo(employee.idPersona),
+      await HistoricoAsignacionFamiliar(employee.idPersona)
+    } catch (error) {
+      console.log(error)
+    }
     // Inicializar formulario con datos del empleado
     setFormData({
       salary: {
@@ -537,7 +558,7 @@ export const ListarEmpleados = () => {
                         <p className="text-sm text-red-500">
                           {parseFloat(formData.salary.amount) === salarioActualPrueba
                             ? 'El sueldo que quiere ingresar es el mismo al sueldo actual'
-                            : 'El monto mínimo permitido es 500'}
+                            : parseFloat(formData.salary.amount) < 500 ?'El monto mínimo permitido es 500':""}
                         </p>
                       )}
                     </div>
@@ -582,14 +603,18 @@ export const ListarEmpleados = () => {
                     name="cargo"
                     value={formData.position.title}
                     onValueChange={(name, value) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        position: {
-                          ...prev.position,
-                          title: value,
-                          valid: !!value && !!prev.position.cod_mes
-                        }
-                      }));
+                      if (value === ultimoPuesto.CARGO) {
+                        alert("Se esta repitiendo el puesto que ya tenia")
+                      } else {
+                        setFormData(prev => ({
+                          ...prev,
+                          position: {
+                            ...prev.position,
+                            title: value,
+                            valid: !!value && !!prev.position.cod_mes
+                          }
+                        }));
+                      }
                     }}
                     options={cargos.map(c => ({ value: c.CARGO, label: c.CARGO }))}
                   />
@@ -604,9 +629,10 @@ export const ListarEmpleados = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Codigo Mes*</Label>
-                  <div className="flex items-center justify-center">
+                  <Label>Codigo Mes Inicio</Label>
+                  
                     <DatePickerFirstDay
+                      mesInicio={ultimoPuesto.mesInicio}
                       handleDateChange={(date) => {
                         const hasDate = !!date;
                         setFormData(prev => ({
@@ -619,7 +645,7 @@ export const ListarEmpleados = () => {
                         }));
                       }}
                     />
-                  </div>
+                  
                   {formData.position.cod_mes === "" && (
                     <p className="text-sm text-red-500">Por favor seleccione una fecha válida</p>
                   )}
@@ -670,14 +696,14 @@ export const ListarEmpleados = () => {
               </div>
             )}
 
-{selectedField === 'familyAllowance' && (
+            {selectedField === 'familyAllowance' && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>¿Recibe asignación familiar?</Label>
                   <div className="flex gap-4">
                     <Button
                       variant={formData.familyAllowance.hasAllowance ? "default" : "outline"}
-                      onClick={() => handleFieldChange('familyAllowance', { 
+                      onClick={() => handleFieldChange('familyAllowance', {
                         hasAllowance: true,
                         valid: formData.familyAllowance.cod_mes !== ""
                       })}
@@ -686,7 +712,7 @@ export const ListarEmpleados = () => {
                     </Button>
                     <Button
                       variant={!formData.familyAllowance.hasAllowance ? "default" : "outline"}
-                      onClick={() => handleFieldChange('familyAllowance', { 
+                      onClick={() => handleFieldChange('familyAllowance', {
                         hasAllowance: false,
                         valid: formData.familyAllowance.cod_mes !== ""
                       })}
@@ -756,7 +782,7 @@ export const ListarEmpleados = () => {
                 )}
               </div>
             )}
-          
+
           </div>
         )
       case 3:
@@ -787,7 +813,7 @@ export const ListarEmpleados = () => {
               {selectedField === 'familyAllowance' && (
                 <>
                   <p><span className="font-medium">Asignación familiar:</span> {formData.familyAllowance.hasAllowance ? 'Sí' : 'No'}</p>
-                  <p><span className="font-medium">Anterior:</span> { formData.familyAllowance.cod_mes}</p>
+                  <p><span className="font-medium">Anterior:</span> {formData.familyAllowance.cod_mes}</p>
                 </>
               )}
               {selectedField === 'personalData' && (

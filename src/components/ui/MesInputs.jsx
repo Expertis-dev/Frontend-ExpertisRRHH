@@ -1,43 +1,52 @@
-import React, { useState } from 'react';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import React, { useState } from "react";
+import { DatePicker } from "antd";
+import dayjs from "dayjs";
+import "dayjs/locale/es"; // Locale en español
 
-export const DatePickerFirstDay = ({ handleDateChange }) => {
+dayjs.locale("es"); // Configura el idioma
+
+export const DatePickerFirstDay = ({ handleDateChange, mesInicio }) => {
   const [selectedDate, setSelectedDate] = useState(null);
 
-  const handleSelectDate = (date) => {
-    if (date && date.getDate() === 1) {
-      setSelectedDate(date);
-      handleDateChange(date);
+  // Función para deshabilitar meses ANTERIORES a `mesInicio`
+  const disabledDate = (current) => {
+    if (!current || !mesInicio) return false;
+    const minDate = dayjs(mesInicio).startOf("month");
+    const nextMonth = minDate.add(1, "month");
+    return (
+      current.isBefore(minDate, "month") ||
+      current.isSame(minDate, "month") ||
+      current.isSame(nextMonth, "month")
+    );
+  };
+
+  const handleChange = (date) => {
+    if (date) {
+      // Forzar el día 01 del mes seleccionado
+      const dateWithFirstDay = date.startOf('month');
+      setSelectedDate(dateWithFirstDay);
+      handleDateChange(dateWithFirstDay);
+    } else {
+      setSelectedDate(null);
+      handleDateChange(null);
     }
-  };
-
-  const disableDays = (date) => {
-    return date.getDate() !== 1;
-  };
-
-  const formatFecha = (date) => {
-    // Formato: 01-Ene-25
-    return format(date, "dd-MMM-yy", { locale: es });
   };
 
   return (
     <div className="space-y-4">
-      <Calendar
-        mode="single"
-        selected={selectedDate}
-        onSelect={handleSelectDate}
-        disabled={disableDays}
-        className="rounded-md border"
-        fromYear={2000}
-        toYear={2300}
-        initialFocus
+      <DatePicker
+        picker="month"
+        format="MMMM YYYY" // Ejemplo: "abril 2024"
+        disabledDate={disabledDate}
+        onChange={handleChange}
+        style={{ width: "100%" }}
+        placeholder="Selecciona el primer día del mes"
+        allowClear={false}
       />
 
       {selectedDate && (
         <div className="text-sm mt-2 p-2 bg-gray-100 rounded">
-          Fecha seleccionada: {formatFecha(selectedDate)}
+          Fecha seleccionada: <strong>{selectedDate.format("DD MMMM YYYY")}</strong>
         </div>
       )}
     </div>

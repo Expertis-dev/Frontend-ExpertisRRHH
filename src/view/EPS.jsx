@@ -63,7 +63,7 @@ export const EPS = () => {
   useEffect(() => {
     if (searchQuery.length === 0) {
       setFilteredData(epsData)
-    } else if (searchQuery.length === 8) {
+    } else {
       const results = epsData.filter(item => item.dni.includes(searchQuery))
       setFilteredData(results)
     }
@@ -74,16 +74,11 @@ export const EPS = () => {
     // Validar que solo sean números y máximo 8 dígitos
     if (/^\d*$/.test(value) && value.length <= 8) {
       setSearchQuery(value)
-      setIsValid(value.length === 8)
+      setIsValid(value.length > 0)
     }
   }
 
-  const handleSearch = () => {
-    if (isValid) {
-      const results = epsData.filter(item => item.dni.includes(searchQuery))
-      setFilteredData(results)
-    }
-  }
+
 
   // Formatear fecha para mostrar
   const formatDate = (dateString) => {
@@ -113,14 +108,6 @@ export const EPS = () => {
             />
           </div>
         </div>
-        <Button 
-          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto transition-all min-w-[120px]"
-          onClick={handleSearch}
-          disabled={!isValid}
-        >
-          <Search className="h-4 w-4 mr-2" />
-          Buscar
-        </Button>
       </div>
 
       {/* Tabla de EPS */}
