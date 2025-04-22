@@ -258,8 +258,8 @@ export const ListarEmpleados = () => {
     setEditOpen(true)
     try {
       await HistoricoPuestos(employee.idPersona),
-      await HistoricoSueldo(employee.idPersona),
-      await HistoricoAsignacionFamiliar(employee.idPersona)
+        await HistoricoSueldo(employee.idPersona),
+        await HistoricoAsignacionFamiliar(employee.idPersona)
     } catch (error) {
       console.log(error)
     }
@@ -558,7 +558,7 @@ export const ListarEmpleados = () => {
                         <p className="text-sm text-red-500">
                           {parseFloat(formData.salary.amount) === salarioActualPrueba
                             ? 'El sueldo que quiere ingresar es el mismo al sueldo actual'
-                            : parseFloat(formData.salary.amount) < 500 ?'El monto mínimo permitido es 500':""}
+                            : parseFloat(formData.salary.amount) < 500 ? 'El monto mínimo permitido es 500' : ""}
                         </p>
                       )}
                     </div>
@@ -630,22 +630,22 @@ export const ListarEmpleados = () => {
 
                 <div className="space-y-2">
                   <Label>Codigo Mes Inicio</Label>
-                  
-                    <DatePickerFirstDay
-                      mesInicio={ultimoPuesto.mesInicio}
-                      handleDateChange={(date) => {
-                        const hasDate = !!date;
-                        setFormData(prev => ({
-                          ...prev,
-                          position: {
-                            ...prev.position,
-                            cod_mes: date ? date.toISOString().split("T")[0] : "",
-                            valid: !!prev.position.title && hasDate
-                          }
-                        }));
-                      }}
-                    />
-                  
+
+                  <DatePickerFirstDay
+                    mesInicio={ultimoPuesto.mesInicio}
+                    handleDateChange={(date) => {
+                      const hasDate = !!date;
+                      setFormData(prev => ({
+                        ...prev,
+                        position: {
+                          ...prev.position,
+                          cod_mes: date ? date.toISOString().split("T")[0] : "",
+                          valid: !!prev.position.title && hasDate
+                        }
+                      }));
+                    }}
+                  />
+
                   {formData.position.cod_mes === "" && (
                     <p className="text-sm text-red-500">Por favor seleccione una fecha válida</p>
                   )}
@@ -701,24 +701,55 @@ export const ListarEmpleados = () => {
                 <div className="space-y-2">
                   <Label>¿Recibe asignación familiar?</Label>
                   <div className="flex gap-4">
-                    <Button
-                      variant={formData.familyAllowance.hasAllowance ? "default" : "outline"}
-                      onClick={() => handleFieldChange('familyAllowance', {
-                        hasAllowance: true,
-                        valid: formData.familyAllowance.cod_mes !== ""
-                      })}
-                    >
-                      Sí
-                    </Button>
-                    <Button
-                      variant={!formData.familyAllowance.hasAllowance ? "default" : "outline"}
-                      onClick={() => handleFieldChange('familyAllowance', {
-                        hasAllowance: false,
-                        valid: formData.familyAllowance.cod_mes !== ""
-                      })}
-                    >
-                      No
-                    </Button>
+                    {
+                      !ultimoAsigFam ? (
+                        <>
+                          <Button
+                            variant={formData.familyAllowance.hasAllowance ? "default" : "outline"}
+                            onClick={() => handleFieldChange('familyAllowance', {
+                              hasAllowance: true,
+                              valid: formData.familyAllowance.cod_mes !== ""
+                            })}
+                          >
+                            Sí
+                          </Button>
+                          <Button
+                            variant={!formData.familyAllowance.hasAllowance ? "default" : "outline"}
+                            onClick={() => handleFieldChange('familyAllowance', {
+                              hasAllowance: false,
+                              valid: formData.familyAllowance.cod_mes !== ""
+                            })}
+                          >
+                            No
+                          </Button>
+                        </>
+                      ) : ultimoAsigFam.asignacion === "SI" ?
+                        (
+                          <div>
+                            <Button
+                              variant={!formData.familyAllowance.hasAllowance ? "default" : "outline"}
+                              onClick={() => handleFieldChange('familyAllowance', {
+                                hasAllowance: false,
+                                valid: formData.familyAllowance.cod_mes !== ""
+                              })}
+                            >
+                              No
+                            </Button>
+                          </div>) : (
+                          <>
+                            <Button
+                              variant={formData.familyAllowance.hasAllowance ? "default" : "outline"}
+                              onClick={() => handleFieldChange('familyAllowance', {
+                                hasAllowance: true,
+                                valid: formData.familyAllowance.cod_mes !== ""
+                              })}
+                            >
+                              Sí
+                            </Button>
+                          </>
+                        )
+                    }
+
                   </div>
                 </div>
 
