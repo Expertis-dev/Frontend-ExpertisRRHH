@@ -1,0 +1,14 @@
+[
+    {
+        "nombreCompleto":"CAROLINA PICHILINGUE",
+        "usuario": "carolina",
+        "contraseña" : "123",
+        "idEmpleado" : 179
+    },
+    {
+        "nombreCompleto":"ALEJANDRO PORTURAS",
+        "usuario": "alejandro",
+        "contraseña" : "456",
+        "idEmpleado" : 167
+    }
+]

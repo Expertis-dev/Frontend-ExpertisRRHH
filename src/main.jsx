@@ -17,27 +17,30 @@ import { CrearEmpleado } from './view/Empleado/CrearEmpleado.jsx';
 import { CesarEmpleado } from './view/Empleado/CesarEmpleado.jsx';
 import Descuentos from './view/Descuentos/Descuentos';
 import HistorialDescuentos from './view/Descuentos/HistorialDescuentos';
+import { DataProvider } from './provider/Provider';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <Routes>
-      <Route path="/" element={<App />} />
-      <Route path="/finanzas" element={<FinanzasLayout />}>
-        <Route path="empleados-listar" element={<ListarEmpleados/>} />
-        <Route path="empleados-crear" element={<CrearEmpleado/> } />
-        <Route path="empleados-cesar" element={<CesarEmpleado/> } />
-        <Route path="empleados-afp" element={<AFPempleado/>} />
-        <Route path="cambios-afp" element={<CambiosAFP/>} />
-        <Route path="info-afp" element={<InfoAFP/>} />
-        <Route path="contrato" element={<Contratos/>} />
-        <Route path="eps" element={<EPS/>} />
-        <Route path="horas-extra" element={<HorasExtra/>} />
-        <Route path="retencion-judicial" element={ <RetencionJudicial/> } />
-        <Route path="descanso-medicos" element={<DescansoMedico/>} />
-        <Route path="comisiones" element={<Comisiones/>} />
-        <Route path="cargarDescuentos" element={<Descuentos/>} />
-        <Route path="historialDescuentos" element={<HistorialDescuentos/>} />
-      </Route>
-    </Routes>
+    <DataProvider>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/finanzas" element={<FinanzasLayout />}>
+          <Route path="empleados-listar" element={<ListarEmpleados />} />
+          <Route path="empleados-crear" element={<CrearEmpleado />} />
+          <Route path="empleados-cesar" element={<CesarEmpleado />} />
+          <Route path="empleados-afp" element={<AFPempleado />} />
+          <Route path="cambios-afp" element={<CambiosAFP />} />
+          <Route path="info-afp" element={<InfoAFP />} />
+          <Route path="contrato" element={<Contratos />} />
+          <Route path="eps" element={<EPS />} />
+          <Route path="horas-extra" element={<HorasExtra />} />
+          <Route path="retencion-judicial" element={<RetencionJudicial />} />
+          <Route path="descanso-medicos" element={<DescansoMedico />} />
+          <Route path="comisiones" element={<Comisiones />} />
+          <Route path="cargarDescuentos" element={<Descuentos />} />
+          <Route path="historialDescuentos" element={<HistorialDescuentos />} />
+        </Route>
+      </Routes>
+    </DataProvider>
   </BrowserRouter>
 )

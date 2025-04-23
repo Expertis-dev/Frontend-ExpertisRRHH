@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Input, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useData } from '@/provider/Provider';
 
 export const Login = () => {
+    const {setNombre} = useData()
     const [messageApi, contextHolder] = message.useMessage();
     const [credenciales, setCredenciales] = useState({
         usuario: "",
@@ -19,21 +21,35 @@ export const Login = () => {
         }));
     };
 
-    const onFinish = () => {
+    const onFinish = async () => {
         setLoading(true);
-        // Simulando una llamada a API
-        setTimeout(() => {
-            setLoading(false);
-            if (credenciales.usuario === "admin" && credenciales.contraseña === "admin") {
-                messageApi.success("Bienvenido!");
+
+        try {
+            const response = await fetch("./permisos.json");
+            const datos = await response.json();
+            console.log(datos)
+            const usuarioValido = datos.find(
+                (empleado) =>
+                    empleado.usuario.toUpperCase() === credenciales.usuario.toUpperCase() && empleado.contraseña.toUpperCase() === credenciales.contraseña.toUpperCase()
+            );
+            console.log(usuarioValido)
+            setNombre(usuarioValido.nombreCompleto)
+            if (usuarioValido) {
+                messageApi.success("¡Bienvenido!");
                 setTimeout(() => {
                     navegar("/finanzas/empleados-listar");
-                  }, 1000)
+                }, 1000);
             } else {
                 messageApi.error("Credenciales incorrectas");
             }
-        }, 1500);
+        } catch (error) {
+            console.error("Error cargando permisos:", error);
+            messageApi.error("Hubo un problema con la autenticación.");
+        } finally {
+            setLoading(false);
+        }
     };
+
 
     const isFormValid = credenciales.usuario && credenciales.contraseña;
 
@@ -43,10 +59,10 @@ export const Login = () => {
 
             <div className="w-full md:w-1/2 lg:w-1/3 xl:w-2/6 bg-white rounded-xl shadow-2xl p-8 transform transition-all duration-500 hover:scale-105">
                 <div className="flex flex-col items-center mb-8">
-                    <img 
-                        className="w-20 h-20 mb-4" 
-                        src="/icono-logo.png" 
-                        alt="Logo" 
+                    <img
+                        className="w-20 h-20 mb-4"
+                        src="/icono-logo.png"
+                        alt="Logo"
                         onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/80" }}
                     />
                     <h1 className="text-2xl font-bold text-gray-800 font-sans text-center">
@@ -98,9 +114,9 @@ export const Login = () => {
             </div>
 
             <div className="hidden md:block md:w-1/3 lg:w-1/3 xl:w-1/4">
-                <img 
-                    src="/Robot3D.gif" 
-                    alt="Robot" 
+                <img
+                    src="/Robot3D.gif"
+                    alt="Robot"
                     className="w-full h-auto max-h-96 object-contain"
                     onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/400" }}
                 />

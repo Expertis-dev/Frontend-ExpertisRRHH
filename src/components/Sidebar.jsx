@@ -1,21 +1,23 @@
 import React, { Children } from 'react';
 import {
     TeamOutlined,
-    IdcardOutlined,
     FileTextOutlined,
     MedicineBoxOutlined,
     ClockCircleOutlined,
     BankOutlined,
     DollarOutlined,
     PercentageOutlined,
-    ReconciliationOutlined
+    ReconciliationOutlined,
+    LogoutOutlined
 } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
+import { useData } from '@/provider/Provider';
 
 const { Sider } = Layout;
 
 export const Sidebar = ({ collapsed, onCollapse }) => {
+    const {nombre} = useData()
     const items = [
         {
             key: 'sub1',
@@ -92,7 +94,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     label: <Link to="/finanzas/historialDescuentos">Histórico</Link>,
                 },
                 {
-                    key: 'empleados-afp',
+                    key: 'carga-descuentos',
                     label: <Link to="/finanzas/cargarDescuentos">Cargar Datos</Link>,
                 },                
                 
@@ -104,6 +106,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             icon: <PercentageOutlined />,
             label: <Link to="/finanzas/comisiones">Comisiones</Link>,
         },
+        {
+            key: "cerrar-sesion",
+            icon: <LogoutOutlined/>,
+            label : <Link to="/">Cerrar Sesion</Link>,
+        }
     ];
 
     return (
@@ -128,7 +135,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                             alt="Logo"
                             onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/80" }}
                         />
-                        <h2 className='roboto font-bold '>CARLOS CALDERON</h2>
+                        <h2 className='roboto font-bold text-center text-sm'>{nombre} </h2>
                     </div>
                 ) : (
                     <img
