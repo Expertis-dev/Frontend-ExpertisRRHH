@@ -190,7 +190,7 @@ export const CrearEmpleado = () => {
                 setDeps(ubigeoData.map(item => ({ id: item.id, name: item.name })))
 
                 // Cargar datos de cargos
-                const cargosResponse = await fetch("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/listarCargos")
+                const cargosResponse = await fetch("https://p9zzp66h-4000.brs.devtunnels.ms/api/empleados/listarCargos")
                 const cargosData = await cargosResponse.json()
                 setCargos(cargosData)
             } catch (error) {
@@ -373,7 +373,7 @@ export const CrearEmpleado = () => {
         }
 
         
-            const response = await axios.post("https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/registrarEmpleado", datos)
+            const response = await axios.post("https://p9zzp66h-4000.brs.devtunnels.ms/api/empleados/registrarEmpleado", datos)
             if(response.status === 200) {
                 setIsLoading(false)
                 setIsSuccess(true)
@@ -707,7 +707,7 @@ export const CrearEmpleado = () => {
         try {
             showDialog('verifying')
             const response = await axios.get(
-                `https://p9zzp66h-3000.brs.devtunnels.ms/api/empleados/validarEmpleado/${formData.documento}`
+                `https://p9zzp66h-4000.brs.devtunnels.ms/api/empleados/validarEmpleado/${formData.documento}`
             )
             const employeeData = response.data.data[0]
 

@@ -14,15 +14,18 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Check, Loader2 } from "lucide-react";
-
+import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom"
 const { Option } = Select;
 
 export const CesarEmpleado = () => {
   const hoy = new Date().toISOString().split("T")[0];
+  const [idEmpleado, setIdEmpleado] = useState(0)
   const [messageApi, contextHolder] = message.useMessage();
   const key = "updatable";
   const [cargo, setCargo] = useState("STAFF");
   const [data, setData] = useState([]);
+  const [empleados, setEmpleados] = useState([])
   const [usuario, setUsuario] = useState("");
   const [fecCese, setFechaCese] = useState(hoy);
   const [modalMotivo, setModalMotivo] = useState(false);
@@ -32,7 +35,7 @@ export const CesarEmpleado = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirmacion, setIsConfirmacion] = useState(false);
-
+  const navegar = useNavigate()
   const motivos = [
     "NO SUPERO EL PERIODO DE PRUEBA",
     "RENUNCIA",
@@ -41,9 +44,16 @@ export const CesarEmpleado = () => {
     "DESPIDO",
     "DESISTIO",
   ];
-
-
-
+  const ObetenerEmpleados = async () => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
+    const dataEmpleados = response.data.recordset.filter(dato => dato.nombreCompleto !== null)
+    const datosFiltrados = dataEmpleados.filter((empleados) => empleados.estadoLaboral === "VIGENTE")
+    //console.log(dataEmpleados)
+    setEmpleados(datosFiltrados.sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto)));
+  }
+  useEffect(() => {
+    ObetenerEmpleados()
+  }, [])
   const CerrarModal = () => {
     if (!nuevoMotivo.trim()) {
       messageApi.open({
@@ -86,17 +96,29 @@ export const CesarEmpleado = () => {
     setIsSubmitting(true);
     setIsConfirmacion(false);
     try {
-      const cuerpo = { usuario, fecCese };
-      const cuerpo_02 = { usuario, fecCese, motivo, detalle };
-      console.log(cuerpo_02);
-      console.log(cuerpo);
-      setTimeout(() => {
-        setIsSubmitting(false)
-        setIsSuccess(true);
-        Limpiar();
-      }, 2000);
-    } catch (error) {
+      const cuerpo = {
+        idEmpleado,
+        fecCese,
+        motivo,
+        detalle
+      };
+      console.log("Enviando:", cuerpo);
 
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/cesarEmpleado`, cuerpo);
+      console.log("Respuesta:", response);
+
+      if (response.status === 200) {
+        setIsSuccess(true);
+      }
+    } catch (error) {
+      console.error("Error al cesar empleado:", error);
+    } finally {
+      setIsSubmitting(false); // Asegúrate de que también se apague en error
+      setTimeout(() => {
+        setIsSuccess(false);
+        Limpiar();
+        navegar("/finanzas/empleados-listar")
+      }, 2000);
     }
   };
 
@@ -168,7 +190,7 @@ export const CesarEmpleado = () => {
       </Dialog>
 
       {/* Modal de éxito */}
-      <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
+      <Dialog open={isSuccess} >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="text-center">Cese completado</DialogTitle>
@@ -184,17 +206,9 @@ export const CesarEmpleado = () => {
               El empleado ha sido cesado correctamente.
             </p>
           </div>
-          <DialogFooter>
-            <Button
-              className="w-full"
-              onClick={() => setIsSuccess(false)}
-            >
-              Aceptar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      {/* Titulo CesarEMPLEADO */}
       <motion.div
         whileHover={{ scale: 1.02 }}
         className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 px-6 py-3 rounded-full border border-red-200 dark:border-red-800"
@@ -204,25 +218,22 @@ export const CesarEmpleado = () => {
           CESAR EMPLEADO
         </h1>
       </motion.div>
-
+      {/* CONTENIDO DEL CESE */}
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         className={cardClass}
       >
         <div className="flex items-center justify-between gap-4">
-          <Select
-            value={cargo}
-            onChange={(value) => setCargo(value)}
-            className="w-32"
-          >
-            <Option value="STAFF">STAFF</Option>
-            <Option value="ASESOR">ASESOR</Option>
-          </Select>
-
+          <Label>EMPLEADO :</Label>
           <Select
             value={usuario}
-            onChange={(value) => setUsuario(value)}
+            onChange={(value) => {
+              const empleadoSeleccionado = empleados.find((empleado) => empleado.nombreCompleto === value);
+              console.log(empleadoSeleccionado?.idEmpleado);
+              setIdEmpleado(empleadoSeleccionado?.idEmpleado); // solo el id
+              setUsuario(value); // esto es el idEmpleado
+            }}
             className="flex-1 min-w-0"
             showSearch
             optionFilterProp="children"
@@ -230,12 +241,13 @@ export const CesarEmpleado = () => {
               option?.children?.toLowerCase().indexOf(input.toLowerCase()) >= 0
             }
           >
-            {data.map((item, index) => (
-              <Option key={index} value={item.USUARIO}>
-                {item.USUARIO}
+            {empleados.map((item, index) => (
+              <Option key={index} value={item.nombreCompleto}>
+                {item.nombreCompleto}
               </Option>
             ))}
           </Select>
+
         </div>
 
         <div className="flex items-center justify-between gap-4">
