@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-
 import { Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
@@ -10,28 +9,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label"
 import axios from 'axios'
 import { DatePickerFirstDay } from "@/components/ui/MesInputs"
+import { Checkbox } from '@/components/ui/checkbox';
+import { Upload } from "antd";
+import { InboxOutlined } from "@ant-design/icons";
 
 export const InfoAFP = () => {
   const [afpList, setAfpList] = useState([])
   const [filtroAFP, setFiltroAFP] = useState([])
   const [selectedAfp, setSelectedAfp] = useState("Todos")
   const [showAddModal, setShowAddModal] = useState(false)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showONP, setShowONP] = useState(false)
+  const [showAFP, setShowAFP] = useState(false)
   const [showLoadingModal, setShowLoadingModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [newAfp, setNewAfp] = useState({
-    codMesInicio: "",
-    codMesFin: null,
-    SISTEMA_DE_PENSION: "",
-    tipoComision: "",
-    aportacion: "",
-    comision: "",
-    seguro: "",
-    seguroTope: "",
-    columna1: ""
-  })
+  const [opcionSelect, setOpcionSelect] = useState("")
+  const [fileList, setFileList] = useState([])
+  const [file, setFile] = useState(null)
+  const [showVerificar, setShowVerificar] = useState(false)
   const [error, setError] = useState("")
+  const [newONP, setNewONP] = useState({
+    aportacion: "",
+    codMesInicio: ""
+  })
 
+  const { Dragger } = Upload;
   const afps = [
     { afp: "HABITAT" },
     { afp: "INTEGRA" },
@@ -45,7 +46,7 @@ export const InfoAFP = () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/afp/listarDatosSP_AFP`)
       if (response.status === 200) {
         const info = response.data.sort((a, b) =>
-          a.codMesInicio.localeCompare(b.codMesInicio)
+          b.codMesInicio.localeCompare(a.codMesInicio)
         )
         setAfpList(info)
         setFiltroAFP(info)
@@ -73,90 +74,160 @@ export const InfoAFP = () => {
     setError("")
   }
 
-  const handleInputChange = (e) => {
+  const handleONPChange = (e) => {
     const { name, value } = e.target
-    setNewAfp(prev => ({
+    setNewONP(prev => ({
       ...prev,
       [name]: value
     }))
   }
 
-  const handleDateChange = (date, field) => {
-    setNewAfp(prev => ({
+  const handleDateChangeONP = (date) => {
+    setNewONP(prev => ({
       ...prev,
-      [field]: date
+      codMesInicio: date
     }))
   }
 
-  const validateForm = () => {
-    if (!newAfp.SISTEMA_DE_PENSION) {
-      setError("Debe seleccionar una AFP")
+  const handleSubmit = () => {
+    if (!opcionSelect) {
+      setError("Debe seleccionar una opción")
+      return
+    }
+
+    if (opcionSelect === "AFP") {
+      setShowAddModal(false)
+      setShowAFP(true)
+    } else {
+      setShowAddModal(false)
+      setShowONP(true)
+    }
+  }
+
+  const getLastONPDate = () => {
+    const onpRecords = afpList.filter(afp => afp.SISTEMA_DE_PENSION === "ONP")
+    if (onpRecords.length === 0) return null
+    return onpRecords[onpRecords.length - 1].codMesInicio
+  }
+
+  const validateONPForm = () => {
+    if (!newONP.aportacion) {
+      setError("Debe ingresar la aportación")
       return false
     }
-    if (!newAfp.codMesInicio) {
-      setError("Debe ingresar una fecha de inicio")
+    if (!newONP.codMesInicio) {
+      setError("Debe seleccionar el mes de inicio")
       return false
     }
-    if (!newAfp.tipoComision) {
-      setError("Debe ingresar el tipo de comisión")
+
+    const lastDate = getLastONPDate()
+    if (lastDate && new Date(newONP.codMesInicio) <= new Date(lastDate)) {
+      setError(`El mes de inicio debe ser posterior al último registro ONP (${lastDate})`)
       return false
     }
-    if (!newAfp.comision) {
-      setError("Debe ingresar la comisión")
-      return false
-    }
+
     setError("")
     return true
   }
 
-  const handleSubmit = () => {
-    if (!validateForm()) return
-    setShowAddModal(false)
-    setShowConfirmModal(true)
-  }
+  const confirmAddONP = async () => {
+    if (!validateONPForm()) return
 
-  const confirmAddAfp = async () => {
-    setShowConfirmModal(false)
     setShowLoadingModal(true)
 
     try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // En producción, usar esto:
-      // const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/crear`, newAfp)
-
-      // Actualizar estado local (simulación)
-      const newRecord = {
-        ...newAfp,
-        codMesInicio: newAfp.codMesInicio.toISOString(),
-        codMesFin: newAfp.codMesFin ? newAfp.codMesFin.toISOString() : null
+      const payload = {
+        SISTEMA_DE_PENSION: "ONP",
+        aportacion: newONP.aportacion,
+        codMesInicio: newONP.codMesInicio.toISOString(),
+        tipoComision: "N/A",
+        comision: "0",
+        seguro: "0",
+        seguroTope: "0"
       }
 
-      setAfpList(prev => [...prev, newRecord])
+      // En producción, usar esto:
+      // const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/crear`, payload)
+
+      // Simulación de éxito
+      await new Promise(resolve => setTimeout(resolve, 1500))
+
+      // Actualizar estado local (simulación)
+      setAfpList(prev => [...prev, payload])
       setShowSuccessModal(true)
-      resetForm()
+      setShowONP(false)
+      setNewONP({
+        aportacion: "",
+        codMesInicio: ""
+      })
     } catch (error) {
-      console.error("Error al guardar AFP:", error)
+      console.error("Error al guardar ONP:", error)
+      setError("Error al guardar el registro ONP")
     } finally {
       setShowLoadingModal(false)
     }
   }
 
-  const resetForm = () => {
-    setNewAfp({
-      codMesInicio: "",
-      codMesFin: null,
-      SISTEMA_DE_PENSION: "",
-      tipoComision: "",
-      aportacion: "",
-      comision: "",
-      seguro: "",
-      seguroTope: "",
-      columna1: ""
-    })
+  const confirmAddAFP = async () => {
+    if (!file) {
+      setError("Debe seleccionar un archivo Excel")
+      return
+    }
+    setShowVerificar(false)
+    setShowLoadingModal(true)
+
+    try {
+      // Simular procesamiento del archivo
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // En producción, usar esto:
+      // const formData = new FormData()
+      // formData.append('file', file)
+      // const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/importar-excel`, formData)
+
+      // Simulación de éxito
+      setShowSuccessModal(true)
+      setShowAFP(false)
+      setFile(null)
+      setFileList([])
+      ObtenerDatos() // Refrescar datos
+    } catch (error) {
+      console.error("Error al importar archivo AFP:", error)
+      setError("Error al procesar el archivo Excel")
+    } finally {
+      setShowLoadingModal(false)
+    }
   }
 
+  const uploadProps = {
+    name: "file",
+    multiple: false,
+    accept: ".xls,.xlsx",
+    fileList: fileList,
+    beforeUpload(file) {
+      const isExcel =
+        file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.type === "application/vnd.ms-excel";
+
+      if (!isExcel) {
+        setError("Solo se permiten archivos Excel (.xls, .xlsx)")
+        return Upload.LIST_IGNORE;
+      }
+
+      setFile(file);
+      setFileList([file]);
+      setError("");
+      return false; // Evita la subida automática
+    },
+    onRemove() {
+      setFile(null);
+      setFileList([]);
+    },
+  };
+  const VerificarArchivo = () => {
+    setShowAFP(false)
+    setShowVerificar(true)
+  }
   return (
     <div className="w-full px-4">
       <h1 className="text-center text-xl font-bold text-gray-800">INFORMACIÓN AFP</h1>
@@ -220,102 +291,44 @@ export const InfoAFP = () => {
         </div>
       </Card>
 
-      {/* Modal para agregar nueva AFP */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Modal para seleccionar tipo (AFP/ONP) */}
+      <Dialog open={showAddModal} onOpenChange={() => {
+        setShowAddModal(false)
+        setOpcionSelect("")
+        setError("")
+      }}>
+        <DialogContent className="max-w-xs max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
-              INGRESAR NUEVO REGISTRO AFP
+              ¿QUE SEGURO PERSONA DESEA MODIFICAR?
             </DialogTitle>
           </DialogHeader>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>AFP*</Label>
-              <Select
-                value={newAfp.SISTEMA_DE_PENSION}
-                onValueChange={(value) => setNewAfp(prev => ({ ...prev, SISTEMA_DE_PENSION: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione AFP" />
-                </SelectTrigger>
-                <SelectContent>
-                  {afps.map((afp, index) => (
-                    <SelectItem key={index} value={afp.afp}>{afp.afp}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>TIPO DE COMISIÓN*</Label>
-              <Input
-                name="tipoComision"
-                value={newAfp.tipoComision}
-                onChange={handleInputChange}
+          <div className='flex justify-evenly'>
+            <div className='flex items-center gap-2'>
+              <Checkbox
+                checked={opcionSelect === "AFP"}
+                onCheckedChange={(checked) =>
+                  setOpcionSelect(checked ? "AFP" : "")
+                }
               />
+              <Label>AFP</Label>
             </div>
-
-            <div className="space-y-2">
-              <Label>FECHA INICIO*</Label>
-              <DatePickerFirstDay
-                handleDateChange={(date) => handleDateChange(date, 'codMesInicio')}
+            <div className='flex items-center gap-2'>
+              <Checkbox
+                checked={opcionSelect === "ONP"}
+                onCheckedChange={(checked) =>
+                  setOpcionSelect(checked ? "ONP" : "")
+                }
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label>FECHA FIN (Opcional)</Label>
-              <DatePickerFirstDay
-                handleDateChange={(date) => handleDateChange(date, 'codMesFin')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>APORTACIONES</Label>
-              <Input
-                name="aportacion"
-                value={newAfp.aportacion}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>COMISIÓN*</Label>
-              <Input
-                name="comision"
-                value={newAfp.comision}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>SEGURO</Label>
-              <Input
-                name="seguro"
-                value={newAfp.seguro}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>SEGURO TOPE</Label>
-              <Input
-                name="seguroTope"
-                value={newAfp.seguroTope}
-                onChange={handleInputChange}
-              />
+              <Label>ONP</Label>
             </div>
           </div>
-
-          {error && (
-            <div className="text-red-500 text-sm mt-4 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowAddModal(false)}>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => {
+              setShowAddModal(false)
+              setOpcionSelect("")
+            }}>
               Cancelar
             </Button>
             <Button
@@ -328,43 +341,122 @@ export const InfoAFP = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de confirmación */}
-      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
-        <DialogContent className="max-w-2xl">
+      {/* Modal de AFP (importar Excel) */}
+      <Dialog open={showAFP} onOpenChange={setShowAFP}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
-              Confirmar Datos
+              INGRESAR EL EXCEL CON EL FORMATO REQUERIDO
             </DialogTitle>
           </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Resumen del nuevo registro AFP:</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <p><span className="font-medium">AFP:</span> {newAfp.SISTEMA_DE_PENSION}</p>
-                <p><span className="font-medium">FECHA INICIO:</span> {newAfp.codMesInicio}</p>
-                <p><span className="font-medium">FECHA FIN:</span> {newAfp.codMesFin || "N/A"}</p>
-                <p><span className="font-medium">TIPO COMISIÓN:</span> {newAfp.tipoComision}</p>
-                <p><span className="font-medium">COMISIÓN:</span> {newAfp.comision}</p>
-                <p><span className="font-medium">APORTACIONES:</span> {newAfp.aportacion || "N/A"}</p>
-                <p><span className="font-medium">SEGURO:</span> {newAfp.seguro || "N/A"}</p>
-                <p><span className="font-medium">SEGURO TOPE:</span> {newAfp.seguroTope || "N/A"}</p>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
+          <Dragger {...uploadProps}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">
+              Haga clic o arrastre el archivo a esta área para cargarlo
+            </p>
+            <p className="ant-upload-hint">
+              Solo se aceptan archivos Excel (.xls, .xlsx)
+            </p>
+          </Dragger>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <DialogFooter className={"mt-5"}>
             <Button variant="outline" onClick={() => {
-              setShowConfirmModal(false)
+              setShowAFP(false)
               setShowAddModal(true)
+              setError("")
             }}>
-              Volver a editar
+              VOLVER
             </Button>
             <Button
               className="bg-green-600 hover:bg-green-700"
-              onClick={confirmAddAfp}
+              onClick={VerificarArchivo}
+              disabled={!file}
             >
-              Confirmar y Guardar
+              VERIFICAR ARCHIVO
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de ONP */}
+      <Dialog open={showONP} onOpenChange={setShowONP}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-center">
+              REGISTRAR UN NUEVO ONP
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>APORTACIÓN (%)</Label>
+              <Input
+                name="aportacion"
+                type="number"
+                value={newONP.aportacion}
+                onChange={handleONPChange}
+                placeholder="Ingrese el porcentaje de aportación"
+              />
+            </div>
+            <div>
+              <Label>COD MES INICIO</Label>
+              <DatePickerFirstDay
+                handleDateChange={handleDateChangeONP}
+                mesInicio={getLastONPDate() ? new Date(getLastONPDate()) : null}
+              />
+              {getLastONPDate() && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Último registro ONP: {getLastONPDate().split("T")[0]}
+                </p>
+              )}
+            </div>
+          </div>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowONP(false)
+              setShowAddModal(true)
+              setError("")
+            }}>
+              VOLVER
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={confirmAddONP}
+            >
+              CONFIRMAR
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* Modal de VERIFICAR , DONDE SE MOSTRARAN LA TABLA */}
+      <Dialog open={showVerificar} onOpenChange={setShowVerificar}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-center">
+              DATOS OBTENIDOS
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/*AQUI PONES LA TABLA QUE SE NECESITA*/}
+          </div>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowVerificar(false)
+              setShowAFP(true)
+              setError("")
+            }}>
+              CANCELAR
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={confirmAddAFP}
+            >
+              SUBIR CAMBIOS
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -378,7 +470,7 @@ export const InfoAFP = () => {
           </DialogHeader>
           <div className="flex flex-col items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-            <p>Guardando los datos de la AFP...</p>
+            <p>Guardando los datos...</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -393,7 +485,11 @@ export const InfoAFP = () => {
             <div className="rounded-full h-12 w-12 bg-green-100 flex items-center justify-center mb-4">
               <Check className="h-6 w-6 text-green-600" />
             </div>
-            <p className="text-center text-gray-600">El nuevo registro AFP ha sido guardado exitosamente.</p>
+            <p className="text-center text-gray-600">
+              {opcionSelect === "AFP"
+                ? "El archivo AFP ha sido procesado exitosamente."
+                : "El nuevo registro ONP ha sido guardado exitosamente."}
+            </p>
           </div>
           <DialogFooter className="justify-center">
             <Button onClick={() => setShowSuccessModal(false)}>Aceptar</Button>

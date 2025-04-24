@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -14,7 +14,6 @@ export const AFPempleado = () => {
       const datos = response.data.sort((a, b) =>
         a.ALIAS_EMPLEADO.localeCompare(b.ALIAS_EMPLEADO)
       )
-
       setEmpleados(datos)
       setFilteredEmpleados(datos)
     }
