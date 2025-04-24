@@ -1338,6 +1338,7 @@ export const ListarEmpleados = () => {
                         variant="ghost"
                         size="icon"
                         className="text-green-600 hover:text-green-800 hover:bg-green-100 cursor-pointer"
+                        disabled={employee.estadoLaboral==="CESADO"}
                         onClick={() => openEdit(employee)}
                       >
                         <Pencil className="h-5 w-5" />
