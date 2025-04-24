@@ -8,7 +8,8 @@ import {
     DollarOutlined,
     PercentageOutlined,
     ReconciliationOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    EuroCircleOutlined
 } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
@@ -41,19 +42,19 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         {
             key: 'sub2',
             icon: <ReconciliationOutlined />,
-            label: "AFP",
+            label: "Seg.Pensiones",
             children: [
                 {
                     key: 'empleados-afp',
-                    label: <Link to="/finanzas/empleados-afp">AFP Empleados</Link>,
+                    label: <Link to="/finanzas/empleados-afp">SP Empleados</Link>,
                 },
                 {
                     key: 'cambios-afp',
-                    label: <Link to="/finanzas/cambios-afp">Cambios AFP</Link>,
+                    label: <Link to="/finanzas/cambios-afp">Cambios SP</Link>,
                 },
                 {
                     key: 'info-afp',
-                    label: <Link to="/finanzas/info-afp">Info. AFP</Link>,
+                    label: <Link to="/finanzas/info-afp">Info. SP</Link>,
                 },
             ],
         },
@@ -107,6 +108,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             label: <Link to="/finanzas/comisiones">Comisiones</Link>,
         },
         {
+            key: 'sueldo-minimo',
+            icon: <EuroCircleOutlined />,
+            label: <Link to="/finanzas/sueldo-minimo">Sueldo Minimo</Link>,
+        },
+        {
             key: "cerrar-sesion",
             icon: <LogoutOutlined/>,
             label : <Link to="/">Cerrar Sesion</Link>,
@@ -149,7 +155,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             <Menu
                 theme="dark"
                 defaultSelectedKeys={['empleados']}
-                style={{ borderRight: 0 }}
+                style={{ borderRight: 0, cursor:"pointer" }}
                 mode="inline"
                 items={items}
             />

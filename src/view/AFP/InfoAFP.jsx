@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+
+import { Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -6,97 +8,69 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import axios from 'axios'
+import { DatePickerFirstDay } from "@/components/ui/MesInputs"
 
-
-const afps = [
-  {
-    cod_mes_inicio: "001",
-    cod_mes_fin: "002",
-    afp: "AFP Integra",
-    tipoComision: "Comisión Mixta",
-    aportaciones: "10%",
-    comision: "10%",
-    seguro: "1.5%",
-    seguroTope: "0.5%",
-    columna1: "Columna 1 Data"
-  },
-  {
-    cod_mes_inicio: "003",
-    cod_mes_fin: "004",
-    afp: "Prima AFP",
-    tipoComision: "Comisión Fija",
-    aportaciones: "10%",
-    comision: "12%",
-    seguro: "2%",
-    seguroTope: "0.7%",
-    columna1: "Columna 1 Data"
-  },
-  {
-    cod_mes_inicio: "005",
-    cod_mes_fin: "006",
-    afp: "Profuturo AFP",
-    tipoComision: "Comisión Variable",
-    aportaciones: "10%",
-    comision: "11%",
-    seguro: "1.8%",
-    seguroTope: "0.6%",
-    columna1: "Columna 1 Data"
-  },
-  {
-    cod_mes_inicio: "007",
-    cod_mes_fin: "008",
-    afp: "AFP Habitat",
-    tipoComision: "Comisión Mixta",
-    aportaciones: "10%",
-    comision: "9%",
-    seguro: "1.2%",
-    seguroTope: "0.4%",
-    columna1: "Columna 1 Data"
-  },
-  {
-    cod_mes_inicio: "009",
-    cod_mes_fin: "010",
-    afp: "AFP Prima",
-    tipoComision: "Comisión Fija",
-    aportaciones: "10%",
-    comision: "13%",
-    seguro: "2.5%",
-    seguroTope: "0.8%",
-    columna1: "Columna 1 Data"
-  },
-]
 export const InfoAFP = () => {
-  const [afpList, setAfpList] = useState(afps)
-  const [filtroAFP, setFiltroAFP] = useState(afps)
-  const [selectedAfp, setSelectedAfp] = useState("")
+  const [afpList, setAfpList] = useState([])
+  const [filtroAFP, setFiltroAFP] = useState([])
+  const [selectedAfp, setSelectedAfp] = useState("Todos")
   const [showAddModal, setShowAddModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showLoadingModal, setShowLoadingModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-
   const [newAfp, setNewAfp] = useState({
-    cod_mes_inicio: "",
-    cod_mes_fin: "",
-    afp: "",
+    codMesInicio: "",
+    codMesFin: null,
+    SISTEMA_DE_PENSION: "",
     tipoComision: "",
+    aportacion: "",
     comision: "",
     seguro: "",
     seguroTope: "",
     columna1: ""
   })
+  const [error, setError] = useState("")
+
+  const afps = [
+    { afp: "HABITAT" },
+    { afp: "INTEGRA" },
+    { afp: "PRIMA" },
+    { afp: "PROFUTURO" },
+    { afp: "ONP" }
+  ]
+
+  const ObtenerDatos = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/afp/listarDatosSP_AFP`)
+      if (response.status === 200) {
+        const info = response.data.sort((a, b) =>
+          a.codMesInicio.localeCompare(b.codMesInicio)
+        )
+        setAfpList(info)
+        setFiltroAFP(info)
+      }
+    } catch (error) {
+      console.error("Error al obtener datos de AFP:", error)
+    }
+  }
+
   useEffect(() => {
-    if (selectedAfp != "" && selectedAfp != "Todos") {
-      const filtrados = afpList.filter((afp) => afp.afp === selectedAfp)
+    ObtenerDatos()
+  }, [])
+
+  useEffect(() => {
+    if (selectedAfp !== "Todos") {
+      const filtrados = afpList.filter(afp => afp.SISTEMA_DE_PENSION === selectedAfp)
       setFiltroAFP(filtrados)
     } else {
       setFiltroAFP(afpList)
     }
-
-  }, [selectedAfp])
-
+  }, [selectedAfp, afpList])
 
   const handleAddAfp = () => {
     setShowAddModal(true)
+    setError("")
   }
 
   const handleInputChange = (e) => {
@@ -107,30 +81,75 @@ export const InfoAFP = () => {
     }))
   }
 
+  const handleDateChange = (date, field) => {
+    setNewAfp(prev => ({
+      ...prev,
+      [field]: date
+    }))
+  }
+
+  const validateForm = () => {
+    if (!newAfp.SISTEMA_DE_PENSION) {
+      setError("Debe seleccionar una AFP")
+      return false
+    }
+    if (!newAfp.codMesInicio) {
+      setError("Debe ingresar una fecha de inicio")
+      return false
+    }
+    if (!newAfp.tipoComision) {
+      setError("Debe ingresar el tipo de comisión")
+      return false
+    }
+    if (!newAfp.comision) {
+      setError("Debe ingresar la comisión")
+      return false
+    }
+    setError("")
+    return true
+  }
+
   const handleSubmit = () => {
+    if (!validateForm()) return
     setShowAddModal(false)
     setShowConfirmModal(true)
   }
 
-  const confirmAddAfp = () => {
+  const confirmAddAfp = async () => {
     setShowConfirmModal(false)
     setShowLoadingModal(true)
 
-    // Simular llamada a API
-    setTimeout(() => {
-      setAfpList(prev => [...prev, newAfp])
-      setShowLoadingModal(false)
+    try {
+      // Simular llamada a API
+      await new Promise(resolve => setTimeout(resolve, 1500))
+
+      // En producción, usar esto:
+      // const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/crear`, newAfp)
+
+      // Actualizar estado local (simulación)
+      const newRecord = {
+        ...newAfp,
+        codMesInicio: newAfp.codMesInicio.toISOString(),
+        codMesFin: newAfp.codMesFin ? newAfp.codMesFin.toISOString() : null
+      }
+
+      setAfpList(prev => [...prev, newRecord])
       setShowSuccessModal(true)
       resetForm()
-    }, 2000)
+    } catch (error) {
+      console.error("Error al guardar AFP:", error)
+    } finally {
+      setShowLoadingModal(false)
+    }
   }
 
   const resetForm = () => {
     setNewAfp({
-      cod_mes_inicio: "",
-      cod_mes_fin: "",
-      afp: "",
+      codMesInicio: "",
+      codMesFin: null,
+      SISTEMA_DE_PENSION: "",
       tipoComision: "",
+      aportacion: "",
       comision: "",
       seguro: "",
       seguroTope: "",
@@ -140,12 +159,10 @@ export const InfoAFP = () => {
 
   return (
     <div className="w-full px-4">
-      <h1 className="text-center text-xl font-bold text-gray-800">INFORMACION AFP</h1>
+      <h1 className="text-center text-xl font-bold text-gray-800">INFORMACIÓN AFP</h1>
 
       {/* Barra de búsqueda y selección */}
-      <div className="py-4 w-full md:w-full flex flex-col justify-between sm:flex-row gap-4">
-
-
+      <div className="py-4 w-full flex flex-col justify-between sm:flex-row gap-4">
         <div className="flex items-center gap-4">
           <span className="font-medium text-gray-700 whitespace-nowrap">FILTRO POR AFP:</span>
           <Select value={selectedAfp} onValueChange={setSelectedAfp}>
@@ -178,26 +195,24 @@ export const InfoAFP = () => {
                 <TableHead>COD. MES INICIO</TableHead>
                 <TableHead>COD. MES FIN</TableHead>
                 <TableHead>AFP</TableHead>
-                <TableHead>TIPO COMISION</TableHead>
+                <TableHead>TIPO COMISIÓN</TableHead>
                 <TableHead>APORTACIONES</TableHead>
-                <TableHead>COMISION</TableHead>
+                <TableHead>COMISIÓN</TableHead>
                 <TableHead>SEGURO</TableHead>
                 <TableHead>SEGURO TOPE</TableHead>
-                <TableHead>COLUMNA 1</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtroAFP.map((afp, key) => (
                 <TableRow key={key} className="border-t hover:bg-blue-50 transition-colors">
-                  <TableCell>{afp.cod_mes_inicio}</TableCell>
-                  <TableCell>{afp.cod_mes_fin}</TableCell>
-                  <TableCell>{afp.afp}</TableCell>
+                  <TableCell>{afp.codMesInicio.split("T")[0]}</TableCell>
+                  <TableCell>{afp.codMesFin ? afp.codMesFin.split("T")[0] : "N/A"}</TableCell>
+                  <TableCell>{afp.SISTEMA_DE_PENSION}</TableCell>
                   <TableCell>{afp.tipoComision}</TableCell>
-                  <TableCell>{afp.aportaciones}</TableCell>
-                  <TableCell>{afp.comision}</TableCell>
-                  <TableCell>{afp.seguro}</TableCell>
-                  <TableCell>{afp.seguroTope}</TableCell>
-                  <TableCell>{afp.columna1}</TableCell>
+                  <TableCell>{afp.aportacion}</TableCell>
+                  <TableCell>{afp.comision || "N/A"}</TableCell>
+                  <TableCell>{afp.seguro || "N/A"}</TableCell>
+                  <TableCell>{afp.seguroTope || "N/A"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -207,28 +222,33 @@ export const InfoAFP = () => {
 
       {/* Modal para agregar nueva AFP */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
-              INGRESAR NUEVO AFP
+              INGRESAR NUEVO REGISTRO AFP
             </DialogTitle>
           </DialogHeader>
-          <div className='max-h-[70vh]'>
-            <div className='flex gap-10'>
-              
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>AFP*</Label>
+              <Select
+                value={newAfp.SISTEMA_DE_PENSION}
+                onValueChange={(value) => setNewAfp(prev => ({ ...prev, SISTEMA_DE_PENSION: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione AFP" />
+                </SelectTrigger>
+                <SelectContent>
+                  {afps.map((afp, index) => (
+                    <SelectItem key={index} value={afp.afp}>{afp.afp}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>AFP</Label>
-              <Input
-                name="afp"
-                value={newAfp.afp}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>TIPO_COMISION</Label>
+              <Label>TIPO DE COMISIÓN*</Label>
               <Input
                 name="tipoComision"
                 value={newAfp.tipoComision}
@@ -237,16 +257,30 @@ export const InfoAFP = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>APORTACION</Label>
+              <Label>FECHA INICIO*</Label>
+              <DatePickerFirstDay
+                handleDateChange={(date) => handleDateChange(date, 'codMesInicio')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>FECHA FIN (Opcional)</Label>
+              <DatePickerFirstDay
+                handleDateChange={(date) => handleDateChange(date, 'codMesFin')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>APORTACIONES</Label>
               <Input
-                name="comision"
-                value={newAfp.comision}
+                name="aportacion"
+                value={newAfp.aportacion}
                 onChange={handleInputChange}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>COMISION</Label>
+              <Label>COMISIÓN*</Label>
               <Input
                 name="comision"
                 value={newAfp.comision}
@@ -271,18 +305,16 @@ export const InfoAFP = () => {
                 onChange={handleInputChange}
               />
             </div>
-
-            <div className="space-y-2">
-              <Label>COLUMNA 1</Label>
-              <Input
-                name="columna1"
-                value={newAfp.columna1}
-                onChange={handleInputChange}
-              />
-            </div>
           </div>
 
-          <DialogFooter>
+          {error && (
+            <div className="text-red-500 text-sm mt-4 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setShowAddModal(false)}>
               Cancelar
             </Button>
@@ -307,22 +339,25 @@ export const InfoAFP = () => {
 
           <div className="space-y-4 py-4">
             <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Resumen de la nueva AFP:</h3>
+              <h3 className="font-semibold mb-2">Resumen del nuevo registro AFP:</h3>
               <div className="grid grid-cols-2 gap-4">
-                <p><span className="font-medium">COD_MES_INICIO:</span> {newAfp.cod_mes_inicio}</p>
-                <p><span className="font-medium">COD_MES_FIN:</span> {newAfp.cod_mes_fin}</p>
-                <p><span className="font-medium">AFP:</span> {newAfp.afp}</p>
-                <p><span className="font-medium">TIPO_COMISION:</span> {newAfp.tipoComision}</p>
-                <p><span className="font-medium">COMISION:</span> {newAfp.comision}</p>
-                <p><span className="font-medium">SEGURO:</span> {newAfp.seguro}</p>
-                <p><span className="font-medium">SEGURO TOPE:</span> {newAfp.seguroTope}</p>
-                <p><span className="font-medium">COLUMNA 1:</span> {newAfp.columna1}</p>
+                <p><span className="font-medium">AFP:</span> {newAfp.SISTEMA_DE_PENSION}</p>
+                <p><span className="font-medium">FECHA INICIO:</span> {newAfp.codMesInicio}</p>
+                <p><span className="font-medium">FECHA FIN:</span> {newAfp.codMesFin || "N/A"}</p>
+                <p><span className="font-medium">TIPO COMISIÓN:</span> {newAfp.tipoComision}</p>
+                <p><span className="font-medium">COMISIÓN:</span> {newAfp.comision}</p>
+                <p><span className="font-medium">APORTACIONES:</span> {newAfp.aportacion || "N/A"}</p>
+                <p><span className="font-medium">SEGURO:</span> {newAfp.seguro || "N/A"}</p>
+                <p><span className="font-medium">SEGURO TOPE:</span> {newAfp.seguroTope || "N/A"}</p>
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowConfirmModal(false)
+              setShowAddModal(true)
+            }}>
               Volver a editar
             </Button>
             <Button
@@ -354,16 +389,17 @@ export const InfoAFP = () => {
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-bold">¡Completado!</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center ">
+          <div className="flex flex-col items-center py-4">
             <div className="rounded-full h-12 w-12 bg-green-100 flex items-center justify-center mb-4">
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <Check className="h-6 w-6 text-green-600" />
             </div>
-            <p className="text-center text-lg">La nueva AFP ha sido registrada exitosamente.</p>
+            <p className="text-center text-gray-600">El nuevo registro AFP ha sido guardado exitosamente.</p>
           </div>
+          <DialogFooter className="justify-center">
+            <Button onClick={() => setShowSuccessModal(false)}>Aceptar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   )
 }

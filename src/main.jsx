@@ -18,6 +18,7 @@ import { CesarEmpleado } from './view/Empleado/CesarEmpleado.jsx';
 import Descuentos from './view/Descuentos/Descuentos';
 import HistorialDescuentos from './view/Descuentos/HistorialDescuentos';
 import { DataProvider } from './provider/Provider';
+import { SueldoMinimo } from './view/SueldoMinimo';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -39,6 +40,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="comisiones" element={<Comisiones />} />
           <Route path="cargarDescuentos" element={<Descuentos />} />
           <Route path="historialDescuentos" element={<HistorialDescuentos />} />
+          <Route path="sueldo-minimo" element={<SueldoMinimo/>} />          
         </Route>
       </Routes>
     </DataProvider>
