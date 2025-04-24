@@ -22,7 +22,7 @@ export const CambiosAFP = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/afp/comparar",
+        "http://localhost:4000/api/afp/comparar",
         formData
       );
 
