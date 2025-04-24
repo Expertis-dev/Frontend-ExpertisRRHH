@@ -42,7 +42,7 @@ export const AFPempleado = () => {
 
   return (
     <div className="w-full px-4">
-      <h1 className="text-center text-xl font-bold text-gray-800">AFP EMPLEADOS</h1>
+      <h1 className="text-center text-xl font-bold text-gray-800">SP EMPLEADOS</h1>
 
       {/* Barra de búsqueda */}
       <div className="py-4 w-full md:w-1/3">

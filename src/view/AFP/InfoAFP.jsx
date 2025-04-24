@@ -230,7 +230,7 @@ export const InfoAFP = () => {
   }
   return (
     <div className="w-full px-4">
-      <h1 className="text-center text-xl font-bold text-gray-800">INFORMACIÓN AFP</h1>
+      <h1 className="text-center text-xl font-bold text-gray-800">INFORMACIÓN SP</h1>
 
       {/* Barra de búsqueda y selección */}
       <div className="py-4 w-full flex flex-col justify-between sm:flex-row gap-4">
