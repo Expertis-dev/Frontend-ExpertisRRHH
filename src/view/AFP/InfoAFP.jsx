@@ -107,7 +107,7 @@ export const InfoAFP = () => {
   const getLastONPDate = () => {
     const onpRecords = afpList.filter(afp => afp.SISTEMA_DE_PENSION === "ONP")
     if (onpRecords.length === 0) return null
-    return onpRecords[onpRecords.length - 1].codMesInicio
+    return onpRecords[0].codMesInicio
   }
 
   const validateONPForm = () => {
