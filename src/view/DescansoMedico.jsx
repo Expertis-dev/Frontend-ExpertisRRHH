@@ -222,23 +222,6 @@ const DescansoMedicoTable = () => {
     }
   };
 
-  const handleDelete = async (record) => {
-    try {
-      const cuerpo = { idDescansosMedicos: record.idDescansosMedicos, idEmpleado: record.idEmpleado, usuario: nombre }
-      console.log("se enviara al backend: ", cuerpo)
-      await axios.post("https://p9zzp66h-4000.brs.devtunnels.ms/api/dm/eliminarDM_Empleados", cuerpo);
-      // Actualizar la lista después de eliminar
-      const response = await axios.get(
-        "https://p9zzp66h-4000.brs.devtunnels.ms/api/dm/listarDM_Empleados"
-      );
-      const sortedData = response.data.sort((a, b) => b.codMes.localeCompare(a.codMes));
-      setData(sortedData);
-      setFilteredData(sortedData);
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-    }
-  };
-
   return (
     <div className="flex flex-col items-center h-screen bg-gray-100 p-4">
       <h1 className="text-xl font-bold mb-4">Descansos Médicos</h1>
