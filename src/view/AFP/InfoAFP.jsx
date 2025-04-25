@@ -12,6 +12,7 @@ import { DatePickerFirstDay } from "@/components/ui/MesInputs"
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
+import { set } from 'date-fns';
 
 export const InfoAFP = () => {
   const [afpList, setAfpList] = useState([])
@@ -24,6 +25,7 @@ export const InfoAFP = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [opcionSelect, setOpcionSelect] = useState("")
   const [fileList, setFileList] = useState([])
+  const [cambiosEncontrados, setCambiosEncontrados] = useState([])
   const [file, setFile] = useState(null)
   const [showVerificar, setShowVerificar] = useState(false)
   const [error, setError] = useState("")
@@ -50,6 +52,23 @@ export const InfoAFP = () => {
         )
         setAfpList(info)
         setFiltroAFP(info)
+      }
+    } catch (error) {
+      console.error("Error al obtener datos de AFP:", error)
+    }
+  }
+
+  const ObtenerCambios = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('archivo', file);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/cambiosSP_AFP`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      if (response.status === 200) {
+         setCambiosEncontrados(response.data.cambios)
       }
     } catch (error) {
       console.error("Error al obtener datos de AFP:", error)
@@ -181,9 +200,10 @@ export const InfoAFP = () => {
       await new Promise(resolve => setTimeout(resolve, 2000))
 
       // En producción, usar esto:
-      // const formData = new FormData()
-      // formData.append('file', file)
-      // const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/importar-excel`, formData)
+      const formData = new FormData()
+      formData.append('archivo', file)
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/cambiosSP_AFP`, formData)
+      console.log("Respuesta del servidor:", response.data)
 
       // Simulación de éxito
       setShowSuccessModal(true)
@@ -225,6 +245,7 @@ export const InfoAFP = () => {
     },
   };
   const VerificarArchivo = () => {
+    ObtenerCambios();
     setShowAFP(false)
     setShowVerificar(true)
   }
@@ -442,6 +463,34 @@ export const InfoAFP = () => {
           </DialogHeader>
           <div className="space-y-4">
             {/*AQUI PONES LA TABLA QUE SE NECESITA*/}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cod. Mes</TableHead>
+                  <TableHead>AFP</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Aportación (%)</TableHead>
+                  <TableHead>Comisión (%)</TableHead>
+                  <TableHead>Seguro (%)</TableHead>
+                  <TableHead>Seguro Tope</TableHead>
+                  <TableHead>Columna 1</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cambiosEncontrados.map((cambios, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{cambios.COD_MES}</TableCell>
+                    <TableCell>{cambios.AFP}</TableCell>
+                    <TableCell>{cambios.TIPO}</TableCell>
+                    <TableCell>{cambios.APORTACION}</TableCell>
+                    <TableCell>{cambios.COMISION}</TableCell>
+                    <TableCell>{cambios.SEGURO}</TableCell>
+                    <TableCell>{cambios.SEGURO_TOPE}</TableCell>
+                    <TableCell>{cambios["COLIMNNA 1"]}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <DialogFooter>
