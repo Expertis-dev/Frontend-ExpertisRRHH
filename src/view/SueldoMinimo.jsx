@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Check, AlertTriangle, AlertCircle, Loader2, Info, UserPlus } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Check, AlertTriangle, AlertCircle } from "lucide-react"
+import { useEffect, useState } from "react"
 import {
     Table,
     TableBody,
@@ -13,23 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePickerFirstDay } from "@/components/ui/MesInputs";
-
-const dataSimulada = [{
-    sueldoMinimo: 980,
-    fecInicio: "19-02-2010",
-    fecFin: "20-09-2012"
-}, {
-    sueldoMinimo: 1025,
-    fecInicio: "21-09-2012",
-    fecFin: "10-01-2025"
-}, {
-    sueldoMinimo: 1135,
-    fecInicio: "11-01-2025",
-    fecFin: ""
-}];
+import { PlusCircleOutlined } from "@ant-design/icons"
+import axios from "axios";
+import dayjs from "dayjs";
+import { useData } from "@/provider/Provider";
 
 export const SueldoMinimo = () => {
-    const [data, setData] = useState(dataSimulada);
+    const [data, setData] = useState([]);
     const [isSueldo, setIsSueldo] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -37,101 +27,122 @@ export const SueldoMinimo = () => {
     const [nuevoSueldo, setNuevoSueldo] = useState("");
     const [fechaInicio, setFechaInicio] = useState(null);
     const [error, setError] = useState("");
+    const { nombre } = useData()
+    const ObtenerSueldos = async () => {
+        try {
+            const response = await axios.get("https://p9zzp66h-4000.brs.devtunnels.ms/api/sueldosminimos/listarHistoricoSueldosminimos")
+            if (response.status === 200) {
+                setData(response.data.sort((a, b) => new Date(b.mesInicio) - new Date(a.mesInicio)))
+            }
+        } catch (error) {
+            console.error("Error al obtener sueldos:", error)
+        }
+    }
 
-    // Validar formulario
+    useEffect(() => {
+        ObtenerSueldos()
+    }, [])
+
     const isValidForm = () => {
-        return nuevoSueldo && !isNaN(nuevoSueldo) && parseFloat(nuevoSueldo) > 0 && fechaInicio;
+        if (!nuevoSueldo || isNaN(nuevoSueldo) || parseFloat(nuevoSueldo) <= 0) {
+            setError("Ingrese un monto válido (mayor a 0)");
+            return false;
+        }
+        if (!fechaInicio) {
+            setError("Seleccione una fecha de inicio");
+            return false;
+        }
+
+        // Validar que la fecha no sea anterior al último registro
+        const ultimoRegistro = data[0];
+        if (ultimoRegistro && new Date(fechaInicio) <= new Date(ultimoRegistro.mesInicio)) {
+            setError(`La fecha debe ser posterior a ${ultimoRegistro.mesInicio.split("T")[0]}`);
+            return false;
+        }
+
+        setError("");
+        return true;
     };
 
-    // Manejar el envío del formulario
     const handleSubmit = () => {
-        Limpiar()
-        if (!isValidForm()) {
-            setError("Por favor complete todos los campos correctamente");
-            return;
-        }
+        if (!isValidForm()) return;
         setIsSueldo(false)
         setIsConfirm(true);
     };
 
-    // Confirmar y guardar los datos
     const confirmSubmit = async () => {
-        Limpiar()
         setIsConfirm(false);
         setIsLoading(true);
-        
-        // Simular llamada a API
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Actualizar los datos
-            const nuevoRegistro = {
-                sueldoMinimo: parseFloat(nuevoSueldo),
-                fecInicio: fechaInicio.toLocaleDateString('es-ES'),
-                fecFin: ""
-            };
-            
-            // Actualizar el último registro para agregar fecha fin
-            const updatedData = [...data];
-            if (updatedData.length > 0) {
-                updatedData[updatedData.length - 1].fecFin = fechaInicio.toLocaleDateString('es-ES');
+            const cuerpo = {
+                nuevoSueldoMinimo: parseFloat(nuevoSueldo),
+                mesinicio: fechaInicio.format("YYYY-MM-DD"),
+                usuario: nombre
             }
-            
-            setData([...updatedData, nuevoRegistro]);
-            setIsSuccess(true);
-            
-            // Resetear el formulario
-            setNuevoSueldo("");
-            setFechaInicio(null);
-            setIsSueldo(false);
+            console.log(cuerpo)
+            const response = await axios.post(
+                "https://p9zzp66h-4000.brs.devtunnels.ms/api/sueldosminimos/registarNuevoSueldoMinimo", cuerpo);
+            if (response.status === 200) {
+                await ObtenerSueldos();
+                setIsSuccess(true);
+                Limpiar();
+                setTimeout(() => setIsSuccess(false), 2000)
+            }
         } catch (error) {
             console.error("Error al guardar:", error);
+            setError("Ocurrió un error al guardar los datos");
         } finally {
             setIsLoading(false);
         }
     };
-    const Limpiar = ()=>{
+
+    const Limpiar = () => {
         setNuevoSueldo("")
-        setFechaInicio("")
+        setFechaInicio(null)
+        setError("")
     }
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 items-center">
             <p className="text-xl font-bold text-center">SUELDO MÍNIMO</p>
-            <div className="flex px-8 justify-end">
-                <Button onClick={() => setIsSueldo(true)} className="bg-green-600">
-                    + Agregar
+            <div className="w-full flex px-8 justify-end">
+                <Button
+                    onClick={() => setIsSueldo(true)}
+                    className="text-white bg-green-600 hover:bg-green-700"
+                >
+                    <PlusCircleOutlined /> AÑADIR NUEVO SUELDO MINIMO
                 </Button>
             </div>
-            <div>
+
+            {/* TABLA DE SUELDOS */}
+            <div className="w-2/3 max-h-[80vh] overflow-y-auto border rounded-lg">
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-100">
-                            <TableHead>SUELDO MÍNIMO</TableHead>
-                            <TableHead>FECHA INICIO</TableHead>
-                            <TableHead>FECHA FIN</TableHead>
+                            <TableHead className="text-center">SUELDO MÍNIMO</TableHead>
+                            <TableHead className="text-center">FECHA INICIO</TableHead>
+                            <TableHead className="text-center">FECHA FIN</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {data.map((datos, index) => (
-                            <TableRow
-                                key={index}
-                                className="border-t hover:bg-blue-50 transition-colors"
-                            >
-                                <TableCell>{datos.sueldoMinimo}</TableCell>
-                                <TableCell>{datos.fecInicio}</TableCell>
-                                <TableCell>{datos.fecFin === "" ? "N/A" : datos.fecFin}</TableCell>
+                            <TableRow key={index} className="hover:bg-blue-50">
+                                <TableCell className="text-center">{`S/. ${parseFloat(datos.montoSueldo).toFixed(2)}`}</TableCell>
+                                <TableCell className="text-center">{datos.mesInicio.split("T")[0]}</TableCell>
+                                <TableCell className="text-center">
+                                    {datos.mesFin ? datos.mesFin.split("T")[0] : "Vigente"}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </div>
 
-            {/* MODAL PARA AGREGAR NUEVO SUELDO MÍNIMO */}
+            {/* MODAL PARA AGREGAR NUEVO SUELDO */}
             <Dialog open={isSueldo} onOpenChange={() => {
-                Limpiar()
+                Limpiar();
                 setIsSueldo(false);
-                setError("");
             }}>
                 <DialogContent className="sm:max-w-[420px]">
                     <DialogHeader>
@@ -145,21 +156,15 @@ export const SueldoMinimo = () => {
                                 min="500"
                                 step="100"
                                 value={nuevoSueldo}
-                                onChange={(e) => {
-                                    setNuevoSueldo(e.target.value);
-                                    setError("");
-                                }}
+                                onChange={(e) => setNuevoSueldo(e.target.value)}
                                 placeholder="Ingrese el monto"
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Fecha de Inicio*</Label>
-                            <DatePickerFirstDay 
-                            mesInicio={"01-03-2025"}
-                                handleDateChange={(date) => {
-                                    setFechaInicio(date.toISOString().split("T")[0]);
-                                    setError("");
-                                }}
+                            <DatePickerFirstDay
+                                mesInicio={data.find(dato => dato.mesFin === null)?.mesInicio}
+                                handleDateChange={(date) => setFechaInicio(date)}
                             />
                         </div>
                         {error && (
@@ -169,10 +174,9 @@ export const SueldoMinimo = () => {
                             </div>
                         )}
                         <DialogFooter>
-                            <Button 
-                                type="button" 
+                            <Button
                                 onClick={handleSubmit}
-                                disabled={!isValidForm()}
+                                disabled={!nuevoSueldo || !fechaInicio}
                                 className="bg-green-600 hover:bg-green-700"
                             >
                                 Guardar
@@ -193,41 +197,29 @@ export const SueldoMinimo = () => {
                             <AlertTriangle className="h-8 w-8 text-yellow-600" />
                         </div>
                         <p className="text-gray-600 text-center">
-                            ¿Está seguro de agregar un nuevo sueldo mínimo de {nuevoSueldo} a partir del {fechaInicio}?
+                            ¿Está seguro de agregar un nuevo sueldo mínimo de S/. {nuevoSueldo} a partir del {dayjs(fechaInicio).format('DD/MM/YYYY')}?
                         </p>
-                        <div className="flex flex-col gap-4 w-full">
-                            <Button 
-                                variant="outline" 
-                                onClick={() => setIsConfirm(false)}
-                                className="w-full"
-                            >
-                                Cancelar
-                            </Button>
-                            <Button 
-                                onClick={confirmSubmit}
-                                className="bg-green-600 hover:bg-green-700 w-full"
-                            >
-                                Confirmar
-                            </Button>
-                        </div>
                     </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsConfirm(false)}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={confirmSubmit} className="bg-green-600 hover:bg-green-700">
+                            Confirmar
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* MODAL DE LOADING */}
+            {/* MODAL DE CARGA */}
             <Dialog open={isLoading}>
                 <DialogContent className="sm:max-w-[420px]">
                     <DialogHeader>
-                        <DialogTitle className="text-center">Procesando actualización</DialogTitle>
+                        <DialogTitle className="text-center">Procesando</DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col items-center justify-center py-12">
-                        <div className="relative w-16 h-16">
-                            <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-blue-500 border-b-transparent border-l-transparent animate-spin"></div>
-                            <div className="absolute inset-2 rounded-full border-4 border-t-blue-600 border-r-transparent border-b-transparent border-l-blue-600 spin-reverse"></div>
-                        </div>
-                        <p className="mt-4 text-blue-600 font-medium">
-                            Actualizando datos...
-                        </p>
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                        <p className="mt-4 text-blue-600">Actualizando datos...</p>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -236,14 +228,14 @@ export const SueldoMinimo = () => {
             <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle className="text-center">Datos Actualizados</DialogTitle>
+                        <DialogTitle className="text-center">¡Éxito!</DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col items-center py-4">
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                             <Check className="h-8 w-8 text-green-600" />
                         </div>
                         <p className="text-gray-600 text-center">
-                            El nuevo sueldo mínimo se ha registrado correctamente.
+                            El sueldo mínimo se ha actualizado correctamente.
                         </p>
                     </div>
                 </DialogContent>
