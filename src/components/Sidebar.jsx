@@ -27,7 +27,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             children: [
                 {
                     key: 'empleados-listar',
-                    label: <Link to="/finanzas/empleados-listar">Listar Empleados</Link>,
+                    label: <Link to="/finanzas/empleados-listar">Lista Empleados</Link>,
                 },
                 {
                     key: 'empleados-crear',
@@ -35,14 +35,14 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                 },
                 {
                     key: 'empleados-cesar',
-                    label: <Link to="/finanzas/empleados-cesar">Cesar Empleado</Link>,
+                    label: <Link to="/finanzas/empleados-cesar">Cese de Empleado</Link>,
                 },
             ]
         },
         {
             key: 'sub2',
             icon: <ReconciliationOutlined />,
-            label: "Seg.Pensiones",
+            label: "Sist. Pensiones",
             children: [
                 {
                     key: 'empleados-afp',
@@ -59,9 +59,9 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             ],
         },
         {
-            key: 'descanso-medicos',
-            icon: <MedicineBoxOutlined />,
-            label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
+            key: 'sueldo-minimo',
+            icon: <EuroCircleOutlined />,
+            label: <Link to="/finanzas/sueldo-minimo">Sueldo Minimo</Link>,
         },
         {
             key: 'contrato',
@@ -84,34 +84,35 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
         },
        
-        {
-            key: 'sub3',
-            icon: <DollarOutlined />,
-            label: "Descuentos",
-            children: [
+        // {
+        //     key: 'sub3',
+        //     icon: <DollarOutlined />,
+        //     label: "Descuentos",
+        //     children: [
 
-                {
-                    key: 'historico-descuento',
-                    label: <Link to="/finanzas/historialDescuentos">Histórico</Link>,
-                },
-                {
-                    key: 'carga-descuentos',
-                    label: <Link to="/finanzas/cargarDescuentos">Cargar Datos</Link>,
-                },                
+        //         {
+        //             key: 'historico-descuento',
+        //             label: <Link to="/finanzas/historialDescuentos">Histórico</Link>,
+        //         },
+        //         {
+        //             key: 'carga-descuentos',
+        //             label: <Link to="/finanzas/cargarDescuentos">Cargar Datos</Link>,
+        //         },                
                 
-            ],
-        },
+        //     ],
+        // },
         
-        {
-            key: 'comisiones',
-            icon: <PercentageOutlined />,
-            label: <Link to="/finanzas/comisiones">Comisiones</Link>,
-        },
-        {
-            key: 'sueldo-minimo',
-            icon: <EuroCircleOutlined />,
-            label: <Link to="/finanzas/sueldo-minimo">Sueldo Minimo</Link>,
-        },
+        // {
+        //     key: 'comisiones',
+        //     icon: <PercentageOutlined />,
+        //     label: <Link to="/finanzas/comisiones">Comisiones</Link>,
+        // },
+        // {
+        //     key: 'descanso-medicos',
+        //     icon: <MedicineBoxOutlined />,
+        //     label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
+        // },
+     
         {
             key: "cerrar-sesion",
             icon: <LogoutOutlined/>,

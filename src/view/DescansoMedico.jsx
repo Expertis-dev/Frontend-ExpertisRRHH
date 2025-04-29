@@ -180,7 +180,7 @@ const DescansoMedicoTable = () => {
       const cantDias = fechaFin.diff(fechaInicio, "day") + 1;
 
       const newRecord = {
-        codMes: values.CodMes.format("YYYY-MM") + "-01",
+        // codMes: values.CodMes.format("YYYY-MM") + "-01",
         fecInicio: fechaInicio.format("YYYY-MM-DD"),
         fecFin: fechaFin.format("YYYY-MM-DD"),
         cantDias: cantDias.toString(),
@@ -259,19 +259,7 @@ const DescansoMedicoTable = () => {
         onCancel={() => setIsModalVisible(false)}
         onOk={handleAddRecord}
       >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="CodMes"
-            label="Mes de Registro"
-            rules={[{ required: true }]}
-          >
-            <DatePicker
-              format="YYYY-MM"
-              picker="month"
-              disabledDate={(current) => current < dayjs().startOf('month')}
-              style={{ width: "100%" }}
-            />
-          </Form.Item>
+        <Form form={form} layout="vertical">         
 
           <Form.Item
             name="Asesor"

@@ -215,7 +215,7 @@ export const CesarEmpleado = () => {
       >
         <UserDeleteOutlined className="text-red-500 dark:text-red-400 text-2xl" />
         <h1 className="text-xl font-bold text-red-600 dark:text-red-300">
-          CESAR EMPLEADO
+          CESE DE EMPLEADO
         </h1>
       </motion.div>
       {/* CONTENIDO DEL CESE */}
@@ -260,7 +260,7 @@ export const CesarEmpleado = () => {
               className={`${inputClass} h-10 w-40 cursor-pointer`}
               onChange={(e) => setFechaCese(e.target.value)}
               value={fecCese}
-              min={hoy}
+             
             />
           </motion.div>
         </div>

@@ -455,7 +455,7 @@ export const InfoAFP = () => {
 
       {/* Modal de VERIFICAR , DONDE SE MOSTRARAN LA TABLA */}
       <Dialog open={showVerificar} onOpenChange={setShowVerificar}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-max ">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
               DATOS OBTENIDOS
@@ -466,14 +466,14 @@ export const InfoAFP = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cod. Mes</TableHead>
+                  <TableHead>MES</TableHead>
                   <TableHead>AFP</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Aportación (%)</TableHead>
-                  <TableHead>Comisión (%)</TableHead>
-                  <TableHead>Seguro (%)</TableHead>
-                  <TableHead>Seguro Tope</TableHead>
-                  <TableHead>Columna 1</TableHead>
+                  <TableHead>TIPO</TableHead>
+                  <TableHead>APORTACIÓN (%)</TableHead>
+                  <TableHead>COMISIÓN (%)</TableHead>
+                  <TableHead>SEGURO (%)</TableHead>
+                  <TableHead>SEGURO TOPE</TableHead>
+                  <TableHead>TOTAL</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

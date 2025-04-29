@@ -12,7 +12,7 @@ export const AFPempleado = () => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/afp/listarEmpleadosAFP`)
     if (response.status === 200) {
       const datos = response.data.sort((a, b) =>
-        a.ALIAS_EMPLEADO.localeCompare(b.ALIAS_EMPLEADO)
+        a.nombreCompleto.localeCompare(b.nombreCompleto)
       )
       setEmpleados(datos)
       setFilteredEmpleados(datos)
@@ -29,7 +29,7 @@ export const AFPempleado = () => {
       const query = searchQuery.toLowerCase()
       const filtered = empleados.filter(emp =>
         emp.documento.includes(searchQuery) ||
-        emp.ALIAS_EMPLEADO.includes(searchQuery.toUpperCase())
+        emp.nombreCompleto.includes(searchQuery.toUpperCase())
       )
       setFilteredEmpleados(filtered)
     }
@@ -42,7 +42,7 @@ export const AFPempleado = () => {
 
   return (
     <div className="w-full px-4">
-      <h1 className="text-center text-xl font-bold text-gray-800">SP EMPLEADOS</h1>
+      <h1 className="text-center text-xl font-bold text-gray-800">SISTEMA DE PENSIONES EMPLEADOS</h1>
 
       {/* Barra de búsqueda */}
       <div className="py-4 w-full md:w-1/3">
@@ -54,7 +54,7 @@ export const AFPempleado = () => {
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                placeholder="Ingrese DNI"
+                placeholder="Ingrese DNI o nombre"
               />
             </div>
           </div>
@@ -68,9 +68,9 @@ export const AFPempleado = () => {
             <TableHeader className="sticky top-0 z-10">
               <TableRow>
                 <TableHead>DNI</TableHead>
-                <TableHead>ALIAS EMPLEADO</TableHead>
+                <TableHead>EMPLEADO</TableHead>
                 <TableHead>AFP</TableHead>
-                <TableHead>TIPO COMISION</TableHead>
+                <TableHead>TIPO COMISIÓN</TableHead>
                 <TableHead>MES INICIO</TableHead>
                 <TableHead>MES FIN</TableHead>
               </TableRow>
@@ -79,7 +79,7 @@ export const AFPempleado = () => {
               {filteredEmpleados.map((empleado, index) => (
                 <TableRow key={index} className="border-t hover:bg-blue-50 transition-colors">
                   <TableCell>{empleado.documento}</TableCell>
-                  <TableCell className="">{empleado.ALIAS_EMPLEADO}</TableCell>
+                  <TableCell className="">{empleado.nombreCompleto}</TableCell>
                   <TableCell>{empleado.SISTEMA_DE_PENSION}</TableCell>
                   <TableCell>{empleado.tipoComision}</TableCell>
                   <TableCell>{empleado.mesInicio.split("T")[0]}</TableCell>

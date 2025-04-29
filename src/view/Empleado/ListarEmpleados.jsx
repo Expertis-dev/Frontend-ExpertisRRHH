@@ -1276,7 +1276,7 @@ export const ListarEmpleados = () => {
   return (
     <div className="w-full px-4">
       <h1 className="text-center text-2xl font-bold text-gray-800">
-        MÓDULO DE EMPLEADOS
+        LISTA DE EMPLEADOS
       </h1>
 
       <div className="py-8 w-full md:w-1/3">
@@ -1463,7 +1463,7 @@ export const ListarEmpleados = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                      DETALLE DE LOS PUESTOS DE TRABAJO
+                      HISTÓRICO DE PUESTOS DE TRABAJO
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1502,7 +1502,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                      DETALLE DE LOS AFP
+                    HISTÓRICO DE SISTEMA DE PENSIÓN
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1540,7 +1540,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                      DETALLE DE LOS SUELDOS
+                    HISTÓRICO DE SUELDOS
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1578,7 +1578,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                      DETALLE DE LA ASIGNACION FAMILIAR
+                    HISTÓRICO DE ASIGNACIÓN FAMILIAR
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1617,7 +1617,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                      DETALLE DE LOS CESES
+                    HISTÓRICO DE CESES
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
