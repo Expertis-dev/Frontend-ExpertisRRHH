@@ -29,6 +29,7 @@ export const InfoAFP = () => {
   const [file, setFile] = useState(null)
   const [showVerificar, setShowVerificar] = useState(false)
   const [error, setError] = useState("")
+  const [ultimoMesInicio, setUltimoMesInicio] = useState("")
   const [newONP, setNewONP] = useState({
     aportacion: "",
     codMesInicio: ""
@@ -68,7 +69,9 @@ export const InfoAFP = () => {
         },
       });
       if (response.status === 200) {
-         setCambiosEncontrados(response.data.cambios)
+        console.log(response.data.detalles)
+        setUltimoMesInicio(response.data.ultimoMesInicio)
+        setCambiosEncontrados(response.data.detalles)
       }
     } catch (error) {
       console.error("Error al obtener datos de AFP:", error)
@@ -469,24 +472,34 @@ export const InfoAFP = () => {
                   <TableHead>MES</TableHead>
                   <TableHead>AFP</TableHead>
                   <TableHead>TIPO</TableHead>
-                  <TableHead>APORTACIÓN (%)</TableHead>
-                  <TableHead>COMISIÓN (%)</TableHead>
-                  <TableHead>SEGURO (%)</TableHead>
-                  <TableHead>SEGURO TOPE</TableHead>
-                  <TableHead>TOTAL</TableHead>
+                  <TableHead>APORTACIÓN (%) ANTERIOR</TableHead>
+                  <TableHead>APORTACIÓN (%) ACTUAL</TableHead>
+                  <TableHead>COMISIÓN (%) ANTERIOR</TableHead>
+                  <TableHead>COMISIÓN (%) ACTUAL</TableHead>
+                  <TableHead>SEGURO (%) ANTERIOR</TableHead>
+                  <TableHead>SEGURO (%) ACTUAL</TableHead>
+                  <TableHead>SEGURO TOPE ANTERIOR</TableHead>
+                  <TableHead>SEGURO TOPE ACTUAL</TableHead>
+                  <TableHead>TOTAL ANTERIOR</TableHead>
+                  <TableHead>TOTAL ACTUAL</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cambiosEncontrados.map((cambios, index) => (
+                {cambiosEncontrados.map((data, index) => (
                   <TableRow key={index}>
-                    <TableCell>{cambios.COD_MES}</TableCell>
-                    <TableCell>{cambios.AFP}</TableCell>
-                    <TableCell>{cambios.TIPO}</TableCell>
-                    <TableCell>{cambios.APORTACION}</TableCell>
-                    <TableCell>{cambios.COMISION}</TableCell>
-                    <TableCell>{cambios.SEGURO}</TableCell>
-                    <TableCell>{cambios.SEGURO_TOPE}</TableCell>
-                    <TableCell>{cambios["COLIMNNA 1"]}</TableCell>
+                    <TableCell>{ultimoMesInicio.split("T")[0]} </TableCell>
+                    <TableCell>{data.sistema}</TableCell>
+                    <TableCell>{data.tipo}</TableCell>
+                    <TableCell>{data.cambios?.aportacion?.anterior ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.aportacion?.actual ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.comision?.anterior ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.comision?.actual ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.seguro?.anterior ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.seguro?.actual ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.seguroTope?.anterior ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.seguroTope?.actual ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.total?.anterior ?? '-'}</TableCell>
+                    <TableCell>{data.cambios?.total?.actual ?? '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
