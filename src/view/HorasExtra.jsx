@@ -1,14 +1,17 @@
 "use client"
-
+import { AutoComplete, Modal } from 'antd';
 import { useState, useEffect } from "react"
+import axios from 'axios';
 import { X, Check, Loader2, Search, Plus } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 export const HorasExtra = () => {
+  const [empleados, setEmpleados] = useState([]);
+  const [empleadosFiltrados, setEmpleadosFiltrados] = useState([]);
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
@@ -16,9 +19,10 @@ export const HorasExtra = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [formIsValid, setFormIsValid] = useState(false)
   const [filteredData, setFilteredData] = useState([])
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
-    dni: "",
+    nombreCompleto: "",
     fecha: "",
     horaInicio: "",
     horaFin: "",
@@ -27,38 +31,48 @@ export const HorasExtra = () => {
   // Datos de ejemplo para la tabla
   const [overtimeData, setOvertimeData] = useState([
     {
-      dni: "72522562",
+      nombreCompleto: "Juan Pérez",
       fecha: "21/05/2024",
       horaInicio: "17:00",
       cantidadHoras: "2",
       horaFin: "19:00",
-      codEmpleado: "72413508-2020-10",
+      codEmpleado: "EMP-001",
     },
     {
-      dni: "72522562",
+      nombreCompleto: "María García",
       fecha: "22/05/2024",
       horaInicio: "18:00",
       cantidadHoras: "3",
       horaFin: "21:00",
-      codEmpleado: "72413508-2020-10",
-    },
-    {
-      dni: "72522563",
-      fecha: "21/05/2024",
-      horaInicio: "16:00",
-      cantidadHoras: "1",
-      horaFin: "17:00",
-      codEmpleado: "72413508-2020-11",
-    },
-    {
-      dni: "72522564",
-      fecha: "23/05/2024",
-      horaInicio: "19:00",
-      cantidadHoras: "4",
-      horaFin: "23:00",
-      codEmpleado: "72413508-2020-12",
-    },
+      codEmpleado: "EMP-002",
+    }
   ])
+
+  // Obtener empleados desde el API
+  const ObtenerEmpleados = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
+      if (response.status === 200) {
+        const empleadosActivos = response.data.recordset
+          .filter(empleado => empleado.estadoLaboral === "VIGENTE")
+          .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto));
+
+        setEmpleados(empleadosActivos);
+        setEmpleadosFiltrados(empleadosActivos.map(emp => ({
+          value: emp.nombreCompleto,
+          label: emp.nombreCompleto,
+          ...emp // Incluir todos los datos del empleado
+        })));
+      }
+    } catch (err) {
+      console.error("Error al obtener empleados:", err);
+      setError("No se pudieron cargar los empleados");
+    }
+  };
+
+  useEffect(() => {
+    ObtenerEmpleados();
+  }, []);
 
   // Inicializar datos filtrados
   useEffect(() => {
@@ -71,8 +85,8 @@ export const HorasExtra = () => {
       setFilteredData(overtimeData)
     } else {
       const results = overtimeData.filter(item =>
-        item.dni.includes(searchQuery) ||
-        item.codEmpleado.includes(searchQuery)
+        item.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.codEmpleado.toLowerCase().includes(searchQuery.toLowerCase())
       )
       setFilteredData(results)
     }
@@ -80,9 +94,9 @@ export const HorasExtra = () => {
 
   // Validar formulario cuando cambian los datos
   useEffect(() => {
-    const { dni, fecha, horaInicio, horaFin } = formData
+    const { nombreCompleto, fecha, horaInicio, horaFin } = formData
     setFormIsValid(
-      dni.length === 8 &&
+      nombreCompleto !== "" &&
       fecha !== "" &&
       horaInicio !== "" &&
       horaFin !== "" &&
@@ -91,10 +105,7 @@ export const HorasExtra = () => {
   }, [formData])
 
   const handleSearchChange = (e) => {
-    const value = e.target.value
-    if (/^\d*$/.test(value) && value.length <= 8) {
-      setSearchQuery(value)
-    }
+    setSearchQuery(e.target.value)
   }
 
   const handleInputChange = (e) => {
@@ -103,11 +114,16 @@ export const HorasExtra = () => {
   }
 
   const handleAddClick = () => {
+    setFormData({
+      nombreCompleto: "",
+      fecha: "",
+      horaInicio: "",
+      horaFin: "",
+    });
     setIsAddModalOpen(true)
   }
 
-  const handleAddSubmit = (e) => {
-    e.preventDefault()
+  const handleAddSubmit = () => {
     setIsAddModalOpen(false)
     setIsConfirmModalOpen(true)
   }
@@ -132,14 +148,18 @@ export const HorasExtra = () => {
         year: 'numeric'
       })
 
+      // Buscar empleado seleccionado para obtener su código
+      const empleado = empleados.find(e => e.nombreCompleto === formData.nombreCompleto);
+      const codEmpleado = empleado ? empleado.codEmpleado : `EMP-${Math.floor(Math.random() * 1000)}`;
+
       // Agregar nuevo registro
       const newRecord = {
-        dni: formData.dni,
+        nombreCompleto: formData.nombreCompleto,
         fecha: fechaFormateada,
         horaInicio: formData.horaInicio,
         cantidadHoras: diffHours.toString(),
         horaFin: formData.horaFin,
-        codEmpleado: `${formData.dni}-${new Date().getFullYear()}`,
+        codEmpleado: codEmpleado,
       }
 
       setOvertimeData([newRecord, ...overtimeData])
@@ -147,13 +167,37 @@ export const HorasExtra = () => {
 
       // Limpiar formulario
       setFormData({
-        dni: "",
+        nombreCompleto: "",
         fecha: "",
         horaInicio: "",
         horaFin: "",
       })
     }, 1500)
   }
+
+  const handleBuscarEmpleado = (value) => {
+    if (!value) {
+      setEmpleadosFiltrados(empleados.map(emp => ({
+        value: emp.nombreCompleto,
+        label: emp.nombreCompleto,
+        ...emp
+      })));
+      return;
+    }
+
+    const filtrados = empleados
+      .filter(empleado =>
+        empleado.nombreCompleto &&
+        empleado.nombreCompleto.toLowerCase().includes(value.toLowerCase())
+      )
+      .map(empleado => ({
+        label: empleado.nombreCompleto,
+        value: empleado.nombreCompleto,
+        ...empleado
+      }));
+
+    setEmpleadosFiltrados(filtrados);
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
@@ -166,30 +210,27 @@ export const HorasExtra = () => {
         GESTIÓN DE HORAS EXTRA
       </motion.h1>
 
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-        {/* Campo de búsqueda */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="relative w-full md:w-auto"
-        >
+        <motion.div whileHover={{ scale: 1.02 }} className="relative w-full md:w-auto">
           <div className="relative flex items-center">
             <Input
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Buscar por DNI o Código"
+              placeholder="Buscar por nombre o código"
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              maxLength={8}
             />
             <Search className="absolute left-3 h-4 w-4 text-gray-400" />
           </div>
         </motion.div>
 
-        {/* Botón Agregar */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             onClick={handleAddClick}
             className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg cursor-pointer"
@@ -210,7 +251,7 @@ export const HorasExtra = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gradient-to-r from-gray-700 to-gray-800">
             <tr>
-              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">DNI</th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">NOMBRE</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">FECHA</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">INICIO</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">HORAS</th>
@@ -222,13 +263,13 @@ export const HorasExtra = () => {
             {filteredData.length > 0 ? (
               filteredData.map((overtime, index) => (
                 <motion.tr
-                  key={`${overtime.dni}-${overtime.fecha}-${index}`}
+                  key={`${overtime.codEmpleado}-${index}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   className={index % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100"}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-medium text-gray-900">{overtime.dni}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-medium text-gray-900">{overtime.nombreCompleto}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">{overtime.fecha}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-blue-600 font-medium">{overtime.horaInicio}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
@@ -251,229 +292,184 @@ export const HorasExtra = () => {
         </table>
       </motion.div>
 
-      {/* Modal para agregar nueva hora extra */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-lg">
+      {/* Modal para agregar nueva hora extra - Usando Modal de Ant Design */}
+      <Modal
+        title="REGISTRAR HORAS EXTRA"
+        open={isAddModalOpen}
+        onCancel={() => setIsAddModalOpen(false)}
+        onOk={handleAddSubmit}
+        okButtonProps={{ disabled: !formIsValid }}
+        okText="Continuar"
+        cancelText="Cancelar"
+        width={600}
+      >
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label htmlFor="empleado" className="block text-sm font-medium text-gray-700">
+              Empleado
+            </label>
+            <AutoComplete
+              style={{ width: '100%' }}
+              options={empleadosFiltrados}
+              value={formData.nombreCompleto}
+              onSelect={(value, option) => {
+                setFormData(prev => ({ ...prev, nombreCompleto: value }));
+                setEmpleadoSeleccionado(option);
+              }}
+              onChange={(value) => {
+                setFormData(prev => ({ ...prev, nombreCompleto: value }));
+              }}
+              onSearch={handleBuscarEmpleado}
+              placeholder="Seleccione un empleado"
+              filterOption={(inputValue, option) =>
+                option.value.toLowerCase().includes(inputValue.toLowerCase())
+              }
+            />
+          </div>
 
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl font-bold text-gray-800">
-              REGISTRAR HORAS EXTRA
-            </DialogTitle>
-          </DialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="fecha" className="block text-sm font-medium text-gray-700">
+              Fecha
+            </label>
+            <Input
+              id="fecha"
+              name="fecha"
+              type="date"
+              value={formData.fecha}
+              onChange={handleInputChange}
+              className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+              required
+            />
+          </div>
 
-          <form onSubmit={handleAddSubmit}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label htmlFor="dni" className="block text-sm font-medium text-gray-700">
-                  DNI del Empleado
-                </label>
-                <Input
-                  id="dni"
-                  name="dni"
-                  value={formData.dni}
-                  onChange={handleInputChange}
-                  placeholder="Ingrese 8 dígitos"
-                  maxLength={8}
-                  className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="fecha" className="block text-sm font-medium text-gray-700">
-                  Fecha
-                </label>
-                <Input
-                  id="fecha"
-                  name="fecha"
-                  type="date"
-                  value={formData.fecha}
-                  onChange={handleInputChange}
-                  className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="horaInicio" className="block text-sm font-medium text-gray-700">
-                    Hora Inicio
-                  </label>
-                  <Input
-                    id="horaInicio"
-                    name="horaInicio"
-                    type="time"
-                    value={formData.horaInicio}
-                    onChange={handleInputChange}
-                    className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="horaFin" className="block text-sm font-medium text-gray-700">
-                    Hora Fin
-                  </label>
-                  <Input
-                    id="horaFin"
-                    name="horaFin"
-                    type="time"
-                    value={formData.horaFin}
-                    onChange={handleInputChange}
-                    className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {formData.horaInicio && formData.horaFin && new Date(`2000-01-01T${formData.horaFin}`) <= new Date(`2000-01-01T${formData.horaInicio}`) && (
-                <Alert variant="destructive" className="text-sm flex text-center">
-                  La hora de fin debe ser mayor a la hora de inicio
-                </Alert>
-              )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="horaInicio" className="block text-sm font-medium text-gray-700">
+                Hora Inicio
+              </label>
+              <Input
+                id="horaInicio"
+                name="horaInicio"
+                type="time"
+                value={formData.horaInicio}
+                onChange={handleInputChange}
+                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                required
+              />
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddModalOpen(false)}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={!formIsValid}
-                className={`bg-blue-600 hover:bg-blue-700 text-white transition-all  ${formIsValid ? 'shadow-md cursor-pointer' : ' cursor-not-allowed '}`}
-              >
-                Continuar
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            <div className="space-y-2">
+              <label htmlFor="horaFin" className="block text-sm font-medium text-gray-700">
+                Hora Fin
+              </label>
+              <Input
+                id="horaFin"
+                name="horaFin"
+                type="time"
+                value={formData.horaFin}
+                onChange={handleInputChange}
+                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                required
+              />
+            </div>
+          </div>
 
-      {/* Modal de confirmación */}
-      <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-lg">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          >
-            <DialogHeader>
-              <DialogTitle className="text-center text-xl font-bold text-gray-800">
-                Confirmar Registro
-              </DialogTitle>
-            </DialogHeader>
+          {formData.horaInicio && formData.horaFin && new Date(`2000-01-01T${formData.horaFin}`) <= new Date(`2000-01-01T${formData.horaInicio}`) && (
+            <Alert variant="destructive" className="text-sm flex text-center">
+              La hora de fin debe ser mayor a la hora de inicio
+            </Alert>
+          )}
+        </div>
+      </Modal>
 
-            <div className="py-4 space-y-4">
-              <p className="text-center text-gray-600">
-                ¿Está seguro de registrar las siguientes horas extra?
-              </p>
+      {/* Modal de confirmación - Usando Modal de Ant Design */}
+      <Modal
+        title="Confirmar Registro"
+        open={isConfirmModalOpen}
+        onCancel={() => setIsConfirmModalOpen(false)}
+        onOk={handleConfirmSubmit}
+        okText="Confirmar Registro"
+        cancelText="Volver"
+        okButtonProps={{ className: "bg-green-600 hover:bg-green-700 text-white" }}
+        width={600}
+      >
+        <div className="py-4 space-y-4">
+          <p className="text-center text-gray-600">
+            ¿Está seguro de registrar las siguientes horas extra?
+          </p>
 
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">DNI:</span>
-                    <span className="font-semibold">{formData.dni}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">Fecha:</span>
-                    <span>{new Date(formData.fecha).toLocaleDateString('es-ES')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">Horario:</span>
-                    <span>
-                      {formData.horaInicio} - {formData.horaFin}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">Total Horas:</span>
-                    <span className="font-semibold text-blue-600">
-                      {Math.round(
-                        (new Date(`2000-01-01T${formData.horaFin}`) -
-                          new Date(`2000-01-01T${formData.horaInicio}`)
-                        )) / (1000 * 60 * 60)} horas
-                    </span>
-                  </div>
-                </div>
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Empleado:</span>
+                <span className="font-semibold">{formData.nombreCompleto}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Fecha:</span>
+                <span>{formData.fecha ? new Date(formData.fecha).toLocaleDateString('es-ES') : ''}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Horario:</span>
+                <span>
+                  {formData.horaInicio} - {formData.horaFin}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Total Horas:</span>
+                <span className="font-semibold text-blue-600">
+                  {formData.horaInicio && formData.horaFin ?
+                    Math.round(
+                      (new Date(`2000-01-01T${formData.horaFin}`) -
+                        new Date(`2000-01-01T${formData.horaInicio}`)
+                      ) / (1000 * 60 * 60)) : 0} horas
+                </span>
               </div>
             </div>
-
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsConfirmModalOpen(false)}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-              >
-                Volver
-              </Button>
-              <Button
-                type="button"
-                onClick={handleConfirmSubmit}
-                className="bg-green-600 hover:bg-green-700 text-white shadow-md cursor-pointer"
-              >
-                Confirmar Registro
-              </Button>
-            </DialogFooter>
-          </motion.div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de carga */}
-      <Dialog open={isLoadingModalOpen} onOpenChange={setIsLoadingModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-lg" showClose={false}>
+          </div>
+        </div>
+      </Modal>
+      {/* Modal de carga - Usando Modal de Ant Design */}
+      <Modal
+        open={isLoadingModalOpen}
+        onCancel={() => setIsLoadingModalOpen(false)}
+        footer={null}
+        closable={false}
+        width={400}
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="py-8 flex flex-col items-center justify-center space-y-4"
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="py-8 flex flex-col items-center justify-center space-y-4"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-            >
-              <Loader2 className="h-10 w-10 text-blue-600" />
-            </motion.div>
-            <p className="text-center text-gray-600 font-medium">Procesando registro...</p>
-            <p className="text-center text-sm text-gray-500">Por favor espere un momento</p>
+            <Loader2 className="h-10 w-10 text-blue-600" />
           </motion.div>
-        </DialogContent>
-      </Dialog>
+          <p className="text-center text-gray-600 font-medium">Procesando registro...</p>
+          <p className="text-center text-sm text-gray-500">Por favor espere un momento</p>
+        </motion.div>
+      </Modal>
 
-      {/* Modal de éxito */}
-      <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-lg">
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          >
-            <DialogHeader>
-              <DialogTitle className="text-center text-xl font-bold text-gray-800">
-                ¡Registro Exitoso!
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="py-4">
-              <Alert className="bg-green-50 border-green-200 flex items-center">
-                <Check className="h-5 w-5 text-green-600 mr-2" />
-                <AlertDescription className="text-green-700 font-medium">
-                  Las horas extra se registraron correctamente.
-                </AlertDescription>
-              </Alert>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                onClick={() => setIsSuccessModalOpen(false)}
-                className="bg-green-600 hover:bg-green-700 text-white w-full shadow-md"
-              >
-                Aceptar
-              </Button>
-            </DialogFooter>
-          </motion.div>
-        </DialogContent>
-      </Dialog>
+      {/* Modal de éxito - Usando Modal de Ant Design */}
+      <Modal
+        title="¡Registro Exitoso!"
+        open={isSuccessModalOpen}
+        onOk={() => setIsSuccessModalOpen(false)}
+        okText="Aceptar"
+        okButtonProps={{ className: "bg-green-600 hover:bg-green-700 text-white" }}
+        width={500}
+      >
+        <div className="py-4">
+          <Alert className="bg-green-50 border-green-200 flex items-center">
+            <Check className="h-5 w-5 text-green-600 mr-2" />
+            <AlertDescription className="text-green-700 font-medium">
+              Las horas extra se registraron correctamente.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -37,6 +37,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     key: 'empleados-cesar',
                     label: <Link to="/finanzas/empleados-cesar">Cese de Empleado</Link>,
                 },
+                
+                {
+                    key: 'cambiar-fecha-cese',
+                    label: <Link to="/finanzas/cambiar-fecha-cese">Cambiar Fec. Cese</Link>,
+                },
             ]
         },
         {

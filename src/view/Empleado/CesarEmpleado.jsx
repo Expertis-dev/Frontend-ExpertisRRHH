@@ -16,9 +16,11 @@ import {
 import { Check, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom"
+import { useData } from "@/provider/Provider";
 const { Option } = Select;
 
 export const CesarEmpleado = () => {
+  const { nombre } = useData()
   const hoy = new Date().toISOString().split("T")[0];
   const [idEmpleado, setIdEmpleado] = useState(0)
   const [messageApi, contextHolder] = message.useMessage();
@@ -100,7 +102,8 @@ export const CesarEmpleado = () => {
         idEmpleado,
         fecCese,
         motivo,
-        detalle
+        detalle,
+        usuario: nombre
       };
       console.log("Enviando:", cuerpo);
 
@@ -108,7 +111,10 @@ export const CesarEmpleado = () => {
       console.log("Respuesta:", response);
 
       if (response.status === 200) {
-        setIsSuccess(true);
+        const response_02 = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/vacaciones-truncas`, cuerpo);
+        if (response_02.status === 200) {
+          setIsSuccess(true);
+        }
       }
     } catch (error) {
       console.error("Error al cesar empleado:", error);
@@ -260,7 +266,7 @@ export const CesarEmpleado = () => {
               className={`${inputClass} h-10 w-40 cursor-pointer`}
               onChange={(e) => setFechaCese(e.target.value)}
               value={fecCese}
-             
+
             />
           </motion.div>
         </div>

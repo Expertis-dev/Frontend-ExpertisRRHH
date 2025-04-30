@@ -22,11 +22,11 @@ export const CambiosAFP = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:4000/api/afp/comparar",
+        `${import.meta.env.VITE_BACKEND_URL}/api/afp/comparar`,
         formData
       );
 
-      const data = res.data.cambios;
+      const data = res.data;
       console.log(data);
 
       if (!data || data.length === 0) {
@@ -72,9 +72,9 @@ export const CambiosAFP = () => {
 
   const columns = [
     {
-      title: "ID Empleado",
-      dataIndex: "idEmpleado",
-      key: "idEmpleado",
+      title: "Documento",
+      dataIndex: "documento",
+      key: "documento",
     },
     {
       title: "Nombre Completo",
@@ -82,9 +82,24 @@ export const CambiosAFP = () => {
       key: "nombreCompleto",
     },
     {
-      title: "Tipo AFP",
-      dataIndex: "tipoAFP",
-      key: "tipoAFP",
+      title: "SP Actual",
+      dataIndex: "afpAnterior",
+      key: "afpAnterior",
+    },
+    {
+      title: "Tipo Comisión actual",
+      dataIndex: "tipoComisionAnterior",
+      key: "tipoComisionAnterior",
+    },
+    {
+      title: "SP nuevo",
+      dataIndex: "afpNueva",
+      key: "afpNueva",
+    },
+    {
+      title: "Tipo Comisión nuevo",
+      dataIndex: "tipoComisionNuevo",
+      key: "tipoComisionNuevo",
     },
   ];
 

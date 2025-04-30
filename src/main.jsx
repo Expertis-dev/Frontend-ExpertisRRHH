@@ -22,6 +22,7 @@ import Descuentos from "./view/Descuentos/Descuentos";
 import HistorialDescuentos from "./view/Descuentos/HistorialDescuentos";
 import { DataProvider } from './provider/Provider';
 import { SueldoMinimo } from './view/SueldoMinimo';
+import { CambiarFecCese } from "./view/Empleado/CambiarFecCese";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -44,6 +45,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="cargarDescuentos" element={<Descuentos />} />
           <Route path="historialDescuentos" element={<HistorialDescuentos />} />
           <Route path="sueldo-minimo" element={<SueldoMinimo/>} />          
+          <Route path="cambiar-fecha-cese" element={<CambiarFecCese/> } />
         </Route>
       </Routes>
     </DataProvider>

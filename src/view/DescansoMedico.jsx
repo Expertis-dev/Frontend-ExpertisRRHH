@@ -104,13 +104,13 @@ const DescansoMedicoTable = () => {
       console.log("Datos enviados para eliminar:", cuerpo);
 
       await axios.post(
-        "https://p9zzp66h-4000.brs.devtunnels.ms/api/dm/eliminarDM_Empleados",
+        `${import.meta.env.VITE_BACKEND_URL}/api/dm/eliminarDM_Empleados`,
         cuerpo
       );
 
       // Actualizar la lista después de eliminar
       const response = await axios.get(
-        "https://p9zzp66h-4000.brs.devtunnels.ms/api/dm/listarDM_Empleados"
+        `${import.meta.env.VITE_BACKEND_URL}/api/dm/listarDM_Empleados`
       );
       const sortedData = response.data.sort((a, b) => b.codMes.localeCompare(a.codMes));
       setData(sortedData);
@@ -129,8 +129,8 @@ const DescansoMedicoTable = () => {
     const fetchData = async () => {
       try {
         const [empleadosRes, descansosRes] = await Promise.all([
-          axios.get("https://p9zzp66h-4000.brs.devtunnels.ms/api/empleados/listarEmpleados"),
-          axios.get("https://p9zzp66h-4000.brs.devtunnels.ms/api/dm/listarDM_Empleados")
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`),
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/dm/listarDM_Empleados`)
         ]);
 
         setEmpleados(empleadosRes.data.recordset.filter(empleado => empleado.estadoLaboral === "VIGENTE"));
@@ -202,11 +202,11 @@ const DescansoMedicoTable = () => {
     setIsLoading(true);
     console.log(dataEnviar)
     try {
-      const response = await axios.post("https://p9zzp66h-4000.brs.devtunnels.ms/api/dm/registarDM_Empleados", dataEnviar);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/dm/registarDM_Empleados`, dataEnviar);
       if (response.status === 200) {
         // Actualizar la lista después de éxito
         const updatedResponse = await axios.get(
-          "https://p9zzp66h-4000.brs.devtunnels.ms/api/dm/listarDM_Empleados"
+          `${import.meta.env.VITE_BACKEND_URL}/api/dm/listarDM_Empleados`
         );
         const sortedData = updatedResponse.data.sort((a, b) => b.codMes.localeCompare(a.codMes));
         setData(sortedData);

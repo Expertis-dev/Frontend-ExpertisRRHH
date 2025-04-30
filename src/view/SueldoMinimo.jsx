@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Check, AlertTriangle, AlertCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import {
@@ -30,7 +30,7 @@ export const SueldoMinimo = () => {
     const { nombre } = useData()
     const ObtenerSueldos = async () => {
         try {
-            const response = await axios.get("https://p9zzp66h-4000.brs.devtunnels.ms/api/sueldosminimos/listarHistoricoSueldosminimos")
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/sueldosminimos/listarHistoricoSueldosminimos`)
             if (response.status === 200) {
                 setData(response.data.sort((a, b) => new Date(b.mesInicio) - new Date(a.mesInicio)))
             }
@@ -81,8 +81,7 @@ export const SueldoMinimo = () => {
                 usuario: nombre
             }
             console.log(cuerpo)
-            const response = await axios.post(
-                "https://p9zzp66h-4000.brs.devtunnels.ms/api/sueldosminimos/registarNuevoSueldoMinimo", cuerpo);
+            const response = await axios.post(` ${import.meta.env.VITE_BACKEND_URL}/api/sueldosminimos/registarNuevoSueldoMinimo `, cuerpo);
             if (response.status === 200) {
                 await ObtenerSueldos();
                 setIsSuccess(true);
