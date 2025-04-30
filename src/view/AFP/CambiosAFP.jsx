@@ -106,7 +106,7 @@ export const CambiosAFP = () => {
   return (
     <div className="flex flex-col justify-between items-center p-4 bg-gray-100 border-b border-gray-300">
       {contextHolder}
-      <Title level={4}>Cambios en ASP / Ficha de Empleados</Title>
+      <Title level={4}>Cambios en SP / Ficha de Empleados</Title>
       <Dragger {...props}>
         <p className="ant-upload-drag-icon">
           <InboxOutlined />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { X, Check, Loader2, Search } from "lucide-react"
+import { PlusCircleOutlined } from "@ant-design/icons";
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -194,7 +195,7 @@ export const RetencionJudicial = () => {
           onClick={handleAddClick}
           className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
         >
-          + Agregar Retención
+          <PlusCircleOutlined />  Agregar Retención
         </Button>
       </div>
 

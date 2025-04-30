@@ -2,7 +2,8 @@
 import { AutoComplete, Modal } from 'antd';
 import { useState, useEffect } from "react"
 import axios from 'axios';
-import { X, Check, Loader2, Search, Plus } from "lucide-react"
+import { PlusCircleOutlined } from "@ant-design/icons";
+import { Check, Loader2, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -235,7 +236,7 @@ export const HorasExtra = () => {
             onClick={handleAddClick}
             className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg cursor-pointer"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusCircleOutlined className="h-4 w-4 mr-2" />
             Agregar Horas Extra
           </Button>
         </motion.div>
