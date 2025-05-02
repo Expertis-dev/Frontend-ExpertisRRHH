@@ -65,16 +65,12 @@ const Descuentos = () => {
       columnasEsperadas.forEach((col) => {
         const valor = row[col.key];
         if (col.tipo === 'number') {
-          if (valor === undefined || valor === null || valor === '') {
-            esValido = false;
-          } else if (isNaN(Number(valor))) {
+          if (valor === undefined || valor === null || valor === ''  || isNaN(Number(valor))) {
             esValido = false;
           }
         }
         if (col.tipo === 'string') {
-          if (valor === undefined || valor === null || valor === '') {
-            esValido = false;
-          } else if (typeof valor !== 'string' && typeof valor !== 'number') {
+          if (valor === undefined || valor === null || valor === ''|| (typeof valor !== 'string' && typeof valor !== 'number') ) {
             esValido = false;
           }
         }

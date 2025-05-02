@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from 'prop-types';
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/es"; // Locale en español
@@ -51,4 +52,17 @@ export const DatePickerFirstDay = ({ handleDateChange, mesInicio }) => {
       )}
     </div>
   );
+};
+
+DatePickerFirstDay.propTypes = {
+  mesInicio: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.instanceOf(Date),
+    PropTypes.object
+  ]),
+  handleDateChange: PropTypes.func.isRequired,
+};
+
+DatePickerFirstDay.defaultProps = {
+  mesInicio: null,
 };

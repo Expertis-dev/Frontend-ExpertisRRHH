@@ -3,7 +3,7 @@ import { Search, Eye, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -15,13 +15,6 @@ export const Empleado = () => {
   const [editOpen, setEditOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [isValid, setIsValid] = useState(false)
-  // Campos a editar
-  const [fieldsToEdit, setFieldsToEdit] = useState({
-    salary: false,
-    position: false,
-    familyAllowance: false,
-    personalData: false,
-  })
 
   // Datos de ejemplo
   const employees = Array(30)

@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { DatePickerFirstDay } from "@/components/ui/MesInputs";
 
-export const EPS = () => {
+export const Eps = () => {
   const [isModalEPS, setIsModalEPS] = useState(false);
   const [isConfirmar, setIsConfirmar] = useState(false);
   const [isSucces, setIsSucces] = useState(false);

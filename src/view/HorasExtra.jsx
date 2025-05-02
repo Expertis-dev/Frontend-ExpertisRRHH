@@ -12,7 +12,6 @@ import { motion } from "framer-motion"
 export const HorasExtra = () => {
   const [empleados, setEmpleados] = useState([]);
   const [empleadosFiltrados, setEmpleadosFiltrados] = useState([]);
-  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
@@ -151,7 +150,7 @@ export const HorasExtra = () => {
 
       // Buscar empleado seleccionado para obtener su código
       const empleado = empleados.find(e => e.nombreCompleto === formData.nombreCompleto);
-      const codEmpleado = empleado ? empleado.codEmpleado : `EMP-${Math.floor(Math.random() * 1000)}`;
+      const codEmpleado = empleado ? empleado.codEmpleado : `-----`;
 
       // Agregar nuevo registro
       const newRecord = {
@@ -188,8 +187,7 @@ export const HorasExtra = () => {
 
     const filtrados = empleados
       .filter(empleado =>
-        empleado.nombreCompleto &&
-        empleado.nombreCompleto.toLowerCase().includes(value.toLowerCase())
+        empleado.nombreCompleto?.toLowerCase().includes(value.toLowerCase())
       )
       .map(empleado => ({
         label: empleado.nombreCompleto,
@@ -315,7 +313,7 @@ export const HorasExtra = () => {
               value={formData.nombreCompleto}
               onSelect={(value, option) => {
                 setFormData(prev => ({ ...prev, nombreCompleto: value }));
-                setEmpleadoSeleccionado(option);
+                
               }}
               onChange={(value) => {
                 setFormData(prev => ({ ...prev, nombreCompleto: value }));

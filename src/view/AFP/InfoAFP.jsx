@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import axios from 'axios'
 import { DatePickerFirstDay } from "@/components/ui/MesInputs"
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
-import { set } from 'date-fns';
+
 
 export const InfoAFP = () => {
   const [afpList, setAfpList] = useState([])
@@ -234,7 +234,7 @@ export const InfoAFP = () => {
 
       if (!isExcel) {
         setError("Solo se permiten archivos Excel (.xls, .xlsx)")
-        return Upload.LIST_IGNORE;
+        return false;
       }
 
       setFile(file);

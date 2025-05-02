@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Check, Loader2, Search } from "lucide-react"
+import { Check, Loader2, Search } from "lucide-react"
 import { PlusCircleOutlined } from "@ant-design/icons";
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"

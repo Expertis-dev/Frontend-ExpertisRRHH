@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Input, Modal, Select } from "antd";
+import { message, Input, Modal, Select } from "antd";
 import { PlusCircleOutlined, UserDeleteOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import { message } from "antd";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,11 +25,9 @@ export const CesarEmpleado = () => {
   const [idEmpleado, setIdEmpleado] = useState(0)
   const [messageApi, contextHolder] = message.useMessage();
   const key = "updatable";
-  const [cargo, setCargo] = useState("STAFF");
-  const [data, setData] = useState([]);
   const [empleados, setEmpleados] = useState([])
   const [usuario, setUsuario] = useState("");
-  const [fecCese, setFechaCese] = useState(hoy);
+  const [fecCese, setFecCese] = useState(hoy);
   const [modalMotivo, setModalMotivo] = useState(false);
   const [nuevoMotivo, setNuevoMotivo] = useState("");
   const [detalle, setDetalle] = useState("");
@@ -91,7 +89,7 @@ export const CesarEmpleado = () => {
   const Limpiar = () => {
     setMotivo("NO SUPERO EL PERIODO DE PRUEBA");
     setDetalle("");
-    setFechaCese(hoy);
+    setFecCese(hoy);
   };
 
   const confirmarEliminacion = async () => {
@@ -264,7 +262,7 @@ export const CesarEmpleado = () => {
             <input
               type="date"
               className={`${inputClass} h-10 w-40 cursor-pointer`}
-              onChange={(e) => setFechaCese(e.target.value)}
+              onChange={(e) => setFecCese(e.target.value)}
               value={fecCese}
 
             />

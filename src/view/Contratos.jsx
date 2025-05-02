@@ -44,8 +44,6 @@ export const Contratos = () => {
       endDate: "01/04/2024",
     },
   ]
-
-  // Inicializar datos filtrados
   useEffect(() => {
     setFilteredData(contractData)
   }, [])

@@ -106,8 +106,8 @@ export const CrearEmpleado = () => {
     // Estados del componente
     const [ubigeoData, setUbigeoData] = useState([])
     const [deps, setDeps] = useState([])
-    const [provincias, setProvs] = useState([])
-    const [distritos, setDists] = useState([])
+    const [provincias, setProvincias] = useState([])
+    const [distritos, setDistritos] = useState([])
     const [provsNacimiento, setProvsNacimiento] = useState([])
     const [distsNacimiento, setDistsNacimiento] = useState([])
     const [registro, setRegistro] = useState(true)
@@ -134,7 +134,7 @@ export const CrearEmpleado = () => {
             fields: [
                 { label: "Nombre", value: `${formData.nombre} ${formData.apellidoPaterno} ${formData.apellidoMaterno}` },
                 { label: "Documento", value: formData.documento },
-                { label: "Sexo", value: formData.sexo === "masculino" ? "Masculino" : "Femenino" },
+                { label: "Sexo", value: formData.sexo },
                 { label: "Estado Civil", value: formData.estadoCivil },
                 { label: "N° de Hijos", value: formData.nroHijos },
                 { label: "Teléfono", value: formData.telefono },
@@ -148,7 +148,7 @@ export const CrearEmpleado = () => {
                 { label: "Sueldo", value: `S/ ${formData.sueldo}` },
                 { label: "Fecha Inicio", value: formData.fecIniciGestion },
                 { label: "Tipo Comisión", value: formData.tip_comision === "0" ? "NULA" : formData.tip_comision },
-                { label: "Asignación Familiar", value: formData.asignacionfamiliar === "si" ? "SI" : "NO" },
+                { label: "Asignación Familiar", value: formData.asignacionfamiliar.toLocaleUpperCase() },
             ]
         },
         {
@@ -205,7 +205,7 @@ export const CrearEmpleado = () => {
         if (formData.dep && ubigeoData.length > 0) {
             const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.dep)
             if (deptoSeleccionado) {
-                setProvs(deptoSeleccionado.provincias.map(prov => ({ id: prov.id, name: prov.name })))
+                setProvincias(deptoSeleccionado.provincias.map(prov => ({ id: prov.id, name: prov.name })))
                 setFormData(prev => ({ ...prev, prov: "", dist: "" }))
             }
         }
@@ -217,7 +217,7 @@ export const CrearEmpleado = () => {
             if (deptoSeleccionado) {
                 const provSeleccionada = deptoSeleccionado.provincias.find(prov => prov.name === formData.prov)
                 if (provSeleccionada) {
-                    setDists(provSeleccionada.distritos.map(dist => ({ id: dist.id, name: dist.name })))
+                    setDistritos(provSeleccionada.distritos.map(dist => ({ id: dist.id, name: dist.name })))
                     setFormData(prev => ({ ...prev, dist: "" }))
                 }
             }
@@ -250,8 +250,6 @@ export const CrearEmpleado = () => {
     // Validación del formulario por pasos
     const validateStep = (step) => {
         const errors = {}
-        let isValid = true
-
         if (step === 0) {
             if (!formData.nombre.trim()) errors.nombre = "Nombre es requerido"
             if (!formData.apellidoPaterno.trim()) errors.apellidoPaterno = "Apellido paterno es requerido"
@@ -264,7 +262,7 @@ export const CrearEmpleado = () => {
                 errors.nroHijos = "Debe ser un número entre 0 y 20"
             }
             if (!formData.telefono.trim()) errors.telefono = "Teléfono es requerido"
-            if (!formData.correo.trim() || !/^\S+@\S+\.\S+$/.test(formData.correo)) errors.correo = "Correo electrónico inválido"
+            if (!isValidEmail(formData.correo)) errors.correo = "Correo electrónico inválido"
             if (!formData.fecNacimiento) errors.fecNacimiento = "Fecha de nacimiento es requerida"
             if (!formData.asignacionfamiliar) errors.asignacionfamiliar = "Asignación familiar es requerida"
         }
@@ -287,14 +285,25 @@ export const CrearEmpleado = () => {
         setFormErrors(errors)
         return Object.keys(errors).length === 0
     }
+    function isValidEmail(email) {
+        if (!email.trim()) return false;
 
-    // Manejadores de eventos
+        const atIndex = email.indexOf('@');
+        const dotIndex = email.lastIndexOf('.');
+
+        return !(
+            atIndex < 1 ||
+            dotIndex <= atIndex + 1 ||
+            dotIndex === email.length - 1
+        );
+    }
+
     const handleChange = (e) => {
         const { name, value } = e.target
 
-        // Para campos numéricos
+
         const newValue = e.target.type === 'number'
-            ? value === '' ? '' : Number(value)
+            ? Number(value)
             : value
 
         setFormData(prev => ({
@@ -321,70 +330,66 @@ export const CrearEmpleado = () => {
     // Navegación entre pasos
     const nextStep = () => validateStep(currentStep) && setCurrentStep(prev => Math.min(prev + 1, 2))
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0))
-    const AgregarNuevoCargo = ()=>{
+    const AgregarNuevoCargo = () => {
         const cargoRepetido = cargos.some(c => c.CARGO.toUpperCase() === nuevoCargo.toUpperCase())
         console.log(cargoRepetido)
-        if(cargoRepetido) {
+        if (cargoRepetido) {
             alert("El cargo ya existe")
-            return
-        }else{
+        } else {
             setCargos(prev => [...prev, { CARGO: nuevoCargo }])
             setModalCargo(false)
             setFormData(prev => ({ ...prev, cargo: nuevoCargo }))
             setNuevoCargo("")
         }
     }
-    // Envío del formulario
     const handleSubmit = async (e) => {
         try {
-        e.preventDefault()
-        setIsSubmitting(false)
-        setIsLoading(true)
+            e.preventDefault()
+            setIsSubmitting(false)
+            setIsLoading(true)
 
-        const datos = {
-            documento: formData.documento,
-            nombre: formData.nombre.toUpperCase(),
-            apellido: `${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
-            nom_completo: `${formData.nombre.toUpperCase()} ${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
-            alias: `${formData.nombre.toUpperCase().split(" ")[0]} ${formData.apellidoPaterno.toUpperCase()}`,
-            fecAlta: formData.fecIniciGestion,
-            cargo: formData.cargo.toUpperCase(),
-            correo: formData.correo,
-            fecNacimiento: formData.fecNacimiento,
-            lugarNacimiento: `${formData.depNacimiento.toUpperCase()} - ${formData.provNacimiento.toUpperCase()} - ${formData.distNacimiento.toUpperCase()}`,
-            sexo: formData.sexo.toUpperCase(),
-            estadoCivil: formData.estadoCivil.toUpperCase(),
-            nroHijos: formData.nroHijos,
-            dir: formData.dir.toUpperCase(),
-            dist: formData.dist.toUpperCase(),
-            prov: formData.prov.toUpperCase(),
-            dep: formData.dep.toUpperCase(),
-            telefono: formData.telefono,
-            modalidad: "PRESENCIAL", // Agregar este campo si es necesario
-            fecInicioGestion: formData.fecIniciGestion,
-            fecRegistro: new Date().toISOString().split("T")[0],
-            sueldo: formData.sueldo,
-            afp: formData.afp.toUpperCase(),
-            tip_comision: formData.tip_comision.toUpperCase(),
-            regimen: formData.tipoContrato.toUpperCase(),
-            asignacionfamiliar: formData.asignacionfamiliar.toUpperCase(),
-            usuario: "ADMIN"
-        }
+            const datos = {
+                documento: formData.documento,
+                nombre: formData.nombre.toUpperCase(),
+                apellido: `${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
+                nom_completo: `${formData.nombre.toUpperCase()} ${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
+                alias: `${formData.nombre.toUpperCase().split(" ")[0]} ${formData.apellidoPaterno.toUpperCase()}`,
+                fecAlta: formData.fecIniciGestion,
+                cargo: formData.cargo.toUpperCase(),
+                correo: formData.correo,
+                fecNacimiento: formData.fecNacimiento,
+                lugarNacimiento: `${formData.depNacimiento.toUpperCase()} - ${formData.provNacimiento.toUpperCase()} - ${formData.distNacimiento.toUpperCase()}`,
+                sexo: formData.sexo.toUpperCase(),
+                estadoCivil: formData.estadoCivil.toUpperCase(),
+                nroHijos: formData.nroHijos,
+                dir: formData.dir.toUpperCase(),
+                dist: formData.dist.toUpperCase(),
+                prov: formData.prov.toUpperCase(),
+                dep: formData.dep.toUpperCase(),
+                telefono: formData.telefono,
+                modalidad: "PRESENCIAL", // Agregar este campo si es necesario
+                fecInicioGestion: formData.fecIniciGestion,
+                fecRegistro: new Date().toISOString().split("T")[0],
+                sueldo: formData.sueldo,
+                afp: formData.afp.toUpperCase(),
+                tip_comision: formData.tip_comision.toUpperCase(),
+                regimen: formData.tipoContrato.toUpperCase(),
+                asignacionfamiliar: formData.asignacionfamiliar.toUpperCase(),
+                usuario: "ADMIN"
+            }
 
-        
+
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleado`, datos)
-            if(response.status === 200) {
+            if (response.status === 200) {
                 setIsLoading(false)
                 setIsSuccess(true)
-                
+
                 console.log("Empleado registrado:", response)
             }
         } catch (error) {
             console.error("Error al enviar datos:", error)
         }
     }
-
-    // Renderizado de campos del formulario
     const renderPersonalInfoFields = () => (
         <>
             <InputField
@@ -417,8 +422,8 @@ export const CrearEmpleado = () => {
                 label="SEXO*" name="sexo" value={formData.sexo}
                 onValueChange={handleSelectChange} error={formErrors.sexo}
                 options={[
-                    { value: "masculino", label: "Masculino" },
-                    { value: "femenino", label: "Femenino" },
+                    { value: "MASCULINO", label: "Masculino" },
+                    { value: "FEMENINO", label: "Femenino" },
                 ]}
             />
             <InputField
@@ -727,15 +732,13 @@ export const CrearEmpleado = () => {
             }
         } catch (error) {
             console.error("Error al verificar empleado:", error)
-            // Aquí podrías mostrar un diálogo de error
+
         }
     }
 
-    // Renderizado principal
     if (registro) {
         return (
             <>
-                {/* Diálogo para ingresar documento */}
                 <Dialog open={dialogState.documentoInput} onOpenChange={() => navegar("/finanzas/empleados-listar")}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -774,7 +777,6 @@ export const CrearEmpleado = () => {
                     </DialogContent>
                 </Dialog>
 
-                {/* Diálogo de verificación en progreso */}
                 <Dialog open={dialogState.verifying}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -787,7 +789,6 @@ export const CrearEmpleado = () => {
                     </DialogContent>
                 </Dialog>
 
-                {/* Diálogo para empleado nuevo */}
                 <Dialog open={dialogState.newEmployee}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -807,7 +808,6 @@ export const CrearEmpleado = () => {
                     </DialogContent>
                 </Dialog>
 
-                {/* Diálogo para empleado cesado */}
                 <Dialog open={dialogState.terminatedEmployee}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -830,7 +830,6 @@ export const CrearEmpleado = () => {
                     </DialogContent>
                 </Dialog>
 
-                {/* Diálogo para empleado registrado */}
                 <Dialog open={dialogState.registeredEmployee}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -866,8 +865,6 @@ export const CrearEmpleado = () => {
 
             <div className="w-full max-w-5xl mx-auto p-4">
                 <h1 className="text-center text-2xl font-bold mb-4">REGISTRO EMPLEADO</h1>
-
-                {/* Slider de progreso */}
                 <div className="mb-10">
                     <div className="relative">
                         <div className="flex justify-between mb-4">
@@ -895,11 +892,7 @@ export const CrearEmpleado = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Formulario */}
                 {renderStep()}
-
-                {/* Botones de navegación */}
                 <div className="flex justify-between mt-6">
                     {currentStep > 0 && (
                         <Button
@@ -916,10 +909,10 @@ export const CrearEmpleado = () => {
                         <Button
                             type="button"
                             className="bg-green-500 hover:bg-green-600 ml-auto cursor-pointer"
-                            onClick={ ()=>{
+                            onClick={() => {
                                 const validar = validateStep(currentStep)
                                 console.log(validar)
-                                if(validar){
+                                if (validar) {
                                     setIsSubmitting(true)
                                 }
                             }}
@@ -937,7 +930,6 @@ export const CrearEmpleado = () => {
                     )}
                 </div>
 
-                {/* Modal de confirmación */}
                 <Dialog open={isSubmitting} onOpenChange={setIsSubmitting}>
                     <DialogContent className="w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
@@ -981,7 +973,6 @@ export const CrearEmpleado = () => {
                     </DialogContent>
                 </Dialog>
 
-                {/* Modal de carga */}
                 <Dialog open={isLoading}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -994,7 +985,6 @@ export const CrearEmpleado = () => {
                     </DialogContent>
                 </Dialog>
 
-                {/* Modal de éxito */}
                 <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -1009,10 +999,10 @@ export const CrearEmpleado = () => {
                         <DialogFooter>
                             <Button
                                 className="w-full "
-                                onClick={() =>{
+                                onClick={() => {
                                     setIsSuccess(false)
                                     navegar("/finanzas/empleados-listar")
-                                } }
+                                }}
                             >
                                 Aceptar
                             </Button>

@@ -70,8 +70,8 @@ export const ListarEmpleados = () => {
   const [editarUbicacion, setEditarUbicacion] = useState(false);
   const [ubigeoData, setUbigeoData] = useState([]);
   const [deps, setDeps] = useState([]);
-  const [provincias, setProvs] = useState([]);
-  const [distritos, setDists] = useState([]);
+  const [provincias, setProvincias] = useState([]);
+  const [distritos, setDistritos] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [modalCargo, setModalCargo] = useState(false);
@@ -80,7 +80,6 @@ export const ListarEmpleados = () => {
   const [ultimoAsigFam, setUltimoAsigFam] = useState({});
   const [ultimoPuesto, setUltimoPuesto] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [isValid, setIsValid] = useState(false);
   const [empleados, setEmpleados] = useState([]);
   const [filteredEmpleados, setFilteredEmpleados] = useState([]);
   const [datosCese, setDatosCese] = useState([]);
@@ -159,7 +158,7 @@ export const ListarEmpleados = () => {
         (depto) => depto.name === formData.personalData.dep
       );
       if (deptoSeleccionado) {
-        setProvs(
+        setProvincias(
           deptoSeleccionado.provincias.map((prov) => ({
             id: prov.id,
             name: prov.name,
@@ -192,7 +191,7 @@ export const ListarEmpleados = () => {
           (prov) => prov.name === formData.personalData.prov
         );
         if (provSeleccionada) {
-          setDists(
+          setDistritos(
             provSeleccionada.distritos.map((dist) => ({
               id: dist.id,
               name: dist.name,
@@ -248,7 +247,6 @@ export const ListarEmpleados = () => {
   const handleSearchChange = (e) => {
     const inputValue = e.target.value;
     setSearchQuery(inputValue);
-    setIsValid(inputValue.trim() !== "");
   };
 
   const formatDate = (dateString) => {
@@ -560,7 +558,18 @@ export const ListarEmpleados = () => {
       })
     };
   };
-
+  const getFieldLabel = (selectedField) => {
+    switch (selectedField) {
+      case "salary":
+        return "el sueldo";
+      case "position":
+        return "el puesto";
+      case "familyAllowance":
+        return "la asignación familiar";
+      default:
+        return "los datos personales";
+    }
+  };
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
@@ -629,13 +638,7 @@ export const ListarEmpleados = () => {
           <div className="space-y-4 py-4">
             <DialogDescription className="text-center">
               Complete los datos para modificar{" "}
-              {selectedField === "salary"
-                ? "el sueldo"
-                : selectedField === "position"
-                  ? "el puesto"
-                  : selectedField === "familyAllowance"
-                    ? "la asignación familiar"
-                    : "los datos personales"}
+              {getFieldLabel(selectedField)}
             </DialogDescription>
 
             {selectedField === "salary" && (
@@ -682,9 +685,9 @@ export const ListarEmpleados = () => {
                           {parseFloat(formData.salary.amount) ===
                             ultimoSueldo.sueldoFijo
                             ? "El sueldo que quiere ingresar es el mismo al sueldo actual"
-                            : parseFloat(formData.salary.amount) < 1200
+                            : (parseFloat(formData.salary.amount) < 1200
                               ? "El monto mínimo permitido es 1200"
-                              : ""}
+                              : "")}
                         </p>
                       )}
                   </div>
@@ -787,9 +790,9 @@ export const ListarEmpleados = () => {
                   <p className="text-sm text-red-500">
                     {!formData.position.title
                       ? "Por favor seleccione un cargo"
-                      : !formData.position.cod_mes
+                      : (!formData.position.cod_mes
                         ? "Por favor seleccione una fecha"
-                        : "Complete todos los campos requeridos"}
+                        : "Complete todos los campos requeridos")}
                   </p>
                 )}
                 <Dialog
@@ -847,7 +850,7 @@ export const ListarEmpleados = () => {
                   <Label>¿Recibe asignación familiar?</Label>
                   <div className="flex gap-4">
                     {!ultimoAsigFam ? (
-                      <>
+                      <div>
                         <Button
                           variant={
                             formData.familyAllowance.hasAllowance
@@ -878,8 +881,8 @@ export const ListarEmpleados = () => {
                         >
                           No
                         </Button>
-                      </>
-                    ) : ultimoAsigFam.asignacion === "SI" ? (
+                      </div>
+                    ) : (ultimoAsigFam.asignacion === "SI" ? (
                       <div>
                         <Button
                           variant={
@@ -898,7 +901,7 @@ export const ListarEmpleados = () => {
                         </Button>
                       </div>
                     ) : (
-                      <>
+                      <div>
                         <Button
                           variant={
                             formData.familyAllowance.hasAllowance
@@ -914,8 +917,8 @@ export const ListarEmpleados = () => {
                         >
                           Sí
                         </Button>
-                      </>
-                    )}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -1338,7 +1341,7 @@ export const ListarEmpleados = () => {
                         variant="ghost"
                         size="icon"
                         className="text-green-600 hover:text-green-800 hover:bg-green-100 cursor-pointer"
-                        disabled={employee.estadoLaboral==="CESADO"}
+                        disabled={employee.estadoLaboral === "CESADO"}
                         onClick={() => openEdit(employee)}
                       >
                         <Pencil className="h-5 w-5" />
@@ -1502,7 +1505,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                    HISTÓRICO DE SISTEMA DE PENSIÓN
+                      HISTÓRICO DE SISTEMA DE PENSIÓN
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1540,7 +1543,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                    HISTÓRICO DE SUELDOS
+                      HISTÓRICO DE SUELDOS
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1578,7 +1581,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                    HISTÓRICO DE ASIGNACIÓN FAMILIAR
+                      HISTÓRICO DE ASIGNACIÓN FAMILIAR
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1617,7 +1620,7 @@ export const ListarEmpleados = () => {
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
-                    HISTÓRICO DE CESES
+                      HISTÓRICO DE CESES
                     </h3>
                     <div className="shadow-lg overflow-y-auto max-h-[40vh] overflow-x-auto">
                       <Table>
@@ -1674,9 +1677,9 @@ export const ListarEmpleados = () => {
             <DialogTitle className="text-xl font-bold text-center text-yellow-800">
               {currentStep === 1
                 ? "¿QUÉ CAMPO REQUIERE MODIFICAR?"
-                : currentStep === 2
+                : (currentStep === 2
                   ? "MODIFICAR DATOS"
-                  : "CONFIRMAR CAMBIOS"}
+                  : "CONFIRMAR CAMBIOS")}
 
             </DialogTitle>
             <div className="py-2">

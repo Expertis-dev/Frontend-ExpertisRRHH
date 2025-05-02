@@ -57,7 +57,6 @@ export const CambiosAFP = () => {
 
       if (!isExcel) {
         messageA.error("Solo se permiten archivos Excel (.xls, .xlsx)");
-        return Upload.LIST_IGNORE;
       }
 
       setFile(file);

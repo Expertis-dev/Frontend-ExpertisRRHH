@@ -1,12 +1,11 @@
-import React, { Children } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {
     TeamOutlined,
     FileTextOutlined,
     MedicineBoxOutlined,
     ClockCircleOutlined,
     BankOutlined,
-    DollarOutlined,
-    PercentageOutlined,
     ReconciliationOutlined,
     LogoutOutlined,
     EuroCircleOutlined
@@ -14,7 +13,6 @@ import {
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useData } from '@/provider/Provider';
-
 const { Sider } = Layout;
 
 export const Sidebar = ({ collapsed, onCollapse }) => {
@@ -167,4 +165,9 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             />
         </Sider>
     );
+};
+
+Sidebar.propTypes = {
+    collapsed: PropTypes.bool,
+    onCollapse: PropTypes.func,
 };

@@ -26,7 +26,6 @@ export const AFPempleado = () => {
     if (searchQuery.trim() === '') {
       setFilteredEmpleados(empleados)
     } else {
-      const query = searchQuery.toLowerCase()
       const filtered = empleados.filter(emp =>
         emp.documento.includes(searchQuery) ||
         emp.nombreCompleto.includes(searchQuery.toUpperCase())

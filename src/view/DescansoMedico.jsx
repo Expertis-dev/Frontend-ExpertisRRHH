@@ -1,4 +1,3 @@
-// DescansoMedico.jsx
 import {
   Dialog,
   DialogContent,
@@ -7,10 +6,9 @@ import {
 } from "@/components/ui/dialog";
 import { Check } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { Table, Input, Modal, Form, DatePicker } from "antd";
+import { Table, Input, Modal, Form, DatePicker,AutoComplete} from "antd";
 import { Button } from "@/components/ui/button";
 import { FileAddOutlined, DeleteOutlined } from "@ant-design/icons";
-import { AutoComplete } from "antd";
 import dayjs from "dayjs";
 import { useData } from "@/provider/Provider";
 import axios from "axios";
