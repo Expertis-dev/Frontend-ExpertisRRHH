@@ -234,12 +234,11 @@ export const InfoAFP = () => {
 
       if (!isExcel) {
         setError("Solo se permiten archivos Excel (.xls, .xlsx)")
-        return false;
+      } else {
+        setFile(file);
+        setFileList([file]);
+        setError("");
       }
-
-      setFile(file);
-      setFileList([file]);
-      setError("");
       return false; // Evita la subida automática
     },
     onRemove() {

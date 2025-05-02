@@ -52,15 +52,15 @@ export const CambiosAFP = () => {
     beforeUpload(file) {
       const isExcel =
         file.type ===
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
         file.type === "application/vnd.ms-excel";
 
       if (!isExcel) {
         messageA.error("Solo se permiten archivos Excel (.xls, .xlsx)");
+      } else {
+        setFile(file);
+        setFileList([file]); // solo un archivo
       }
-
-      setFile(file);
-      setFileList([file]); // solo un archivo
       return false; // Evita la subida automática
     },
     onRemove() {
@@ -121,11 +121,10 @@ export const CambiosAFP = () => {
       <button
         onClick={handleSubmit}
         disabled={!file}
-        className={`ml-2 mt-5 px-4 py-1 rounded cursor-pointer ${
-          file
-            ? "bg-blue-500 text-white hover:bg-blue-600"
-            : "bg-gray-300 text-gray-600 cursor-not-allowed"
-        }`}
+        className={`ml-2 mt-5 px-4 py-1 rounded cursor-pointer ${file
+          ? "bg-blue-500 text-white hover:bg-blue-600"
+          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+          }`}
       >
         Comparar
       </button>
