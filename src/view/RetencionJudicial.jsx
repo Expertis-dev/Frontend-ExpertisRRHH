@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, Loader2, Search } from "lucide-react"
+import { Check, Loader2, Search, Pencil } from "lucide-react"
 import { PlusCircleOutlined } from "@ant-design/icons";
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -72,14 +72,14 @@ export const RetencionJudicial = () => {
     const months = []
     const date = new Date()
     const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    
+
     for (let i = 0; i < 12; i++) {
       const year = date.getFullYear().toString().slice(-2)
       const month = monthNames[date.getMonth()]
       months.push(`01-${month}-${year}`)
       date.setMonth(date.getMonth() + 1)
     }
-    
+
     return months
   }
 
@@ -87,9 +87,9 @@ export const RetencionJudicial = () => {
 
   const handleSearch = () => {
     if (searchQuery.length !== 8) return
-    
+
     const resultados = originalData.filter(item => item.dni === searchQuery)
-    
+
     if (resultados.length === 0) {
       alert("No se encontraron resultados para este DNI")
       setFilteredData([])
@@ -181,7 +181,7 @@ export const RetencionJudicial = () => {
         </div>
 
         {searchQuery && (
-          <Button 
+          <Button
             onClick={handleResetSearch}
             variant="outline"
             className="text-gray-600 hover:bg-gray-200"
@@ -210,7 +210,7 @@ export const RetencionJudicial = () => {
               <th className="py-3 px-4 text-center border border-gray-600 font-semibold">RETENCIÓN</th>
               <th className="py-3 px-4 text-center border border-gray-600 font-semibold">MES INICIO</th>
               <th className="py-3 px-4 text-center border border-gray-600 font-semibold">MES FIN</th>
-              <th className="py-3 px-4 text-center border border-gray-600 font-semibold">VALIDACIÓN</th>
+              <th className="py-3 px-4 text-center border border-gray-600 font-semibold">EDITAR</th>
             </tr>
           </thead>
           <tbody>
@@ -230,16 +230,14 @@ export const RetencionJudicial = () => {
                   <td className="py-3 px-4 text-center border border-gray-200">
                     {retention.mesFin || "-"}
                   </td>
-                  <td className="py-3 px-4 text-center border border-gray-200">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        retention.validacion === 1
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="bg-green-200 text-gray-700 hover:text-green-800 hover:bg-green-300 cursor-pointer"
                     >
-                      {retention.validacion === 1 ? "Activo" : "Inactivo"}
-                    </span>
+                      <Pencil className="h-5 w-5" />
+                    </Button>
                   </td>
                 </tr>
               ))
@@ -330,11 +328,10 @@ export const RetencionJudicial = () => {
               type="submit"
               onClick={handleAddSubmit}
               disabled={!formData.dni || !formData.retencion || !formData.mesInicio}
-              className={`${
-                formData.dni && formData.retencion && formData.mesInicio
+              className={`${formData.dni && formData.retencion && formData.mesInicio
                   ? "bg-blue-500 hover:bg-blue-600 shadow-md hover:shadow-lg"
                   : "bg-gray-400 cursor-not-allowed"
-              } text-white transition-all duration-300 w-full sm:w-auto`}
+                } text-white transition-all duration-300 w-full sm:w-auto`}
             >
               Continuar
             </Button>

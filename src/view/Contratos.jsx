@@ -98,8 +98,9 @@ export const Contratos = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
-      <h1 className="text-center text-2xl font-bold mb-6 text-gray-800">TIPO DE CONTRATO</h1>
-
+      <h1 className="text-center text-2xl font-bold mb-6 text-gray-800">
+        MODALIDAD DE CONTRATACION
+      </h1>
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         {/* Campo de búsqueda */}
         <div className="flex flex-col sm:flex-row items-center gap-4 ">

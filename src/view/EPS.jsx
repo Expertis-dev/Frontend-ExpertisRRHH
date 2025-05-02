@@ -1,5 +1,6 @@
 "use client";
 import { Check } from "lucide-react";
+import { Pencil} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -414,6 +415,9 @@ export const Eps = () => {
               <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
                 FIN
               </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                Editar
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -443,6 +447,15 @@ export const Eps = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
                     {eps.mesFin ? formatDate(eps.mesFin) : "Actual"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="bg-green-300 text-gray-700 hover:text-green-800 hover:bg-green-300 cursor-pointer"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </Button>
                   </td>
                 </tr>
               ))
