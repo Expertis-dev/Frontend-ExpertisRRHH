@@ -11,7 +11,7 @@ import axios from 'axios'
 import { DatePickerFirstDay } from "@/components/ui/MesInputs"
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload } from "antd";
-import { InboxOutlined } from "@ant-design/icons";
+import {PlusCircleOutlined, InboxOutlined } from "@ant-design/icons";
 
 
 export const InfoAFP = () => {
@@ -276,7 +276,7 @@ export const InfoAFP = () => {
           className="bg-green-600 hover:bg-green-700"
           onClick={handleAddAfp}
         >
-          + Nuevo Registro AFP
+          <PlusCircleOutlined /> Nuevo Registro AFP
         </Button>
       </div>
 

@@ -16,7 +16,7 @@ import { useData } from '@/provider/Provider';
 const { Sider } = Layout;
 
 export const Sidebar = ({ collapsed, onCollapse }) => {
-    const {nombre} = useData()
+    const { nombre } = useData()
     const items = [
         {
             key: 'sub1',
@@ -35,7 +35,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     key: 'empleados-cesar',
                     label: <Link to="/finanzas/empleados-cesar">Cese de Empleado</Link>,
                 },
-                
+
                 {
                     key: 'cambiar-fecha-cese',
                     label: <Link to="/finanzas/cambiar-fecha-cese">Cambiar Fec. Cese</Link>,
@@ -45,7 +45,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         {
             key: 'sub2',
             icon: <ReconciliationOutlined />,
-            label: "Sist. Pensiones",
+            label: "Seg. Pensiones",
             children: [
                 {
                     key: 'empleados-afp',
@@ -62,9 +62,20 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             ],
         },
         {
+            key: 'eps',
+            icon: <MedicineBoxOutlined />,
+            label: <Link to="/finanzas/eps">EPS</Link>,
+        },
+        {
             key: 'sueldo-minimo',
             icon: <EuroCircleOutlined />,
             label: <Link to="/finanzas/sueldo-minimo">Sueldo Minimo</Link>,
+        },
+
+        {
+            key: 'horas-extra',
+            icon: <ClockCircleOutlined />,
+            label: <Link to="/finanzas/horas-extra">Horas Extra</Link>,
         },
         {
             key: 'contrato',
@@ -72,21 +83,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             label: <Link to="/finanzas/contrato">Contratos</Link>,
         },
         {
-            key: 'eps',
-            icon: <MedicineBoxOutlined />,
-            label: <Link to="/finanzas/eps">EPS</Link>,
-        },
-        {
-            key: 'horas-extra',
-            icon: <ClockCircleOutlined />,
-            label: <Link to="/finanzas/horas-extra">Horas Extra</Link>,
-        },
-        {
             key: 'retencion-judicial',
             icon: <BankOutlined />,
             label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
         },
-       
+
         // {
         //     key: 'sub3',
         //     icon: <DollarOutlined />,
@@ -101,10 +102,10 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         //             key: 'carga-descuentos',
         //             label: <Link to="/finanzas/cargarDescuentos">Cargar Datos</Link>,
         //         },                
-                
+
         //     ],
         // },
-        
+
         // {
         //     key: 'comisiones',
         //     icon: <PercentageOutlined />,
@@ -115,11 +116,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         //     icon: <MedicineBoxOutlined />,
         //     label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
         // },
-     
+
         {
             key: "cerrar-sesion",
-            icon: <LogoutOutlined/>,
-            label : <Link to="/">Cerrar Sesion</Link>,
+            icon: <LogoutOutlined />,
+            label: <Link to="/">Cerrar Sesion</Link>,
         }
     ];
 
@@ -159,7 +160,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             <Menu
                 theme="dark"
                 defaultSelectedKeys={['empleados']}
-                style={{ borderRight: 0, cursor:"pointer" }}
+                style={{ borderRight: 0, cursor: "pointer" }}
                 mode="inline"
                 items={items}
             />

@@ -289,6 +289,7 @@ export const CesarEmpleado = () => {
               <button
                 onClick={() => setModalMotivo(true)}
                 aria-label="Agregar motivo"
+                className="cursor-pointer "
               >
                 <PlusCircleOutlined className="text-white bg-green-600 p-1 rounded-md hover:bg-green-700 transition-colors" />
               </button>

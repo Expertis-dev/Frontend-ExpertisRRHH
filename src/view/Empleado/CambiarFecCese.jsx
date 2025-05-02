@@ -21,7 +21,7 @@ export const CambiarFecCese = () => {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState(null);
-    const {nombre} = useData()
+    const { nombre } = useData()
     const ObtenerEmpleadosCesados = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
@@ -31,7 +31,11 @@ export const CambiarFecCese = () => {
                     .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto));
 
                 setEmpleados(empleadosFiltrados);
-                setEmpleadosFiltrados(empleadosFiltrados);
+                setEmpleadosFiltrados(empleadosFiltrados.map(emp => ({
+                    value: emp.nombreCompleto,
+                    label: emp.nombreCompleto,
+                    ...emp // Incluir todos los datos del empleado
+                })));
             }
         } catch (err) {
             console.error("Error al obtener empleados cesados:", err);
@@ -46,37 +50,37 @@ export const CambiarFecCese = () => {
     useEffect(() => {
         const obtenerUltimoCese = async () => {
             if (empleadoEscogido?.idPersona) {
-              try {
-                const response = await axios.get(
-                  `${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoCeses/${empleadoEscogido.idPersona}`
-                );
-                
-                console.log("Respuesta completa:", response.data); // Para depuración
-                
-                if (response.status === 200 && response.data.data && response.data.data.length > 0) {
-                  // Ordenar por fecha de cese (más reciente primero)
-                  const cesesOrdenados = [...response.data.data[0]].sort((a, b) => 
-                    new Date(b.fecCese) - new Date(a.fecCese)
-                  );
-                  
-                  console.log("Ceses ordenados:", cesesOrdenados); // Para depuración
-                  
-                  // Tomar la primera fecha (la más reciente)
-                  const ultimoCese = cesesOrdenados[0]?.fecCese;
-                  setUltimoCese(ultimoCese || "");
-                  
-                  console.log("Último cese:", ultimoCese); // Para depuración
-                } else {
-                  setUltimoCese("");
-                  console.warn("No se encontraron ceses para este empleado");
+                try {
+                    const response = await axios.get(
+                        `${import.meta.env.VITE_BACKEND_URL}/api/empleados/historicoCeses/${empleadoEscogido.idPersona}`
+                    );
+
+                    console.log("Respuesta completa:", response.data); // Para depuración
+
+                    if (response.status === 200 && response.data.data && response.data.data.length > 0) {
+                        // Ordenar por fecha de cese (más reciente primero)
+                        const cesesOrdenados = [...response.data.data[0]].sort((a, b) =>
+                            new Date(b.fecCese) - new Date(a.fecCese)
+                        );
+
+                        console.log("Ceses ordenados:", cesesOrdenados); // Para depuración
+
+                        // Tomar la primera fecha (la más reciente)
+                        const ultimoCese = cesesOrdenados[0]?.fecCese;
+                        setUltimoCese(ultimoCese || "");
+
+                        console.log("Último cese:", ultimoCese); // Para depuración
+                    } else {
+                        setUltimoCese("");
+                        console.warn("No se encontraron ceses para este empleado");
+                    }
+                } catch (err) {
+                    console.error("Error al obtener histórico de ceses:", err);
+                    setError("No se pudo cargar el historial de ceses");
+                    setUltimoCese("");
                 }
-              } catch (err) {
-                console.error("Error al obtener histórico de ceses:", err);
-                setError("No se pudo cargar el historial de ceses");
-                setUltimoCese("");
-              }
             }
-          };
+        };
 
         obtenerUltimoCese();
     }, [empleadoEscogido]);
@@ -113,7 +117,7 @@ export const CambiarFecCese = () => {
             const cuerpo = {
                 idEmpleado: empleadoEscogido.idEmpleado,
                 nuevaFechaCese: nuevaFecha,
-                usuario : nombre
+                usuario: nombre
             };
             console.log(cuerpo)
             const response = await axios.put(
