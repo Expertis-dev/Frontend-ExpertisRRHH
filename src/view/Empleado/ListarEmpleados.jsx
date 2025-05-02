@@ -1330,22 +1330,28 @@ export const ListarEmpleados = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 cursor-pointer"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-300 cursor-pointer"
                         onClick={() => openDetails(employee)}
                       >
                         <Eye className="h-5 w-5" />
                       </Button>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-green-600 hover:text-green-800 hover:bg-green-100 cursor-pointer"
-                        disabled={employee.estadoLaboral === "CESADO"}
-                        onClick={() => openEdit(employee)}
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </Button>
+                      {
+                        employee.estadoLaboral === "CESADO" ?
+                          (
+                            <div></div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-green-600 hover:text-green-800 hover:bg-green-300 cursor-pointer"
+                              onClick={() => openEdit(employee)}
+                            >
+                              <Pencil className="h-5 w-5" />
+                            </Button>
+                          )
+                      }
                     </TableCell>
                   </TableRow>
                 ))}
