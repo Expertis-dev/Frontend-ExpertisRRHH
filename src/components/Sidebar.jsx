@@ -45,7 +45,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         {
             key: 'sub2',
             icon: <ReconciliationOutlined />,
-            label: "Seg. Pensiones",
+            label: "Sist. Pensiones",
             children: [
                 {
                     key: 'empleados-afp',

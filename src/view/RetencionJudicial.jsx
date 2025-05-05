@@ -1,28 +1,65 @@
 "use client"
-
+import { DatePickerFirstDay } from "@/components/ui/MesInputs";
 import { useState, useEffect } from "react"
-import { Check, Loader2, Search, Pencil } from "lucide-react"
-import { PlusCircleOutlined } from "@ant-design/icons";
+import { Check, Loader2, Search } from "lucide-react"
+import { EditTwoTone, PlusCircleOutlined } from "@ant-design/icons";
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-
+import { AutoComplete, Modal } from "antd";
+import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import axios from "axios";
 export const RetencionJudicial = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [isLoadingModalOpen, setIsLoadingModalOpen] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+  const [listaEmpleados, setListaEmpleados] = useState([])
+  const [empleadosFiltrados, setEmpleadosFiltrados] = useState([])
+  const [mesInicio, setMesInicio] = useState("")
   const [originalData, setOriginalData] = useState([])
   const [filteredData, setFilteredData] = useState([])
-
+  const [retencionEditar, setRetencionEditar] = useState({})
+  const [isModalEditar, setIsModalEditar] = useState(false)
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [formData, setFormData] = useState({
     dni: "",
     retencion: "",
     mesInicio: "",
   })
 
+  const ObtenerEmpleados = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`
+      );
+      if (response.status === 200) {
+        const empleadosActivos = response.data.recordset
+          .filter(
+            (empleado) =>
+              empleado.estadoLaboral === "VIGENTE" &&
+              empleado.nombreCompleto != null
+          )
+          .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto));
+
+        setListaEmpleados(empleadosActivos);
+        setEmpleadosFiltrados(
+          empleadosActivos.map((emp) => ({
+            value: emp.nombreCompleto,
+            label: emp.nombreCompleto,
+            ...emp, // Incluir todos los datos del empleado
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Error al obtener empleados:", err);
+      setError("No se pudieron cargar los empleados");
+    }
+  };
+  useEffect(() => {
+    ObtenerEmpleados();
+  }, []);
   // Datos de ejemplo para la tabla
   useEffect(() => {
     const initialData = [
@@ -67,23 +104,32 @@ export const RetencionJudicial = () => {
     setFilteredData(initialData)
   }, [])
 
-  // Generar opciones de meses (los próximos 12 meses)
-  const generateMonthOptions = () => {
-    const months = []
-    const date = new Date()
-    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-
-    for (let i = 0; i < 12; i++) {
-      const year = date.getFullYear().toString().slice(-2)
-      const month = monthNames[date.getMonth()]
-      months.push(`01-${month}-${year}`)
-      date.setMonth(date.getMonth() + 1)
+  const handleBuscarEmpleado = (value) => {
+    if (!value) {
+      setEmpleadosFiltrados(
+        listaEmpleados.map((emp) => ({
+          value: emp.nombreCompleto,
+          label: emp.nombreCompleto,
+          ...emp,
+        }))
+      );
+      return;
     }
+    
+    const filtrados = listaEmpleados
+      .filter(empleado => 
+        empleado.nombreCompleto.toLowerCase().includes(value.toLowerCase())
+      )
+      .map(emp => ({
+        value: emp.nombreCompleto,
+        label: emp.nombreCompleto,
+        ...emp
+      }));
+    
+    setEmpleadosFiltrados(filtrados);
+  };
 
-    return months
-  }
 
-  const monthOptions = generateMonthOptions()
 
   const handleSearch = () => {
     if (searchQuery.length !== 8) return
@@ -110,11 +156,6 @@ export const RetencionJudicial = () => {
 
   const handleAddClick = () => {
     setIsAddModalOpen(true)
-  }
-
-  const handleAddSubmit = () => {
-    setIsAddModalOpen(false)
-    setIsConfirmModalOpen(true)
   }
 
   const handleConfirmSubmit = () => {
@@ -235,8 +276,13 @@ export const RetencionJudicial = () => {
                       variant="ghost"
                       size="icon"
                       className="bg-green-200 text-gray-700 hover:text-green-800 hover:bg-green-300 cursor-pointer"
+                      onClick={() => {
+                        console.log(retention)
+                        setRetencionEditar(retention)
+                        setIsModalEditar(true)
+                      }}
                     >
-                      <Pencil className="h-5 w-5" />
+                      <EditTwoTone className="h-4 w-4" />
                     </Button>
                   </td>
                 </tr>
@@ -253,91 +299,148 @@ export const RetencionJudicial = () => {
       </div>
 
       {/* Modal para agregar nueva retención judicial */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-lg shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-center font-bold text-xl text-gray-800">
-              NUEVA RETENCIÓN JUDICIAL
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="dni" className="text-right font-medium text-gray-700">
-                DNI
-              </label>
-              <div className="col-span-3 space-y-1">
-                <Input
-                  id="dni"
-                  name="dni"
-                  value={formData.dni}
-                  onChange={handleInputChange}
-                  className="focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ingrese 8 dígitos"
-                  maxLength={8}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="retencion" className="text-right font-medium text-gray-700">
-                RETENCIÓN
-              </label>
-              <div className="col-span-3 space-y-1">
-                <Input
-                  id="retencion"
-                  name="retencion"
-                  value={formData.retencion}
-                  onChange={handleInputChange}
-                  className="focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ejemplo: 30%"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="mesInicio" className="text-right font-medium text-gray-700">
-                MES INICIO
-              </label>
-              <div className="col-span-3 space-y-1">
-                <select
-                  id="mesInicio"
-                  name="mesInicio"
-                  value={formData.mesInicio}
-                  onChange={handleInputChange}
-                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Seleccione mes</option>
-                  {monthOptions.map((month, index) => (
-                    <option key={index} value={month}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      <Modal
+        open={isAddModalOpen}
+        title={[
+          <h1 className="text-lg text-slate-900 mb-4 roboto flex items-center justify-center gap-2">
+            AGREGAR NUEVA RETENCION JUDICIAL
+          </h1>
+        ]}
+        style={{ top: "10vh", paddingBottom: 0 }}
+        onCancel={() => setIsAddModalOpen(false)}
+        onOk={() => {
+          setIsAddModalOpen(false);
+        }}
+        okText="Confirmar"
+        cancelText="Cancelar"
+        width={600}
+        footer={[
+          <Button key="back" onClick={() => setIsAddModalOpen(false)} variant="outline">
+            Cancelar
+          </Button>,
+          <Button
+            key="submit"
+            onClick={() => {
+              setIsAddModalOpen(false);
+            }}
+            disabled={!empleadoSeleccionado || !mesInicio || !formData.retencion}
+            className={"ml-4"}
+          >
+            Confirmar
+          </Button>,
+        ]}
+      >
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="dni" className="text-right font-medium text-gray-700">
+              EMPLEADO
+            </label>
+            <div className="col-span-3 space-y-1">
+              <AutoComplete
+                style={{ width: "100%", marginTop: 8 }}
+                options={empleadosFiltrados}
+                onSelect={(value, option) => {
+                  setEmpleadoSeleccionado(option);
+                }}
+                onSearch={handleBuscarEmpleado}
+                placeholder="Seleccione un empleado"
+              />
             </div>
           </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="retencion" className="text-right font-medium text-gray-700">
+              RETENCIÓN
+            </label>
+            <div className="col-span-3 space-y-1">
+              <Input
+                id="retencion"
+                name="retencion"
+                value={formData.retencion}
+                onChange={handleInputChange}
+                className="focus:ring-2 focus:ring-blue-500"
+                placeholder="Ejemplo: 30%"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-cente gap-4">
+            <label htmlFor="mesInicio" className="text-right font-medium text-gray-700">
+              MES INICIO
+            </label>
+            <div className="col-span-3">
+              <DatePickerFirstDay
+                mesInicio={new Date(new Date().setMonth(new Date().getMonth() - 6))}
+                handleDateChange={(option) => {
+                  setMesInicio(option.toISOString());
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
 
-          <DialogFooter className="sm:justify-between gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => setIsAddModalOpen(false)}
-              className="bg-gray-500 hover:bg-gray-600 text-white shadow-sm transition-colors duration-300 w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              onClick={handleAddSubmit}
-              disabled={!formData.dni || !formData.retencion || !formData.mesInicio}
-              className={`${formData.dni && formData.retencion && formData.mesInicio
-                  ? "bg-blue-500 hover:bg-blue-600 shadow-md hover:shadow-lg"
-                  : "bg-gray-400 cursor-not-allowed"
-                } text-white transition-all duration-300 w-full sm:w-auto`}
-            >
-              Continuar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modal para editar la retencion judicial de un empleado*/}
+      <Modal
+        open={isModalEditar}
+        title={[
+          <h1 className="text-lg text-slate-900 mb-4 roboto flex items-center justify-center gap-2">
+            EDITAR RETENCION JUDICIAL
+          </h1>
+        ]}
+        style={{ top: "10vh", paddingBottom: 0 }}
+        onCancel={() => setIsModalEditar(false)}
+        onOk={() => {
+          setIsModalEditar(false);
+        }}
+        okText="Confirmar"
+        cancelText="Cancelar"
+        width={600}
+        footer={[
+          <Button key="back" onClick={() => setIsModalEditar(false)} variant="outline">
+            Cancelar
+          </Button>,
+          <Button
+            key="submit"
+            onClick={() => {
+              setIsModalEditar(false);
+            }}
+            className={"ml-4"}
+          >
+            Confirmar
+          </Button>,
+        ]}
+      >
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="retencion" className="text-right font-medium text-gray-700">
+              RETENCIÓN
+            </label>
+            <div className="col-span-3 space-y-1">
+              <Input
+                id="retencion"
+                name="retencion"
+                value={retencionEditar.retencion}
+                onChange={(e)=>setRetencionEditar({...retencionEditar, retencion:e.value.target })}
+                className="focus:ring-2 focus:ring-blue-500"
+                placeholder="Ejemplo: 30%"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-cente gap-4">
+            <label htmlFor="mesInicio" className="text-right font-medium text-gray-700">
+              MES INICIO
+            </label>
+            <div className="col-span-3">
+              <DatePickerFirstDay
+                mesInicio={retencionEditar.mesInicio}
+                handleDateChange={(option) => {
+                  setRetencionEditar({...retencionEditar, mesInicio: option.toISOString()})
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
+      
 
       {/* Modal de confirmación */}
       <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>

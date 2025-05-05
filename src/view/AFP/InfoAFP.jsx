@@ -457,7 +457,7 @@ export const InfoAFP = () => {
 
       {/* Modal de VERIFICAR , DONDE SE MOSTRARAN LA TABLA */}
       <Dialog open={showVerificar} onOpenChange={setShowVerificar}>
-        <DialogContent className="max-w-max ">
+        <DialogContent className="max-w-[80VW] ">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
               DATOS OBTENIDOS
@@ -468,7 +468,7 @@ export const InfoAFP = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>MES</TableHead>
+                  <TableHead className="w-20">ULTIMO MES</TableHead>
                   <TableHead>AFP</TableHead>
                   <TableHead>TIPO</TableHead>
                   <TableHead>APORTACIÓN (%) ANTERIOR</TableHead>
@@ -489,16 +489,16 @@ export const InfoAFP = () => {
                     <TableCell>{ultimoMesInicio.split("T")[0]} </TableCell>
                     <TableCell>{data.sistema}</TableCell>
                     <TableCell>{data.tipo}</TableCell>
-                    <TableCell>{data.cambios?.aportacion?.anterior ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.aportacion?.actual ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.comision?.anterior ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.comision?.actual ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.seguro?.anterior ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.seguro?.actual ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.seguroTope?.anterior ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.seguroTope?.actual ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.total?.anterior ?? '-'}</TableCell>
-                    <TableCell>{data.cambios?.total?.actual ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-300">{data.cambios?.aportacion?.anterior ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.cambios?.aportacion?.actual ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-300">{data.cambios?.comision?.anterior ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.cambios?.comision?.actual ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-300">{data.cambios?.seguro?.anterior ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.cambios?.seguro?.actual ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-300">{data.cambios?.seguroTope?.anterior ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.cambios?.seguroTope?.actual ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-300">{data.cambios?.total?.anterior ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.cambios?.total?.actual ?? '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

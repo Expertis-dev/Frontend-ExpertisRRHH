@@ -119,18 +119,18 @@ export const SueldoMinimo = () => {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-100">
-                            <TableHead className="text-center">SUELDO MÍNIMO</TableHead>
-                            <TableHead className="text-center">FECHA INICIO</TableHead>
-                            <TableHead className="text-center">FECHA FIN</TableHead>
+                            <TableHead className="text-center text-md">SUELDO MÍNIMO</TableHead>
+                            <TableHead className="text-center text-md">FECHA INICIO</TableHead>
+                            <TableHead className="text-center text-md">FECHA FIN</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {data.map((datos, index) => (
                             <TableRow key={index} className="hover:bg-blue-50">
-                                <TableCell className="text-center">{`S/. ${parseFloat(datos.montoSueldo).toFixed(2)}`}</TableCell>
-                                <TableCell className="text-center">{datos.mesInicio.split("T")[0]}</TableCell>
-                                <TableCell className="text-center">
-                                    {datos.mesFin ? datos.mesFin.split("T")[0] : "Vigente"}
+                                <TableCell className="text-center text-md">{`S/. ${parseFloat(datos.montoSueldo).toFixed(2)}`}</TableCell>
+                                <TableCell className="text-center text-md">{datos.mesInicio.split("T")[0]}</TableCell>
+                                <TableCell className="text-center text-md">
+                                    {datos.mesFin ? datos.mesFin.split("T")[0] : "VIGENTE"}
                                 </TableCell>
                             </TableRow>
                         ))}

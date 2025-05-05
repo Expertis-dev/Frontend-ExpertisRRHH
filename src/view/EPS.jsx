@@ -1,18 +1,17 @@
 "use client";
 import { Check } from "lucide-react";
-import { Pencil} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AutoComplete, Modal } from "antd";
-import { PlusCircleOutlined } from "@ant-design/icons";
+import { EditTwoTone, UserAddOutlined, PlusCircleOutlined,UserOutlined } from "@ant-design/icons";
 import axios from "axios";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { DatePickerFirstDay } from "@/components/ui/MesInputs";
 
 export const Eps = () => {
   const [isModalEPS, setIsModalEPS] = useState(false);
+  const [isEditar, setIsEditar] = useState(false)
   const [isConfirmar, setIsConfirmar] = useState(false);
   const [isSucces, setIsSucces] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +21,7 @@ export const Eps = () => {
   const [empleados, setEmpleados] = useState([]);
   const [empleadosFiltrados, setEmpleadosFiltrados] = useState([]);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
-  const [opcionSelect, setOpcionSelect] = useState("");
+  const [empleadoEditar, setEmpleadoEditar] = useState({})
   const [numeDepen, setNumeDepen] = useState(0);
   const [planEps, setPlanEps] = useState("");
   // Datos de ejemplo para la tabla
@@ -180,7 +179,6 @@ export const Eps = () => {
         setIsModalEPS(false); // También cerramos el modal principal
         // Resetear formulario
         setEmpleadoSeleccionado(null);
-        setOpcionSelect("");
         setNumeDepen(0);
         setPlanEps("");
       }, 2000);
@@ -189,10 +187,96 @@ export const Eps = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
+      {/* Modal para editar EPS */}
+      <Modal
+        open={isEditar}
+        title={[
+          <h1 className="text-lg text-slate-900 mb-4 roboto flex items-center justify-center gap-2">
+            <UserOutlined/>
+            EDITAR EMPLEADO EPS
+          </h1>
+        ]}
+        style={{ top: "10vh", paddingBottom: 0 }}
+        onCancel={() => setIsEditar(false)}
+        onOk={() => {
+          setIsEditar(false);
+          setIsConfirmar(true);
+        }}
+        okText="Confirmar"
+        cancelText="Cancelar"
+        width={600}
+        footer={[
+          <Button key="back" onClick={() => setIsEditar(false)} variant="outline">
+            Cancelar
+          </Button>,
+          <Button
+            key="submit"
+            onClick={() => {
+              setIsEditar(false);
+              setIsConfirmar(true);
+            }}
+            disabled={!empleadoSeleccionado || !planEps}
+            className={"ml-4"}
+          >
+            Confirmar
+          </Button>,
+        ]}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Label>EMPLEADO:</Label>
+            <p className="text-base py-[1.5px] text-center w-full bg-neutral-200 rounded-md border-2 border-neutral-300">Carlos Calderon </p>
+          </div>
+          <div>
+            <Label>DEPENDIENTE</Label>
+            <Input
+              type="number"
+              placeholder="Cantidad de dependientes"
+              onChange={(e) => setEmpleadoEditar({
+                ...empleadoEditar,
+                dependiente: Number(e.target.value)
+              })}
+              value={empleadoEditar.dependiente}
+              min={0}
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label>MES INICIO</Label>
+            <DatePickerFirstDay
+              mesInicio={new Date(new Date().setMonth(new Date().getMonth() - 6))}
+              handleDateChange={(option) => {
+                setMesInicio(option.toISOString());
+              }}
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label>PLAN EPS</Label>
+            <Input
+              type="text"
+              placeholder="Plan EPS seleccionado"
+              onChange={(e) => setEmpleadoEditar({
+                ...empleadoEditar,
+                planEps: e.target.value
+              })}
+              value={empleadoEditar.planEps}
+              className="mt-2"
+            />
+          </div>
+        </div>
+      </Modal>
       {/* Modal para agregar nuevo EPS */}
       <Modal
         open={isModalEPS}
-        title="Registrar nuevo EPS"
+        title={[
+          <h1 className="text-lg text-slate-900 mb-4 roboto flex items-center justify-center gap-2">
+            <UserAddOutlined />
+            NUEVO REGISTRO EPS
+          </h1>
+        ]}
         style={{ top: "10vh", paddingBottom: 0 }}
         onCancel={() => setIsModalEPS(false)}
         onOk={() => {
@@ -212,10 +296,11 @@ export const Eps = () => {
               setIsModalEPS(false);
               setIsConfirmar(true);
             }}
-            disabled={!empleadoSeleccionado || !opcionSelect || !planEps}
+            disabled={!empleadoSeleccionado || !planEps || !mesInicio || !numeDepen}
+            className={"ml-4"}
           >
             Confirmar
-          </Button>,
+          </Button>
         ]}
       >
         <div className="space-y-4">
@@ -231,33 +316,6 @@ export const Eps = () => {
               placeholder="Seleccione un empleado"
             />
           </div>
-
-          <div>
-            <Label>DESCUENTO EPS</Label>
-            <div className="flex items-center space-x-4 mt-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="descuento-si"
-                  checked={opcionSelect === "AFP"}
-                  onCheckedChange={(checked) =>
-                    setOpcionSelect(checked ? "AFP" : "")
-                  }
-                />
-                <Label htmlFor="descuento-si">SI</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="descuento-no"
-                  checked={opcionSelect === "ONP"}
-                  onCheckedChange={(checked) =>
-                    setOpcionSelect(checked ? "ONP" : "")
-                  }
-                />
-                <Label htmlFor="descuento-no">NO</Label>
-              </div>
-            </div>
-          </div>
-
           <div>
             <Label>DEPENDIENTE</Label>
             <Input
@@ -273,7 +331,7 @@ export const Eps = () => {
           <div>
             <Label>MES INICIO</Label>
             <DatePickerFirstDay
-              mesInicio={new Date(new Date().setMonth(new Date().getMonth() - 1))}
+              mesInicio={new Date(new Date().setMonth(new Date().getMonth() - 2))}
               handleDateChange={(option) => {
                 setMesInicio(option.toISOString());
               }}
@@ -310,14 +368,12 @@ export const Eps = () => {
         <div className="flex">
           <div className="flex flex-col gap-8 w-52">
             <Label>Empleado:</Label>
-            <Label>Descuento EPS:</Label>
             <Label>Dependientes:</Label>
             <Label>Mes Inicio:</Label>
             <Label>Plan EPS:</Label>
           </div>
           <div className="flex flex-col gap-3 w-full">
             <p className="font-medium p-1 bg-gray-100 rounded-lg text-center w-full">{empleadoSeleccionado?.nombreCompleto || "-"}</p>
-            <p className="font-medium p-1 bg-gray-100 rounded-lg text-center w-full">{opcionSelect || "-"}</p>
             <p className="font-medium p-1 bg-gray-100 rounded-lg text-center w-full">{numeDepen}</p>
             <p className="font-medium p-1 bg-gray-100 rounded-lg text-center w-full">
               {mesInicio ? new Date(mesInicio).toLocaleDateString("es-ES") : "-"}
@@ -450,11 +506,16 @@ export const Eps = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
                     <Button
+                      onClick={() => {
+                        console.log(eps)
+                        setEmpleadoEditar(eps)
+                        setIsEditar(true)
+                      }}
                       variant="ghost"
                       size="icon"
-                      className="bg-green-300 text-gray-700 hover:text-green-800 hover:bg-green-300 cursor-pointer"
+                      className="bg-green-200 text-gray-700 hover:bg-green-300 hover:text-gray-900 hover:scale-105 cursor-pointer transition-all duration-400 ease-in-out"
                     >
-                      <Pencil className="h-5 w-5" />
+                      <EditTwoTone className="h-4 w-4" />
                     </Button>
                   </td>
                 </tr>
