@@ -1,13 +1,15 @@
 "use client"
-import { AutoComplete, Modal } from 'antd';
-import { useState, useEffect } from "react"
+import { AutoComplete, Modal, DatePicker, TimePicker, notification, Spin } from 'antd';
+import { PlusCircleOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { Check, Loader2, Search, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import dayjs from 'dayjs';
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { useEffect, useState } from 'react';
+import { useData } from '@/provider/Provider';
 import axios from 'axios';
-import { PlusCircleOutlined } from "@ant-design/icons";
-import { Check, Loader2, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { motion } from "framer-motion"
 
 export const HorasExtra = () => {
   const [empleados, setEmpleados] = useState([]);
@@ -20,7 +22,8 @@ export const HorasExtra = () => {
   const [formIsValid, setFormIsValid] = useState(false)
   const [filteredData, setFilteredData] = useState([])
   const [error, setError] = useState(null);
-
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState({})
+  const { nombre } = useData()
   const [formData, setFormData] = useState({
     nombreCompleto: "",
     fecha: "",
@@ -29,25 +32,32 @@ export const HorasExtra = () => {
   })
 
   // Datos de ejemplo para la tabla
-  const [overtimeData, setOvertimeData] = useState([
-    {
-      nombreCompleto: "Juan Pérez",
-      fecha: "21/05/2024",
-      horaInicio: "17:00",
-      cantidadHoras: "2",
-      horaFin: "19:00",
-      codEmpleado: "EMP-001",
-    },
-    {
-      nombreCompleto: "María García",
-      fecha: "22/05/2024",
-      horaInicio: "18:00",
-      cantidadHoras: "3",
-      horaFin: "21:00",
-      codEmpleado: "EMP-002",
+  const [overtimeData, setOvertimeData] = useState([])
+  const formatTime = (timeString) => {
+    if (!timeString) return "---";
+    return timeString.split("T")[1].substring(0, 5);
+  };
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
     }
-  ])
-
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
   // Obtener empleados desde el API
   const ObtenerEmpleados = async () => {
     try {
@@ -69,28 +79,26 @@ export const HorasExtra = () => {
       setError("No se pudieron cargar los empleados");
     }
   };
+  const ObtenerHorasExtra = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/mostrarHorasExtra`);
+      if (response.status === 200) {
+        const horasExtra = response.data.sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto));
+        console.log(horasExtra)
+
+        setFilteredData(horasExtra);
+        setOvertimeData(horasExtra);
+      }
+    } catch (err) {
+      console.error("Error al obtener horas extra:", err);
+      setError("No se pudieron cargar las horas extra");
+    }
+  }
 
   useEffect(() => {
     ObtenerEmpleados();
+    ObtenerHorasExtra();
   }, []);
-
-  // Inicializar datos filtrados
-  useEffect(() => {
-    setFilteredData(overtimeData)
-  }, [overtimeData])
-
-  // Filtrar datos cuando cambia la búsqueda
-  useEffect(() => {
-    if (searchQuery.length === 0) {
-      setFilteredData(overtimeData)
-    } else {
-      const results = overtimeData.filter(item =>
-        item.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.codEmpleado.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      setFilteredData(results)
-    }
-  }, [searchQuery, overtimeData])
 
   // Validar formulario cuando cambian los datos
   useEffect(() => {
@@ -106,6 +114,15 @@ export const HorasExtra = () => {
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value)
+    if (searchQuery === "") {
+      setFilteredData(overtimeData)
+    } else {
+      const results = overtimeData.filter(item =>
+        item.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.documento.toLowerCase().includes(searchQuery)
+      )
+      setFilteredData(results)
+    }
   }
 
   const handleInputChange = (e) => {
@@ -128,52 +145,43 @@ export const HorasExtra = () => {
     setIsConfirmModalOpen(true)
   }
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     setIsConfirmModalOpen(false)
     setIsLoadingModalOpen(true)
-
-    // Simular proceso de carga
-    setTimeout(() => {
+    // Calcular cantidad de horas
+    const inicio = new Date(`2000-01-01T${formData.horaInicio}`)
+    const fin = new Date(`2000-01-01T${formData.horaFin}`)
+    const diffHours = Math.round((fin - inicio) / (1000 * 60 * 60))
+    // Agregar nuevo registro
+    const cuerpo = {
+      fecha: formData.fecha,
+      horaInicio: formData.horaInicio,
+      cantHoras: Number(diffHours.toString()),
+      horaFin: formData.horaFin,
+      idEmpleado: empleadoSeleccionado.idEmpleado,
+      usuario: nombre,
+    }
+    console.log(cuerpo)
+    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarHorasExtra`, cuerpo)
+    console.log(response)
+    if (response.status === 200) {
+      console.log("Registro exitoso")
       setIsLoadingModalOpen(false)
-
-      // Calcular cantidad de horas
-      const inicio = new Date(`2000-01-01T${formData.horaInicio}`)
-      const fin = new Date(`2000-01-01T${formData.horaFin}`)
-      const diffHours = Math.round((fin - inicio) / (1000 * 60 * 60))
-
-      // Formatear fecha
-      const fechaFormateada = new Date(formData.fecha).toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-
-      // Buscar empleado seleccionado para obtener su código
-      const empleado = empleados.find(e => e.nombreCompleto === formData.nombreCompleto);
-      const codEmpleado = empleado ? empleado.codEmpleado : `-----`;
-
-      // Agregar nuevo registro
-      const newRecord = {
-        nombreCompleto: formData.nombreCompleto,
-        fecha: fechaFormateada,
-        horaInicio: formData.horaInicio,
-        cantidadHoras: diffHours.toString(),
-        horaFin: formData.horaFin,
-        codEmpleado: codEmpleado,
-      }
-
-      setOvertimeData([newRecord, ...overtimeData])
       setIsSuccessModalOpen(true)
-
-      // Limpiar formulario
       setFormData({
         nombreCompleto: "",
         fecha: "",
         horaInicio: "",
         horaFin: "",
       })
-    }, 1500)
+      setTimeout(() => {
+        setIsSuccessModalOpen(false)
+        ObtenerHorasExtra()
+      }, 1500)
+    }
   }
+
+
 
   const handleBuscarEmpleado = (value) => {
     if (!value) {
@@ -198,224 +206,344 @@ export const HorasExtra = () => {
     setEmpleadosFiltrados(filtrados);
   };
 
+
   return (
-    <div className="w-full max-w-6xl mx-auto p-4">
-      <motion.h1
+    <div className="w-full p-6 max-w-7xl mx-auto">
+      {/* Header mejorado */}
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center text-2xl font-bold mb-8 text-gray-800"
+        className="mb-8 text-center"
       >
-        GESTIÓN DE HORAS EXTRA
-      </motion.h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+          HORAS EXTRAS REGISTRADAS
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          Gestión y registro de horas extras del personal
+        </p>
+      </motion.div>
 
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-        <motion.div whileHover={{ scale: 1.02 }} className="relative w-full md:w-auto">
+      {/* Barra de búsqueda y acciones mejorada */}
+      <motion.div
+        className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={itemVariants} className="relative w-full md:w-96">
           <div className="relative flex items-center">
+            <Search className="absolute left-3 h-4 w-4 text-gray-400 dark:text-gray-300" />
             <Input
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Buscar por nombre o código"
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Buscar por nombre o documento"
+              className="pl-10 w-full bg-gray-50 dark:bg-gray-700 border-0 focus-visible:ring-2 focus-visible:ring-blue-500"
             />
-            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
           </div>
         </motion.div>
 
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <motion.div variants={itemVariants}>
           <Button
             onClick={handleAddClick}
-            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg cursor-pointer"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
           >
             <PlusCircleOutlined className="h-4 w-4 mr-2" />
-            Agregar Horas Extra
+            <span>Agregar Horas Extra</span>
           </Button>
         </motion.div>
-      </div>
+      </motion.div>
 
-      {/* Tabla de Horas Extra */}
+      {/* Tabla mejorada */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="overflow-x-auto rounded-xl shadow-lg border border-gray-200"
+        transition={{ duration: 0.5 }}
+        className="rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700"
       >
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gradient-to-r from-gray-700 to-gray-800">
-            <tr>
-              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">NOMBRE</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">FECHA</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">INICIO</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">HORAS</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">FIN</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">CÓDIGO</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredData.length > 0 ? (
-              filteredData.map((overtime, index) => (
-                <motion.tr
-                  key={`${overtime.codEmpleado}-${index}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100"}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-medium text-gray-900">{overtime.nombreCompleto}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">{overtime.fecha}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-blue-600 font-medium">{overtime.horaInicio}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      {overtime.cantidadHoras} hrs
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-red-600 font-medium">{overtime.horaFin}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">{overtime.codEmpleado}</td>
-                </motion.tr>
-              ))
-            ) : (
+        <div className="overflow-y-auto max-h-[65vh]">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
               <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-                  No se encontraron resultados
-                </td>
+                {['Documento', 'Nombre Completo', 'Fecha', 'Hora Inicio', 'Horas', 'Hora Fin'].map((header) => (
+                  <th
+                    key={header}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
+                    {header}
+                  </th>
+                ))}
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+              <AnimatePresence>
+                {filteredData.length > 0 ? (
+                  filteredData.map((overtime, index) => (
+                    <motion.tr
+                      key={`${overtime.codEmpleado}-${index}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {overtime.documento}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
+                        {overtime.nombreCompleto}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                        {overtime.fecha?.split("T")[0] || "---"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-blue-600 dark:text-blue-400 font-medium">
+                        {formatTime(overtime.horaInicio)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          {overtime.cantidadHoras} hrs
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-red-600 dark:text-red-400 font-medium">
+                        {formatTime(overtime.horaFin)}
+                      </td>
+                    </motion.tr>
+                  ))
+                ) : (
+                  <motion.tr
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    <td colSpan={6} className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <Search className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400">
+                          No se encontraron resultados
+                        </p>
+                        <Button
+                          variant="ghost"
+                          className="mt-2 text-blue-600 dark:text-blue-400"
+                          onClick={() => setSearchQuery("")}
+                        >
+                          Limpiar búsqueda
+                        </Button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                )}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </div>
       </motion.div>
 
-      {/* Modal para agregar nueva hora extra - Usando Modal de Ant Design */}
+      {/* Modal de registro mejorado */}
       <Modal
-        title="REGISTRAR HORAS EXTRA"
+        title={
+          <div className="flex items-center gap-3">
+            <PlusCircleOutlined className="text-blue-500 text-xl" />
+            <span className="text-xl font-semibold text-gray-800 dark:text-white">
+              Registrar Horas Extra
+            </span>
+          </div>
+        }
         open={isAddModalOpen}
         onCancel={() => setIsAddModalOpen(false)}
-        onOk={handleAddSubmit}
-        okButtonProps={{ disabled: !formIsValid }}
-        okText="Continuar"
-        cancelText="Cancelar"
-        width={600}
+        width={650}
+        footer={null}
+        className="[&_.ant-modal-content]:p-0 dark:[&_.ant-modal-content]:bg-gray-800"
       >
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label htmlFor="empleado" className="block text-sm font-medium text-gray-700">
-              Empleado
-            </label>
-            <AutoComplete
-              style={{ width: '100%' }}
-              options={empleadosFiltrados}
-              value={formData.nombreCompleto}
-              onSelect={(value, option) => {
-                setFormData(prev => ({ ...prev, nombreCompleto: value }));
-                
-              }}
-              onChange={(value) => {
-                setFormData(prev => ({ ...prev, nombreCompleto: value }));
-              }}
-              onSearch={handleBuscarEmpleado}
-              placeholder="Seleccione un empleado"
-              filterOption={(inputValue, option) =>
-                option.value.toLowerCase().includes(inputValue.toLowerCase())
+        <div className="p-6">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="space-y-6"
+          >
+            {/* Campos del formulario con animaciones */}
+            {[
+              {
+                label: "Empleado *",
+                component: (
+                  <AutoComplete
+                    options={empleadosFiltrados}
+                    value={formData.nombreCompleto}
+                    onSelect={(value, option) => {
+                      setEmpleadoSeleccionado(option);
+                      setFormData(prev => ({ ...prev, nombreCompleto: value }));
+                    }}
+                    onChange={(value) => setFormData(prev => ({ ...prev, nombreCompleto: value }))}
+                    onSearch={handleBuscarEmpleado}
+                    placeholder="Buscar empleado..."
+                    className="w-full"
+                    popupClassName="[&_.ant-select-item]:px-4 [&_.ant-select-item]:py-3"
+                    notFoundContent={
+                      <div className="p-3 text-center text-gray-500">
+                        No se encontraron empleados
+                      </div>
+                    }
+                  />
+                ),
+                helpText: "Busque por nombre completo"
+              },
+              {
+                label: "Fecha *",
+                component: (
+                  <DatePicker
+                    className="w-full"
+                    format="YYYY-MM-DD"
+                    value={formData.fecha ? dayjs(formData.fecha) : null}
+                    onChange={(date, dateString) =>
+                      setFormData(prev => ({ ...prev, fecha: dateString }))
+                    }
+                  />
+                )
+              },
+              {
+                label: "Hora Inicio *",
+                component: (
+                  <TimePicker
+                    className="w-full"
+                    format="HH:mm"
+                    minuteStep={10}
+                    value={formData.horaInicio ? dayjs(formData.horaInicio, 'HH:mm') : null}
+                    onChange={(time, timeString) =>
+                      setFormData(prev => ({ ...prev, horaInicio: timeString }))
+                    }
+                  />
+                )
+              },
+              {
+                label: "Hora Fin *",
+                component: (
+                  <TimePicker
+                    className="w-full"
+                    format="HH:mm"
+                    minuteStep={10}
+                    disabled={!formData.horaInicio}
+                    value={formData.horaFin ? dayjs(formData.horaFin, 'HH:mm') : null}
+                    onChange={(time, timeString) =>
+                      setFormData(prev => ({ ...prev, horaFin: timeString }))
+                    }
+                    disabledTime={() => ({
+                      disabledHours: () => {
+                        if (!formData.horaInicio) return [];
+                        const startHour = parseInt(formData.horaInicio.split(':')[0]);
+                        return Array.from({ length: startHour }, (_, i) => i);
+                      }
+                    })}
+                  />
+                )
               }
-            />
-          </div>
+            ].map((field, index) => (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                className="space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {field.label}
+                  </label>
+                  {field.helpText && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {field.helpText}
+                    </span>
+                  )}
+                </div>
+                {field.component}
+              </motion.div>
+            ))}
 
-          <div className="space-y-2">
-            <label htmlFor="fecha" className="block text-sm font-medium text-gray-700">
-              Fecha
-            </label>
-            <Input
-              id="fecha"
-              name="fecha"
-              type="date"
-              value={formData.fecha}
-              onChange={handleInputChange}
-              className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-              required
-            />
-          </div>
+            {/* Validación de horas */}
+            <AnimatePresence>
+              {formData.horaInicio && formData.horaFin &&
+                new Date(`2000-01-01T${formData.horaFin}`) <= new Date(`2000-01-01T${formData.horaInicio}`) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-4"
+                  >
+                    <Alert
+                      variant="destructive"
+                      icon={<InfoCircleOutlined />}
+                      className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800"
+                    >
+                      <AlertDescription className="text-red-700 dark:text-red-300">
+                        La hora de fin debe ser mayor a la hora de inicio
+                      </AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+            </AnimatePresence>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="horaInicio" className="block text-sm font-medium text-gray-700">
-                Hora Inicio
-              </label>
-              <Input
-                id="horaInicio"
-                name="horaInicio"
-                type="time"
-                value={formData.horaInicio}
-                onChange={handleInputChange}
-                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="horaFin" className="block text-sm font-medium text-gray-700">
-                Hora Fin
-              </label>
-              <Input
-                id="horaFin"
-                name="horaFin"
-                type="time"
-                value={formData.horaFin}
-                onChange={handleInputChange}
-                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                required
-              />
-            </div>
-          </div>
-
-          {formData.horaInicio && formData.horaFin && new Date(`2000-01-01T${formData.horaFin}`) <= new Date(`2000-01-01T${formData.horaInicio}`) && (
-            <Alert variant="destructive" className="text-sm flex text-center">
-              La hora de fin debe ser mayor a la hora de inicio
-            </Alert>
-          )}
+            {/* Botones del modal */}
+            <motion.div
+              variants={itemVariants}
+              className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700"
+            >
+              <Button
+                variant="outline"
+                onClick={() => setIsAddModalOpen(false)}
+                className="border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancelar
+              </Button>
+              <Button
+                disabled={!formIsValid}
+                onClick={handleAddSubmit}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Continuar
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </Modal>
 
-      {/* Modal de confirmación - Usando Modal de Ant Design */}
+      {/* Modal de confirmación */}
       <Modal
-        title="Confirmar Registro"
+        title={<span className="text-xl font-semibold text-gray-800 dark:text-white">Confirmar Registro</span>}
         open={isConfirmModalOpen}
-        onCancel={() => setIsConfirmModalOpen(false)}
+        onCancel={() => {
+          setIsConfirmModalOpen(false)
+          setIsAddModalOpen(true)
+        }}
         onOk={handleConfirmSubmit}
         okText="Confirmar Registro"
         cancelText="Volver"
         okButtonProps={{ className: "bg-green-600 hover:bg-green-700 text-white" }}
         width={600}
+        className="dark:[&_.ant-modal-content]:bg-gray-800"
       >
-        <div className="py-4 space-y-4">
-          <p className="text-center text-gray-600">
+        <div className="py-4 space-y-6">
+          <p className="text-center text-gray-600 dark:text-gray-300">
             ¿Está seguro de registrar las siguientes horas extra?
           </p>
 
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Empleado:</span>
-                <span className="font-semibold">{formData.nombreCompleto}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Empleado:</span>
+                <span className="font-semibold dark:text-white">{formData.nombreCompleto}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Fecha:</span>
-                <span>{formData.fecha ? new Date(formData.fecha).toLocaleDateString('es-ES') : ''}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Fecha:</span>
+                <span className="dark:text-gray-200">
+                  {formData.fecha ? formData.fecha : ''}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Horario:</span>
-                <span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Horario:</span>
+                <span className="dark:text-gray-200">
                   {formData.horaInicio} - {formData.horaFin}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Total Horas:</span>
-                <span className="font-semibold text-blue-600">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Total Horas:</span>
+                <span className="font-semibold text-blue-600 dark:text-blue-400">
                   {formData.horaInicio && formData.horaFin ?
                     Math.round(
                       (new Date(`2000-01-01T${formData.horaFin}`) -
@@ -427,13 +555,15 @@ export const HorasExtra = () => {
           </div>
         </div>
       </Modal>
-      {/* Modal de carga - Usando Modal de Ant Design */}
+
+      {/* Modal de carga */}
       <Modal
         open={isLoadingModalOpen}
         onCancel={() => setIsLoadingModalOpen(false)}
         footer={null}
         closable={false}
         width={400}
+        className="dark:[&_.ant-modal-content]:bg-gray-800"
       >
         <motion.div
           initial={{ opacity: 0 }}
@@ -444,26 +574,27 @@ export const HorasExtra = () => {
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           >
-            <Loader2 className="h-10 w-10 text-blue-600" />
+            <Loader2 className="h-10 w-10 text-blue-600 dark:text-blue-400" />
           </motion.div>
-          <p className="text-center text-gray-600 font-medium">Procesando registro...</p>
-          <p className="text-center text-sm text-gray-500">Por favor espere un momento</p>
+          <p className="text-center text-gray-600 dark:text-gray-300 font-medium">Procesando registro...</p>
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">Por favor espere un momento</p>
         </motion.div>
       </Modal>
 
-      {/* Modal de éxito - Usando Modal de Ant Design */}
+      {/* Modal de éxito */}
       <Modal
-        title="¡Registro Exitoso!"
+        title={<span className="text-xl font-semibold text-gray-800 dark:text-white">¡Registro Exitoso!</span>}
         open={isSuccessModalOpen}
         onOk={() => setIsSuccessModalOpen(false)}
         okText="Aceptar"
         okButtonProps={{ className: "bg-green-600 hover:bg-green-700 text-white" }}
         width={500}
+        className="dark:[&_.ant-modal-content]:bg-gray-800"
       >
         <div className="py-4">
-          <Alert className="bg-green-50 border-green-200 flex items-center">
-            <Check className="h-5 w-5 text-green-600 mr-2" />
-            <AlertDescription className="text-green-700 font-medium">
+          <Alert className="bg-green-50 border-green-200 dark:bg-green-900 dark:border-green-800 flex items-center">
+            <Check className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+            <AlertDescription className="text-green-700 dark:text-green-200 font-medium">
               Las horas extra se registraron correctamente.
             </AlertDescription>
           </Alert>

@@ -1,206 +1,178 @@
 "use client"
-
-import { useState, useRef, useEffect } from "react"
-import { Search, ChevronDown } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Select } from 'antd'
+import axios from "axios"
+import { Trash2, Search, RefreshCw } from "lucide-react"
+import { motion } from "framer-motion"
 
 export const Contratos = () => {
   const [searchQuery, setSearchQuery] = useState("")
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedContractType, setSelectedContractType] = useState("TODOS")
-  const [filteredData, setFilteredData] = useState([])
-  const dropdownRef = useRef(null)
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // Datos de ejemplo para la tabla
-  const contractData = [
-    {
-      dni: "48512478",
-      employeeCode: "123456",
-      contractType: "REGULAR",
-      startDate: "01/04/2023",
-      endDate: "01/04/2024",
-    },
-    {
-      dni: "48512478",
-      employeeCode: "123456",
-      contractType: "RIA",
-      startDate: "01/04/2022",
-      endDate: "01/04/2023",
-    },
-    {
-      dni: "87654321",
-      employeeCode: "123457",
-      contractType: "REGULAR",
-      startDate: "01/04/2023",
-      endDate: "01/04/2024",
-    },
-    {
-      dni: "48512388",
-      employeeCode: "654321",
-      contractType: "CAS",
-      startDate: "01/04/2023",
-      endDate: "01/04/2024",
-    },
+  // Opciones para el filtro de contrato
+  const contractOptions = [
+    { value: "TODOS", label: "Todos los contratos" },
+    { value: "RIA", label: "RIA" },
+    { value: "REGULAR", label: "Regular" },
+    { value: "PRACTICANTE", label: "Practicante" }
   ]
-  useEffect(() => {
-    setFilteredData(contractData)
-  }, [])
 
-  // Cerrar el dropdown cuando se hace clic fuera de él
+  // Obtener datos de la API
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false)
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/tipoContrato/mostrarTipoContrato`
+        )
+        if (response.status === 200) {
+          setData(response.data.sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto)))
+          setError(null)
+        }
+      } catch (err) {
+        console.error("Error al obtener contratos:", err)
+        setError("No se pudieron cargar los contratos")
+      } finally {
+        setLoading(false)
       }
     }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    fetchData()
   }, [])
 
-  // Manejar cambio en el input de búsqueda
-  const handleSearchChange = (e) => {
-    const value = e.target.value
-    // Validar que solo sean números y máximo 8 dígitos
-    if (/^\d*$/.test(value) && value.length <= 8) {
-      setSearchQuery(value)
-    }
-  }
+  // Filtrar datos basados en búsqueda y tipo de contrato
+  const filteredData = useMemo(() => {
+    if (!data) return []
 
-  // Filtrar datos cuando cambian los filtros
-  useEffect(() => {
-    let result = contractData
-    
-    // Filtrar por DNI si hay búsqueda
-    if (searchQuery.length >= 1) {
-      result = result.filter(item => item.dni.includes(searchQuery))
-    }
-    
-    // Filtrar por tipo de contrato si no es "TODOS"
-    if (selectedContractType !== "TODOS") {
-      result = result.filter(item => item.contractType === selectedContractType)
-    }
-    
-    setFilteredData(result)
-  }, [searchQuery, selectedContractType])
+    return data.filter(item => {
+      const matchesSearch = searchQuery === "" ||
+        item.nombreCompleto?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.documento?.toLowerCase().includes(searchQuery.toLowerCase())
 
-  const handleContractTypeSelect = (type) => {
-    setSelectedContractType(type)
-    setIsDropdownOpen(false)
-  }
+      const matchesContract = selectedContractType === "TODOS" ||
+        item.tipoContrato?.toUpperCase() === selectedContractType.toUpperCase()
 
-  // Validar si el DNI tiene 8 dígitos para habilitar la búsqueda
-  const isValid = searchQuery.length === 8
+      return matchesSearch && matchesContract
+    })
+  }, [data, searchQuery, selectedContractType])
+
+  const handleRefresh = () => {
+    setSearchQuery("")
+    setSelectedContractType("TODOS")
+    setError(null)  }
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
-      <h1 className="text-center text-2xl font-bold mb-6 text-gray-800">
-        MODALIDAD DE CONTRATACION
-      </h1>
-      <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-        {/* Campo de búsqueda */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 ">
-          <div className="flex items-center gap-2 w-full">
-            <span className="font-medium text-gray-700 whitespace-nowrap">Documento:</span>
-            <div className="relative w-full">
+      <motion.h1
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="text-center text-2xl font-bold mb-6 text-gray-800 dark:text-white"
+      >
+        MODALIDAD DE CONTRATACIÓN
+      </motion.h1>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+          <div className="relative w-full max-w-md">
+            <div className="relative flex items-center">
               <Input
                 type="text"
                 value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Ingrese DNI (8 dígitos)"
-                maxLength={8}
-                inputMode="numeric"
-                pattern="\d*"
-                className="w-full"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por DNI o nombre"
+                className="pl-10 w-full"
               />
+              <Search className="absolute left-3 h-4 w-4 text-gray-400" />
             </div>
           </div>
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto transition-all"
-            disabled={!isValid}
-          >
-            <Search className="h-4 w-4" />
-            Buscar
-          </Button>
+
+          <div className="w-full sm:w-64">
+            <Select
+              value={selectedContractType}
+              style={{ width: '100%' }}
+              onChange={setSelectedContractType}
+              options={contractOptions}
+              className="[&_.ant-select-selector]:h-10 [&_.ant-select-selector]:rounded-lg"
+            />
+          </div>
         </div>
 
-        {/* Dropdown de tipo de contrato */}
-        <div className="relative" ref={dropdownRef}>
-          <Button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            variant="outline"
-            className="bg-gray-50 border-gray-300 text-gray-700 flex items-center justify-between w-full md:w-40"
-          >
-            <span className="truncate">{selectedContractType}</span>
-            <ChevronDown className={`h-4 w-4 ml-2 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-          </Button>
-
-          {isDropdownOpen && (
-            <Card className="absolute right-0 mt-1 w-40 z-10 border border-gray-200 shadow-lg">
-              <div className="py-1">
-                <button
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${selectedContractType === "TODOS" ? "bg-gray-100 font-medium" : ""}`}
-                  onClick={() => handleContractTypeSelect("TODOS")}
-                >
-                  TODOS
-                </button>
-                <button
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 border-t border-gray-100 ${selectedContractType === "REGULAR" ? "bg-gray-100 font-medium" : ""}`}
-                  onClick={() => handleContractTypeSelect("REGULAR")}
-                >
-                  REGULAR
-                </button>
-                <button
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 border-t border-gray-100 ${selectedContractType === "CAS" ? "bg-gray-100 font-medium" : ""}`}
-                  onClick={() => handleContractTypeSelect("RIA")}
-                >
-                  RIA
-                </button>
-                <button
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 border-t border-gray-100 ${selectedContractType === "PRACTICANTE" ? "bg-gray-100 font-medium" : ""}`}
-                  onClick={() => handleContractTypeSelect("PRACTICANTE")}
-                >
-                  PRACTICANTE
-                </button>
-              </div>
-            </Card>
-          )}
-        </div>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          className="mt-4 md:mt-0"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Limpiar
+        </Button>
       </div>
 
       {/* Tabla de contratos */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="overflow-y-auto max-h-[60vh] rounded-lg border border-gray-200 dark:border-gray-700 shadow">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-gray-500 text-white">
-              <th className="py-3 px-4 text-left border border-gray-600">DNI</th>
-              <th className="py-3 px-4 text-left border border-gray-600">COD. EMPLEADO</th>
-              <th className="py-3 px-4 text-left border border-gray-600">TIPO DE CONTRATO</th>
-              <th className="py-3 px-4 text-left border border-gray-600">INICIO</th>
-              <th className="py-3 px-4 text-left border border-gray-600">SALIDA</th>
+            <tr className="bg-gradient-to-r from-gray-600 to-gray-700 text-white">
+              <th className="py-3 px-4 text-left border-b border-gray-300 dark:border-gray-600">DNI</th>
+              <th className="py-3 px-4 text-left border-b border-gray-300 dark:border-gray-600">NOMBRE COMPLETO</th>
+              <th className="py-3 px-4 text-left border-b border-gray-300 dark:border-gray-600">TIPO DE CONTRATO</th>
+              <th className="py-3 px-4 text-left border-b border-gray-300 dark:border-gray-600">MES INICIO</th>
+              <th className="py-3 px-4 text-left border-b border-gray-300 dark:border-gray-600">MES FIN</th>
             </tr>
           </thead>
           <tbody>
-            {filteredData.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="5" className="py-8 text-center">
+                  <div className="flex justify-center">
+                    <RefreshCw className="h-6 w-6 animate-spin text-gray-500" />
+                  </div>
+                </td>
+              </tr>
+            ) : filteredData.length > 0 ? (
               filteredData.map((contract, index) => (
-                <tr 
-                  key={`${contract.dni}-${contract.employeeCode}-${index}`} 
-                  className="bg-white"
+                <motion.tr
+                  key={`${contract.documento}-${contract.tipoContrato}-${index}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
+                  className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <td className="py-2 px-4 border border-gray-300">{contract.dni}</td>
-                  <td className="py-2 px-4 border border-gray-300">{contract.employeeCode}</td>
-                  <td className="py-2 px-4 border border-gray-300">{contract.contractType}</td>
-                  <td className="py-2 px-4 border border-gray-300">{contract.startDate}</td>
-                  <td className="py-2 px-4 border border-gray-300">{contract.endDate}</td>
-                </tr>
+                  <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 font-medium">
+                    {contract.documento}
+                  </td>
+                  <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700">
+                    {contract.nombreCompleto}
+                  </td>
+                  <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${contract.tipoContrato === 'RIA' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                        contract.tipoContrato === 'REGULAR' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                      }`}>
+                      {contract.tipoContrato}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                    {contract.mesInicio ? contract.mesInicio.split("T")[0] : "-"}
+                  </td>
+                  <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                    {contract.mesFin ? contract.mesFin.split("T")[0] : "-"}
+                  </td>
+                </motion.tr>
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="py-4 text-center text-gray-500">
+                <td colSpan="5" className="py-4 text-center text-gray-500 dark:text-gray-400">
                   No se encontraron resultados
                 </td>
               </tr>
