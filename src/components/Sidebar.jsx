@@ -60,12 +60,12 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     label: <Link to="/finanzas/info-afp">Info. SP</Link>,
                 },
             ],
-        },
+        },/*
         {
             key: 'eps',
             icon: <MedicineBoxOutlined />,
             label: <Link to="/finanzas/eps">EPS</Link>,
-        },
+        },*/
         {
             key: 'sueldo-minimo',
             icon: <EuroCircleOutlined />,

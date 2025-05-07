@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Table, Typography, Upload, message, Modal } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { useData } from "@/provider/Provider";
 
 const { Title } = Typography;
 const { Dragger } = Upload;
@@ -13,6 +15,7 @@ export const CambiosAFP = () => {
   const [mostrarTabla, setMostrarTabla] = useState(false);
   const [messageA, contextHolder] = message.useMessage();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const { nombre } = useData()
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) return messageA.warning("Selecciona un archivo Excel");
@@ -101,6 +104,27 @@ export const CambiosAFP = () => {
       key: "tipoComisionNuevo",
     },
   ];
+  const EnviarCambios = async () => {
+    try {
+      console.log({ cambios, nombre});
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/afp/registrarCambiosSPempleado`,
+        { cambios, nombre}
+      );
+      console.log(res);
+      if (res.status === 200) {
+        messageA.success("Cambios enviados correctamente");
+        setMostrarTabla(false);
+        setFile(null);
+        setFileList([]);
+      } else {
+        messageA.error("Error al enviar cambios");
+      }
+    } catch (err) {
+      console.error(err);
+      messageA.error("Error al enviar cambios");
+    }
+  }
 
   return (
     <div className="flex flex-col justify-between items-center p-4 bg-gray-100 border-b border-gray-300">
@@ -117,17 +141,27 @@ export const CambiosAFP = () => {
           Solo se aceptan archivos Excel (.xls, .xlsx)
         </p>
       </Dragger>
+      <div className="mt-5 flex flex-row gap-2">
+        <Button
+          onClick={handleSubmit}
+          disabled={!file}
+          className={` px-4 py-1 rounded cursor-pointer ${file
+            ? "bg-blue-500 text-white hover:bg-blue-600"
+            : "bg-gray-300 text-gray-600 cursor-not-allowed"
+            }`}
+        >
+          Comparar
+        </Button>
+        {
+          mostrarTabla && (
+            <Button onClick={EnviarCambios}
+              className="bg-green-500 text-white hover:bg-green-600 ">
+              Enviar Cambios
+            </Button>
+          )
+        }
+      </div>
 
-      <button
-        onClick={handleSubmit}
-        disabled={!file}
-        className={`ml-2 mt-5 px-4 py-1 rounded cursor-pointer ${file
-          ? "bg-blue-500 text-white hover:bg-blue-600"
-          : "bg-gray-300 text-gray-600 cursor-not-allowed"
-          }`}
-      >
-        Comparar
-      </button>
 
       {mostrarTabla && (
         <div className="p-4 w-full">

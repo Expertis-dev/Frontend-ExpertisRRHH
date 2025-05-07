@@ -1,6 +1,6 @@
 "use client"
-import { AutoComplete, Modal, DatePicker, TimePicker, notification, Spin } from 'antd';
-import { PlusCircleOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { Upload, AutoComplete, Modal, DatePicker, TimePicker, notification, Spin } from 'antd';
+import { ToTopOutlined, InboxOutlined, PlusCircleOutlined, InfoCircleOutlined, PaperClipOutlined } from "@ant-design/icons";
 import { Check, Loader2, Search, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dayjs from 'dayjs';
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from 'react';
 import { useData } from '@/provider/Provider';
 import axios from 'axios';
-
+const { Dragger } = Upload;
 export const HorasExtra = () => {
   const [empleados, setEmpleados] = useState([]);
   const [empleadosFiltrados, setEmpleadosFiltrados] = useState([]);
@@ -20,10 +20,13 @@ export const HorasExtra = () => {
   const [isLoadingModalOpen, setIsLoadingModalOpen] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [formIsValid, setFormIsValid] = useState(false)
+  const [isCargaMaziva, setIsCargaMaziva] = useState(false)
   const [filteredData, setFilteredData] = useState([])
   const [error, setError] = useState(null);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState({})
   const { nombre } = useData()
+  const [file, setFile] = useState(null);
+  const [fileList, setFileList] = useState([]);
   const [formData, setFormData] = useState({
     nombreCompleto: "",
     fecha: "",
@@ -112,6 +115,31 @@ export const HorasExtra = () => {
     )
   }, [formData])
 
+  const props = {
+    name: "file",
+    multiple: false,
+    accept: ".xls,.xlsx",
+    fileList: fileList,
+    beforeUpload(file) {
+      const isExcel =
+        file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.type === "application/vnd.ms-excel";
+
+      if (!isExcel) {
+        console.log("Solo se permiten archivos Excel (.xls, .xlsx)");
+      } else {
+        setFile(file);
+        setFileList([file]); // solo un archivo
+      }
+      return false; // Evita la subida automática
+    },
+    onRemove() {
+      setFile(null);
+      setFileList([]);
+    },
+  };
+
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value)
     if (searchQuery === "") {
@@ -181,8 +209,6 @@ export const HorasExtra = () => {
     }
   }
 
-
-
   const handleBuscarEmpleado = (value) => {
     if (!value) {
       setEmpleadosFiltrados(empleados.map(emp => ({
@@ -205,6 +231,27 @@ export const HorasExtra = () => {
 
     setEmpleadosFiltrados(filtrados);
   };
+
+  const handleCargaMaziva = async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append("archivo", file);
+  
+      try {
+        const res = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarMazivo`,
+          formData
+        );
+  
+        const data = res.data;
+        console.log(data);
+        
+      } catch (err) {
+        console.error(err);
+        messageA.error("Error al comparar");
+      }
+    
+  }
 
 
   return (
@@ -240,6 +287,18 @@ export const HorasExtra = () => {
               placeholder="Buscar por nombre o documento"
               className="pl-10 w-full bg-gray-50 dark:bg-gray-700 border-0 focus-visible:ring-2 focus-visible:ring-blue-500"
             />
+          </div>
+        </motion.div>
+
+
+        <motion.div variants={itemVariants} className="relative w-full md:w-96">
+          <div className="relative flex items-center">
+            <Button
+              onClick={() => setIsCargaMaziva(true)}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg">
+              <PaperClipOutlined />
+              <span>Carga Masiva</span>
+            </Button>
           </div>
         </motion.div>
 
@@ -336,6 +395,99 @@ export const HorasExtra = () => {
           </table>
         </div>
       </motion.div>
+
+      {/* Modal de carga maziva */}
+      <Modal
+        title={
+          <div className="flex items-center gap-3">
+            <PlusCircleOutlined className="text-blue-500 text-xl" />
+            <span className="text-xl font-semibold text-gray-800 dark:text-white">
+              Registrar Carga Masiva
+            </span>
+          </div>
+        }
+        open={isCargaMaziva}
+        onCancel={() => setIsCargaMaziva(false)}
+        width={650}
+        footer={null}
+        className="[&_.ant-modal-content]:p-0 dark:[&_.ant-modal-content]:bg-gray-800"
+      >
+        <div className="p-6">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="space-y-6"
+          >
+            {/* Campos del formulario con animaciones */}
+            {[
+              {
+                label: "Cargar el Archivo *",
+                component: (
+                  <Dragger {...props}>
+                    <p className="ant-upload-drag-icon">
+                      <InboxOutlined />
+                    </p>
+                    <p className="ant-upload-text">
+                      Haga clic o arrastre el archivo a esta área para cargarlo
+                    </p>
+                    <p className="ant-upload-hint">
+                      Solo se aceptan archivos Excel (.xls, .xlsx)
+                    </p>
+                  </Dragger>
+                ),
+                helpText: "Suba el archivo de Excel con los datos de horas extra"
+              }
+            ].map((field, index) => (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                className="space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {field.label}
+                  </label>
+                  {field.helpText && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {field.helpText}
+                    </span>
+                  )}
+                </div>
+                {field.component}
+              </motion.div>
+            ))}
+            {/* Botones del modal */}
+            <motion.div
+              variants={itemVariants}
+              className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700"
+            >
+              <Button
+                variant="outline"
+                onClick={() => setIsAddModalOpen(false)}
+                className="border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancelar
+              </Button>
+              <Button
+              onClick={handleCargaMaziva}
+                disabled={!file}
+                className={`px-4 py-1 rounded-lg cursor-pointer ${file
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  }`}
+              >
+                <ToTopOutlined className="h-4 w-4" />
+
+                Cargar
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </Modal>
+
+
+
 
       {/* Modal de registro mejorado */}
       <Modal
