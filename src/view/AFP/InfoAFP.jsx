@@ -11,7 +11,8 @@ import axios from 'axios'
 import { DatePickerFirstDay } from "@/components/ui/MesInputs"
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload } from "antd";
-import {PlusCircleOutlined, InboxOutlined } from "@ant-design/icons";
+import { PlusCircleOutlined, InboxOutlined } from "@ant-design/icons";
+import { useData } from '@/provider/Provider';
 
 
 export const InfoAFP = () => {
@@ -30,11 +31,12 @@ export const InfoAFP = () => {
   const [showVerificar, setShowVerificar] = useState(false)
   const [error, setError] = useState("")
   const [ultimoMesInicio, setUltimoMesInicio] = useState("")
+  const [codMes, setCodMes] = useState("")
   const [newONP, setNewONP] = useState({
     aportacion: "",
     codMesInicio: ""
   })
-
+  const { nombre } = useData()
   const { Dragger } = Upload;
   const afps = [
     { afp: "HABITAT" },
@@ -48,9 +50,18 @@ export const InfoAFP = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/afp/listarDatosSP_AFP`)
       if (response.status === 200) {
-        const info = response.data.sort((a, b) =>
-          b.codMesInicio.localeCompare(a.codMesInicio)
-        )
+        const info = response.data.sort((a, b) => {
+          // Primero ordenar por fecha (descendente)
+          const dateComparison = b.codMesInicio.localeCompare(a.codMesInicio);
+
+          // Si las fechas son diferentes, devolver el resultado de la comparación de fechas
+          if (dateComparison !== 0) {
+            return dateComparison;
+          }
+
+          // Si las fechas son iguales, ordenar por comision (descendente)
+          return b.comision - a.comision;
+        });
         setAfpList(info)
         setFiltroAFP(info)
       }
@@ -69,7 +80,8 @@ export const InfoAFP = () => {
         },
       });
       if (response.status === 200) {
-        console.log(response.data.detalles)
+        console.log(response.data)
+        setCodMes(response.data.codMesInicio)
         setUltimoMesInicio(response.data.ultimoMesInicio)
         setCambiosEncontrados(response.data.detalles)
       }
@@ -160,65 +172,30 @@ export const InfoAFP = () => {
     try {
       const payload = {
         SISTEMA_DE_PENSION: "ONP",
-        aportacion: newONP.aportacion,
-        codMesInicio: newONP.codMesInicio.toISOString(),
-        tipoComision: "N/A",
-        comision: "0",
-        seguro: "0",
-        seguroTope: "0"
+        aportacion: Number(newONP.aportacion),
+        codMesInicio: newONP.codMesInicio.toISOString().split("T")[0],
+        usuario: nombre
       }
-
+      console.log(payload)
       // En producción, usar esto:
-      // const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/crear`, payload)
-
-      // Simulación de éxito
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // Actualizar estado local (simulación)
-      setAfpList(prev => [...prev, payload])
-      setShowSuccessModal(true)
-      setShowONP(false)
-      setNewONP({
-        aportacion: "",
-        codMesInicio: ""
-      })
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/registrarONP`, payload)
+      if (response.status === 200) {
+        console.log("Registro ONP guardado:", response)
+        setAfpList(prev => [...prev, payload])
+        setShowSuccessModal(true)
+        setShowONP(false)
+        setNewONP({
+          aportacion: "",
+          codMesInicio: ""
+        })
+        setShowLoadingModal(false)
+      } else {
+        setShowLoadingModal(false)
+        setShowONP(true)
+      }
     } catch (error) {
       console.error("Error al guardar ONP:", error)
       setError("Error al guardar el registro ONP")
-    } finally {
-      setShowLoadingModal(false)
-    }
-  }
-
-  const confirmAddAFP = async () => {
-    if (!file) {
-      setError("Debe seleccionar un archivo Excel")
-      return
-    }
-    setShowVerificar(false)
-    setShowLoadingModal(true)
-
-    try {
-      // Simular procesamiento del archivo
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      // En producción, usar esto:
-      const formData = new FormData()
-      formData.append('archivo', file)
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/cambiosSP_AFP`, formData)
-      console.log("Respuesta del servidor:", response.data)
-
-      // Simulación de éxito
-      setShowSuccessModal(true)
-      setShowAFP(false)
-      setFile(null)
-      setFileList([])
-      ObtenerDatos() // Refrescar datos
-    } catch (error) {
-      console.error("Error al importar archivo AFP:", error)
-      setError("Error al procesar el archivo Excel")
-    } finally {
-      setShowLoadingModal(false)
     }
   }
 
@@ -250,6 +227,17 @@ export const InfoAFP = () => {
     ObtenerCambios();
     setShowAFP(false)
     setShowVerificar(true)
+  }
+  const subirCambios = async () => {
+    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/afp/registrarInfoSP`, { cambiosEncontrados, nombre, codMes })
+    if (response.status === 200) {
+      setShowVerificar(false)
+      setShowSuccessModal(true)
+      setCambiosEncontrados([])
+      setUltimoMesInicio("")
+    } else {
+      setError("Error al subir los cambios")
+    }
   }
   return (
     <div className="w-full px-4">
@@ -485,20 +473,20 @@ export const InfoAFP = () => {
               </TableHeader>
               <TableBody>
                 {cambiosEncontrados.map((data, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={index} className={`${data.ESTADO === "NO CAMBIO" ? "bg-green-200" : " bg-red-300 "}`} >
                     <TableCell>{ultimoMesInicio.split("T")[0]} </TableCell>
-                    <TableCell>{data.sistema}</TableCell>
-                    <TableCell>{data.tipo}</TableCell>
-                    <TableCell className="bg-neutral-300">{data.cambios?.aportacion?.anterior ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.cambios?.aportacion?.actual ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-300">{data.cambios?.comision?.anterior ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.cambios?.comision?.actual ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-300">{data.cambios?.seguro?.anterior ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.cambios?.seguro?.actual ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-300">{data.cambios?.seguroTope?.anterior ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.cambios?.seguroTope?.actual ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-300">{data.cambios?.total?.anterior ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.cambios?.total?.actual ?? '-'}</TableCell>
+                    <TableCell>{data.SP}</TableCell>
+                    <TableCell>{data.TIPO}</TableCell>
+                    <TableCell className="bg-neutral-100">{data.APORTACION_ANTERIOR ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.APORTACION_ACTUAL ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-100">{data.COMISION_ANTERIOR ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.COMISION_ACTUAL ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-100">{data.SEGURO_ANTERIOR ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.SEGURO_ACTUAL ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-100">{data.SEGUROTOPE_ANTERIOR ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.SEGUROTOPE_ACTUAL ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-100">{data.TOTAL_ANTERIOR ?? '-'}</TableCell>
+                    <TableCell className="bg-green-300">{data.TOTAL_ACTUAL ?? '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -515,7 +503,7 @@ export const InfoAFP = () => {
             </Button>
             <Button
               className="bg-green-600 hover:bg-green-700"
-              onClick={confirmAddAFP}
+              onClick={subirCambios}
             >
               SUBIR CAMBIOS
             </Button>

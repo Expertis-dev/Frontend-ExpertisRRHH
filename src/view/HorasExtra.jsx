@@ -233,24 +233,24 @@ export const HorasExtra = () => {
   };
 
   const handleCargaMaziva = async (e) => {
-      e.preventDefault();
-      const formData = new FormData();
-      formData.append("archivo", file);
-  
-      try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarMazivo`,
-          formData
-        );
-  
-        const data = res.data;
-        console.log(data);
-        
-      } catch (err) {
-        console.error(err);
-        messageA.error("Error al comparar");
-      }
-    
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("archivo", file);
+
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarMazivo`,
+        formData
+      );
+
+      const data = res.data;
+      console.log(data);
+
+    } catch (err) {
+      console.error(err);
+      messageA.error("Error al comparar");
+    }
+
   }
 
 
@@ -292,24 +292,21 @@ export const HorasExtra = () => {
 
 
         <motion.div variants={itemVariants} className="relative w-full md:w-96">
-          <div className="relative flex items-center">
+          <div className="relative flex items-center gap-8">
             <Button
               onClick={() => setIsCargaMaziva(true)}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg">
               <PaperClipOutlined />
               <span>Carga Masiva</span>
             </Button>
+            <Button
+              onClick={handleAddClick}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
+            >
+              <PlusCircleOutlined className="h-4 w-4 mr-2" />
+              <span>Agregar Horas Extra</span>
+            </Button>
           </div>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Button
-            onClick={handleAddClick}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
-          >
-            <PlusCircleOutlined className="h-4 w-4 mr-2" />
-            <span>Agregar Horas Extra</span>
-          </Button>
         </motion.div>
       </motion.div>
 
@@ -470,7 +467,7 @@ export const HorasExtra = () => {
                 Cancelar
               </Button>
               <Button
-              onClick={handleCargaMaziva}
+                onClick={handleCargaMaziva}
                 disabled={!file}
                 className={`px-4 py-1 rounded-lg cursor-pointer ${file
                   ? "bg-blue-500 text-white hover:bg-blue-600"
