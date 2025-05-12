@@ -246,10 +246,10 @@ export const InfoAFP = () => {
       {/* Barra de búsqueda y selección */}
       <div className="py-4 w-full flex flex-col justify-between sm:flex-row gap-4">
         <div className="flex items-center gap-4">
-          <span className="font-medium text-gray-700 whitespace-nowrap">FILTRO POR AFP:</span>
+          <span className="font-medium text-gray-700 whitespace-nowrap">FILTRO POR SP:</span>
           <Select value={selectedAfp} onValueChange={setSelectedAfp}>
             <SelectTrigger className="w-50">
-              <SelectValue placeholder="Seleccione AFP" />
+              <SelectValue placeholder="Seleccione SP" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Todos">Todos</SelectItem>
@@ -264,7 +264,7 @@ export const InfoAFP = () => {
           className="bg-green-600 hover:bg-green-700"
           onClick={handleAddAfp}
         >
-          <PlusCircleOutlined /> Nuevo Registro AFP
+          <PlusCircleOutlined /> Nuevo Registro SP
         </Button>
       </div>
 

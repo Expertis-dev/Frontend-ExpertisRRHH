@@ -292,19 +292,21 @@ export const HorasExtra = () => {
 
 
         <motion.div variants={itemVariants} className="relative w-full md:w-96">
-          <div className="relative flex items-center gap-8">
-            <Button
+          <div className="relative flex items-center justify-end gap-8">
+            {/**
+             * <Button
               onClick={() => setIsCargaMaziva(true)}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg">
               <PaperClipOutlined />
               <span>Carga Masiva</span>
             </Button>
+             */}
             <Button
               onClick={handleAddClick}
               className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
             >
-              <PlusCircleOutlined className="h-4 w-4 mr-2" />
-              <span>Agregar Horas Extra</span>
+              <PlusCircleOutlined className="h-4 w-4" />
+              <span>Registrar Horas Extra</span>
             </Button>
           </div>
         </motion.div>
@@ -644,7 +646,7 @@ export const HorasExtra = () => {
                 onClick={handleAddSubmit}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Check className="h-4 w-4 mr-2" />
+                <Check className="h-4 w-4" />
                 Continuar
               </Button>
             </motion.div>

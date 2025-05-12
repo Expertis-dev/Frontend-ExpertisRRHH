@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from "react-router-dom";
+
 import {
     TeamOutlined,
     FileTextOutlined,
@@ -17,6 +19,11 @@ const { Sider } = Layout;
 
 export const Sidebar = ({ collapsed, onCollapse }) => {
     const { nombre } = useData()
+    const navigate = useNavigate();
+    const CerrarSesion = () => {
+        localStorage.clear()
+        navigate("/")
+    }
     const items = [
         {
             key: 'sub1',
@@ -81,12 +88,12 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             key: 'contrato',
             icon: <FileTextOutlined />,
             label: <Link to="/finanzas/contrato">Contratos</Link>,
-        },
+        },/*
         {
             key: 'retencion-judicial',
             icon: <BankOutlined />,
             label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
-        },
+        },*/
 
         // {
         //     key: 'sub3',
@@ -120,7 +127,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         {
             key: "cerrar-sesion",
             icon: <LogoutOutlined />,
-            label: <Link to="/">Cerrar Sesion</Link>,
+            label: <button className='cursor-pointer' onClick={CerrarSesion}>Cerrar Sesion</button>
         }
     ];
 

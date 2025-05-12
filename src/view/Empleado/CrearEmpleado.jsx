@@ -101,6 +101,8 @@ export const CrearEmpleado = () => {
         tipoContrato: "",
         tip_comision: "",
         porcentajeAfp: "",
+        impuestoRetenido: "",
+        ingresoBruto: "",
     }
 
     // Estados del componente
@@ -149,6 +151,8 @@ export const CrearEmpleado = () => {
                 { label: "Fecha Inicio", value: formData.fecIniciGestion },
                 { label: "Tipo Comisión", value: formData.tip_comision === "0" ? "NULA" : formData.tip_comision },
                 { label: "Asignación Familiar", value: formData.asignacionfamiliar.toLocaleUpperCase() },
+                { label: "Impuesto Retenido", value: formData.impuestoRetenido },
+                { label: "Ingreso Bruto", value: formData.ingresoBruto },
             ]
         },
         {
@@ -280,6 +284,8 @@ export const CrearEmpleado = () => {
             if (!formData.afp) errors.afp = "AFP es requerida"
             if (!formData.tipoContrato) errors.tipoContrato = "Tipo contrato es requerido"
             if (!formData.tip_comision) errors.tip_comision = "Tipo de comisión es requerido"
+            if (!formData.impuestoRetenido || isNaN(formData.impuestoRetenido) || formData.impuestoRetenido < 0) errors.impuestoRetenido = "Impuesto retenido inválido"
+            if (!formData.ingresoBruto || isNaN(formData.ingresoBruto) || formData.ingresoBruto < 0) errors.ingresoBruto = "Ingreso bruto inválido"
         }
 
         setFormErrors(errors)
@@ -375,10 +381,13 @@ export const CrearEmpleado = () => {
                 tip_comision: formData.tip_comision.toUpperCase(),
                 regimen: formData.tipoContrato.toUpperCase(),
                 asignacionfamiliar: formData.asignacionfamiliar.toUpperCase(),
+                /// FALTAN LOS ULTIMOS CAMBIOS AGREGADOS
+                impuestoRetenido: formData.impuestoRetenido,
+                ingresoBruto: formData.ingresoBruto,
                 usuario: "ADMIN"
             }
 
-
+            console.log("Datos a enviar:", datos)
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleado`, datos)
             if (response.status === 200) {
                 setIsLoading(false)
@@ -587,7 +596,14 @@ export const CrearEmpleado = () => {
                     label="SUELDO*" id="sueldo" name="sueldo" type="number"
                     min={1200} value={formData.sueldo} onChange={handleChange} error={formErrors.sueldo}
                 />
-
+                <InputField
+                    label="INGRESO BRUTO*" id="ingresoBruto" name="ingresoBruto" type="number"
+                    min={0} value={formData.ingresoBruto} onChange={handleChange} error={formErrors.ingresoBruto}
+                />
+                <InputField
+                    label="IMPUESTO RETENIDO*" id="impuestoRetenido" name="impuestoRetenido" type="number"
+                    min={0} value={formData.impuestoRetenido} onChange={handleChange} error={formErrors.impuestoRetenido}
+                />
                 <SelectField
                     label="TIPO CONTRATO*" name="tipoContrato" value={formData.tipoContrato}
                     onValueChange={(name, value) => {
@@ -955,13 +971,6 @@ export const CrearEmpleado = () => {
                             ))}
                         </div>
                         <DialogFooter className="gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsSubmitting(false)}
-                                className="w-full"
-                            >
-                                Cancelar
-                            </Button>
                             <Button
                                 type="button"
                                 className="w-full bg-green-600 hover:bg-green-700"

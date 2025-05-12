@@ -17,6 +17,7 @@ import { Check, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom"
 import { useData } from "@/provider/Provider";
+import { Checkbox } from "@/components/ui/checkbox";
 const { Option } = Select;
 
 export const CesarEmpleado = () => {
@@ -25,7 +26,8 @@ export const CesarEmpleado = () => {
   const [idEmpleado, setIdEmpleado] = useState(0)
   const [messageApi, contextHolder] = message.useMessage();
   const key = "updatable";
-  const [empleados, setEmpleados] = useState([])
+  const [sumaGraciosa, setSumaGraciosa] = useState(0);
+  const [empleados, setEmpleados] = useState([]);
   const [usuario, setUsuario] = useState("");
   const [fecCese, setFecCese] = useState(hoy);
   const [modalMotivo, setModalMotivo] = useState(false);
@@ -35,6 +37,7 @@ export const CesarEmpleado = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirmacion, setIsConfirmacion] = useState(false);
+  const [isSumaGraciosa, setIsSumaGraciosa] = useState(false)
   const navegar = useNavigate()
   const motivos = [
     "NO SUPERO EL PERIODO DE PRUEBA",
@@ -101,7 +104,8 @@ export const CesarEmpleado = () => {
         fecCese,
         motivo,
         detalle,
-        usuario: nombre
+        usuario: nombre,
+        sumaGraciosa: isSumaGraciosa ? Number(sumaGraciosa) : 0,
       };
       console.log("Enviando:", cuerpo);
 
@@ -317,6 +321,29 @@ export const CesarEmpleado = () => {
               />
             </motion.div>
           </Modal>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <label className="text-black font-semibold dark:text-white flex items-center gap-2">
+            <Checkbox
+              checked={isSumaGraciosa}
+              onClick={() => {
+                setIsSumaGraciosa(!isSumaGraciosa);
+                setSumaGraciosa(0);
+                console.log(isSumaGraciosa);
+              }}
+            />
+            SUMA GRACIOSA:
+          </label>
+          <motion.div whileHover={{ scale: 1.05 }}>
+            <Input
+              type="number"
+              className={`${inputClass} cursor-pointer`}
+              onChange={(e) => setSumaGraciosa(e.target.value)}
+              value={sumaGraciosa}
+              disabled={!isSumaGraciosa}
+            />
+          </motion.div>
         </div>
 
         <div className="flex flex-col gap-2">
