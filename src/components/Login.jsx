@@ -3,9 +3,10 @@ import { Input, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/provider/Provider';
+import axios from 'axios';
 
 export const Login = () => {
-    const {setNombre} = useData()
+    const {setNombre, setToken} = useData()
     const [messageApi, contextHolder] = message.useMessage();
     const [credenciales, setCredenciales] = useState({
         usuario: "",
@@ -33,8 +34,11 @@ export const Login = () => {
                     empleado.usuario.toUpperCase() === credenciales.usuario.toUpperCase() && empleado.contraseña.toUpperCase() === credenciales.contraseña.toUpperCase()
             );
             console.log(usuarioValido)
-            setNombre(usuarioValido.nombreCompleto)
+            
             if (usuarioValido) {
+                const token = await axios.post( `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, { usuario: credenciales.usuario })
+                setNombre(usuarioValido.nombreCompleto)
+                setToken(token.data.token)
                 messageApi.success("¡Bienvenido!");
                 setTimeout(() => {
                     navegar("/finanzas/empleados-listar");

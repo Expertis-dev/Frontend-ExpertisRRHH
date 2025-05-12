@@ -10,7 +10,24 @@ import { Check, AlertTriangle, AlertCircle, Loader2, Info, UserPlus } from "luci
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
+import dayjs from 'dayjs';
 // Componentes reutilizables
+function sumarDiasHabiles(fecha, cantidad) {
+    let diasSumados = 0;
+    let resultado = dayjs(fecha);
+
+    while (diasSumados < cantidad) {
+        resultado = resultado.add(1, 'day');
+        const dia = resultado.day(); // 0 = domingo, 6 = sábado
+
+        if (dia >= 1 && dia <= 5) {
+            diasSumados++;
+        }
+    }
+
+    return resultado;
+}
+
 const InputField = ({ label, id, name, type = "text", value, onChange, error, className = "", ...props }) => (
     <div className={`space-y-2 ${className}`}>
         <Label htmlFor={id} className="text-slate-800 mb-1">{label}</Label>
@@ -353,6 +370,10 @@ export const CrearEmpleado = () => {
             e.preventDefault()
             setIsSubmitting(false)
             setIsLoading(true)
+            const fecInicioGestion = formData.fecIniciGestion;
+            const fecFinGestion = sumarDiasHabiles(fecInicioGestion, 3);
+
+            console.log("Fecha final:", fecFinGestion.format("YYYY-MM-DD"));
 
             const datos = {
                 documento: formData.documento,
@@ -374,15 +395,14 @@ export const CrearEmpleado = () => {
                 dep: formData.dep.toUpperCase(),
                 telefono: formData.telefono,
                 modalidad: "PRESENCIAL", // Agregar este campo si es necesario
-                fecInicioGestion: formData.fecIniciGestion,
+                fecInicioGestion: fecFinGestion.format("YYYY-MM-DD"),
                 fecRegistro: new Date().toISOString().split("T")[0],
                 sueldo: formData.sueldo,
                 afp: formData.afp.toUpperCase(),
                 tip_comision: formData.tip_comision.toUpperCase(),
                 regimen: formData.tipoContrato.toUpperCase(),
                 asignacionfamiliar: formData.asignacionfamiliar.toUpperCase(),
-                /// FALTAN LOS ULTIMOS CAMBIOS AGREGADOS
-                impuestoRetenido: formData.impuestoRetenido,
+                impRetenido: formData.impuestoRetenido,
                 ingresoBruto: formData.ingresoBruto,
                 usuario: "ADMIN"
             }
@@ -414,7 +434,7 @@ export const CrearEmpleado = () => {
                 value={formData.apellidoMaterno} onChange={handleChange} error={formErrors.apellidoMaterno}
             />
             <InputField
-                label="FECHA INICIO DE GESTIÓN*" id="fecIniciGestion" name="fecIniciGestion"
+                label="FECHA INGRESO*" id="fecIniciGestion" name="fecIniciGestion"
                 type="date" value={formData.fecIniciGestion} onChange={handleChange} error={formErrors.fecIniciGestion}
             />
             <SelectField

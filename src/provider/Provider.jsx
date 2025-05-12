@@ -16,13 +16,20 @@ export const DataProvider = ({ children }) => {
         const nombreObtenido = localStorage.getItem("nombre")
         return nombreObtenido || null
     })
+        const [token, setToken] = useState(() => {
+        const tokenObtenido = localStorage.getItem("token")
+        return tokenObtenido || null
+    })
     useEffect(()=>{
         localStorage.setItem("nombre", nombre)
-    }, [nombre])
+        localStorage.setItem("token", token)
+    }, [nombre, token])
     const value = useMemo(() => ({
         nombre,
-        setNombre
-    }), [nombre]);
+        setNombre,
+        token,
+        setToken
+    }), [nombre, token]);
     return (
         <Context.Provider
             value={value}
