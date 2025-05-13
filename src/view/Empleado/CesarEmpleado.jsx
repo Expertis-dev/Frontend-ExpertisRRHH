@@ -237,24 +237,31 @@ export const CesarEmpleado = () => {
           <Select
             value={usuario}
             onChange={(value) => {
-              const empleadoSeleccionado = empleados.find((empleado) => empleado.nombreCompleto === value);
+              const empleadoSeleccionado = empleados.find(
+                (empleado) => empleado.nombreCompleto === value
+              );
               console.log(empleadoSeleccionado?.idEmpleado);
-              setIdEmpleado(empleadoSeleccionado?.idEmpleado); // solo el id
-              setUsuario(value); // esto es el idEmpleado
+              setIdEmpleado(empleadoSeleccionado?.idEmpleado);
+              setUsuario(value);
             }}
             className="flex-1 min-w-0"
             showSearch
-            optionFilterProp="children"
+            optionFilterProp="label"
             filterOption={(input, option) =>
-              option?.children?.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              option?.label?.toLowerCase().includes(input.toLowerCase())
             }
           >
             {empleados.map((item, index) => (
-              <Option key={index} value={item.nombreCompleto}>
+              <Option
+                key={index}
+                value={item.nombreCompleto}
+                label={`${item.nombreCompleto}-${item.documento}`}
+              >
                 {item.nombreCompleto}
               </Option>
             ))}
           </Select>
+
 
         </div>
 

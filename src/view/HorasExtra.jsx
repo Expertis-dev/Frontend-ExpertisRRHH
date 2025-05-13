@@ -176,20 +176,20 @@ export const HorasExtra = () => {
   const handleConfirmSubmit = async () => {
     setIsConfirmModalOpen(false)
     setIsLoadingModalOpen(true)
-    // Calcular cantidad de horas
-    const inicio = new Date(`2000-01-01T${formData.horaInicio}`)
-    const fin = new Date(`2000-01-01T${formData.horaFin}`)
-    const diffHours = Math.round((fin - inicio) / (1000 * 60 * 60))
-    // Agregar nuevo registro
+
+    const inicio = new Date(`2000-01-01T${formData.horaInicio}`);
+    const fin = new Date(`2000-01-01T${formData.horaFin}`);
+    const diffMs = fin - inicio;
+    const diffHoras = diffMs / (1000 * 60 * 60);
     const cuerpo = {
       fecha: formData.fecha,
       horaInicio: formData.horaInicio,
-      cantHoras: Number(diffHours.toString()),
+      cantHoras: parseFloat(diffHoras.toFixed(2)),
       horaFin: formData.horaFin,
       idEmpleado: empleadoSeleccionado.idEmpleado,
       usuario: nombre,
-    }
-    console.log(cuerpo)
+    };
+    console.log(cuerpo);
     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarHorasExtra`, cuerpo)
     console.log(response)
     if (response.status === 200) {
@@ -221,7 +221,8 @@ export const HorasExtra = () => {
 
     const filtrados = empleados
       .filter(empleado =>
-        empleado.nombreCompleto?.toLowerCase().includes(value.toLowerCase())
+        empleado.nombreCompleto?.toLowerCase().includes(value.toLowerCase()) ||
+        empleado.documento?.toLowerCase().includes(value.toLowerCase())
       )
       .map(empleado => ({
         label: empleado.nombreCompleto,
@@ -502,9 +503,9 @@ export const HorasExtra = () => {
         onCancel={() => setIsAddModalOpen(false)}
         width={650}
         footer={null}
-        className="[&_.ant-modal-content]:p-0 dark:[&_.ant-modal-content]:bg-gray-800"
+        className="[&_.ant-modal-content]:p-0 dark:[&_.ant-modal-content]:bg-gray-800 -translate-y-14"
       >
-        <div className="p-6">
+        <div className="p-4">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -696,10 +697,7 @@ export const HorasExtra = () => {
                 <span className="font-medium text-gray-700 dark:text-gray-300">Total Horas:</span>
                 <span className="font-semibold text-blue-600 dark:text-blue-400">
                   {formData.horaInicio && formData.horaFin ?
-                    Math.round(
-                      (new Date(`2000-01-01T${formData.horaFin}`) -
-                        new Date(`2000-01-01T${formData.horaInicio}`)
-                      ) / (1000 * 60 * 60)) : 0} horas
+                    ((new Date(`2000-01-01T${formData.horaFin}`) - new Date(`2000-01-01T${formData.horaInicio}`)) / (1000 * 60 * 60)) : 0} horas
                 </span>
               </div>
             </div>

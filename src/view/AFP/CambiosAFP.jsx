@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Typography, Upload, message, Modal } from "antd";
+import { Table, Typography, Upload, message, Modal,Tag } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,11 @@ export const CambiosAFP = () => {
 
   const columns = [
     {
+      title: "Mes nuevo Registro",
+      dataIndex: "codMesInicio",
+      key: "codMesInicio",
+    },
+    {
       title: "Documento",
       dataIndex: "documento",
       key: "documento",
@@ -87,29 +92,41 @@ export const CambiosAFP = () => {
       title: "SP Actual",
       dataIndex: "afpAnterior",
       key: "afpAnterior",
-    },
-    {
-      title: "Tipo Comisión actual",
-      dataIndex: "tipoComisionAnterior",
-      key: "tipoComisionAnterior",
+      render: (_, { afpAnterior }) => (
+        <Tag color="blue" style={{ fontSize: "14px"}}>{afpAnterior}</Tag>
+      )
     },
     {
       title: "SP nuevo",
       dataIndex: "afpNueva",
       key: "afpNueva",
+      render: (_, { afpNueva }) => (
+        <Tag color="green" style={{ fontSize: "14px"}}>{afpNueva}</Tag>
+      )
+    },
+    {
+      title: "Tipo Comisión actual",
+      dataIndex: "tipoComisionAnterior",
+      key: "tipoComisionAnterior",
+      render: (_, { tipoComisionAnterior }) => (
+        <Tag color="blue" style={{ fontSize: "14px"}}>{tipoComisionAnterior}</Tag>
+      )
     },
     {
       title: "Tipo Comisión nuevo",
       dataIndex: "tipoComisionNuevo",
       key: "tipoComisionNuevo",
+      render: (_, { tipoComisionNuevo }) => (
+        <Tag color="green" style={{ fontSize: "14px"}}>{tipoComisionNuevo}</Tag>
+      )
     },
   ];
   const EnviarCambios = async () => {
     try {
-      console.log({ cambios, nombre});
+      console.log({ cambios, nombre });
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/afp/registrarCambiosSPempleado`,
-        { cambios, nombre}
+        { cambios, nombre }
       );
       console.log(res);
       if (res.status === 200) {

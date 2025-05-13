@@ -88,7 +88,8 @@ export const CambiarFecCese = () => {
     const handleBuscarEmpleado = (value) => {
         const filtrados = empleados
             .filter(empleado =>
-                empleado.nombreCompleto.toLowerCase().includes(value.toLowerCase())
+                empleado.nombreCompleto.toLowerCase().includes(value.toLowerCase()) ||
+                empleado.documento.toString().includes(value.toLowerCase())
             )
             .map(empleado => ({
                 value: empleado.nombreCompleto,

@@ -31,6 +31,7 @@ export const InfoAFP = () => {
   const [showVerificar, setShowVerificar] = useState(false)
   const [error, setError] = useState("")
   const [ultimoMesInicio, setUltimoMesInicio] = useState("")
+  const [nuevoMes, setNuevoMes] = useState("")
   const [codMes, setCodMes] = useState("")
   const [newONP, setNewONP] = useState({
     aportacion: "",
@@ -84,6 +85,7 @@ export const InfoAFP = () => {
         setCodMes(response.data.codMesInicio)
         setUltimoMesInicio(response.data.ultimoMesInicio)
         setCambiosEncontrados(response.data.detalles)
+        setNuevoMes(response.data.codMesInicio)
       }
     } catch (error) {
       console.error("Error al obtener datos de AFP:", error)
@@ -291,10 +293,15 @@ export const InfoAFP = () => {
                   <TableCell>{afp.codMesFin ? afp.codMesFin.split("T")[0] : "N/A"}</TableCell>
                   <TableCell>{afp.SISTEMA_DE_PENSION}</TableCell>
                   <TableCell>{afp.tipoComision}</TableCell>
-                  <TableCell>{afp.aportacion}</TableCell>
-                  <TableCell>{afp.comision || "N/A"}</TableCell>
-                  <TableCell>{afp.seguro || "N/A"}</TableCell>
-                  <TableCell>{afp.seguroTope || "N/A"}</TableCell>
+                  <TableCell>{afp.aportacion * 100} %</TableCell>
+                  <TableCell>
+                    {afp.comision ? `${(afp.comision * 100).toFixed(2)} %` : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {afp.seguro ? `${(afp.seguro * 100).toFixed(2)} %` : "N/A"}
+                  </TableCell>
+
+                  <TableCell>{afp.seguroTope}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -311,7 +318,7 @@ export const InfoAFP = () => {
         <DialogContent className="max-w-xs max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
-              ¿QUE SEGURO PERSONA DESEA MODIFICAR?
+              ¿QUÉ SISTEMA DE PENSIÓN DESEA MODIFICAR?
             </DialogTitle>
           </DialogHeader>
           <div className='flex justify-evenly'>
@@ -445,7 +452,7 @@ export const InfoAFP = () => {
 
       {/* Modal de VERIFICAR , DONDE SE MOSTRARAN LA TABLA */}
       <Dialog open={showVerificar} onOpenChange={setShowVerificar}>
-        <DialogContent className="max-w-[80VW] ">
+        <DialogContent className="max-w-[95vw] ">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
               DATOS OBTENIDOS
@@ -456,16 +463,17 @@ export const InfoAFP = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-20">ULTIMO MES</TableHead>
-                  <TableHead>AFP</TableHead>
-                  <TableHead>TIPO</TableHead>
-                  <TableHead>APORTACIÓN (%) ANTERIOR</TableHead>
-                  <TableHead>APORTACIÓN (%) ACTUAL</TableHead>
-                  <TableHead>COMISIÓN (%) ANTERIOR</TableHead>
-                  <TableHead>COMISIÓN (%) ACTUAL</TableHead>
-                  <TableHead>SEGURO (%) ANTERIOR</TableHead>
-                  <TableHead>SEGURO (%) ACTUAL</TableHead>
-                  <TableHead>SEGURO TOPE ANTERIOR</TableHead>
+                  <TableHead className="font-semibold">AFP</TableHead>
+                  <TableHead className="font-semibold">TIPO</TableHead>
+                  <TableHead className="w-20 font-semibold">ULTIMO MES CARGADO</TableHead>
+                  <TableHead className="w-20 font-semibold">MES A CARGAR</TableHead>
+                  <TableHead className="font-semibold">APORTACIÓN (%) ANTERIOR</TableHead>
+                  <TableHead className="font-semibold">APORTACIÓN (%) ACTUAL</TableHead>
+                  <TableHead className="font-semibold">COMISIÓN (%) ANTERIOR</TableHead>
+                  <TableHead className="font-semibold">COMISIÓN (%) ACTUAL</TableHead>
+                  <TableHead className="font-semibold">SEGURO (%) ANTERIOR</TableHead>
+                  <TableHead className="font-semibold">SEGURO (%) ACTUAL</TableHead>
+                  <TableHead className="font-semibold">SEGURO TOPE ANTERIOR</TableHead>
                   <TableHead>SEGURO TOPE ACTUAL</TableHead>
                   <TableHead>TOTAL ANTERIOR</TableHead>
                   <TableHead>TOTAL ACTUAL</TableHead>
@@ -474,19 +482,20 @@ export const InfoAFP = () => {
               <TableBody>
                 {cambiosEncontrados.map((data, index) => (
                   <TableRow key={index} className={`${data.ESTADO === "NO CAMBIO" ? "bg-green-200" : " bg-red-300 "}`} >
-                    <TableCell>{ultimoMesInicio.split("T")[0]} </TableCell>
                     <TableCell>{data.SP}</TableCell>
                     <TableCell>{data.TIPO}</TableCell>
-                    <TableCell className="bg-neutral-100">{data.APORTACION_ANTERIOR ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.APORTACION_ACTUAL ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-100">{data.COMISION_ANTERIOR ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.COMISION_ACTUAL ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-100">{data.SEGURO_ANTERIOR ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.SEGURO_ACTUAL ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-100">{data.SEGUROTOPE_ANTERIOR ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.SEGUROTOPE_ACTUAL ?? '-'}</TableCell>
-                    <TableCell className="bg-neutral-100">{data.TOTAL_ANTERIOR ?? '-'}</TableCell>
-                    <TableCell className="bg-green-300">{data.TOTAL_ACTUAL ?? '-'}</TableCell>
+                    <TableCell className="bg-neutral-100">{ultimoMesInicio.split("T")[0]} </TableCell>
+                    <TableCell className="bg-green-300">{nuevoMes} </TableCell>
+                    <TableCell className="bg-neutral-100">{data.APORTACION_ANTERIOR ?? '-'} %</TableCell>
+                    <TableCell className="bg-green-300">{data.APORTACION_ACTUAL ?? '-'} %</TableCell>
+                    <TableCell className="bg-neutral-100">{data.COMISION_ANTERIOR ?? '-'} %</TableCell>
+                    <TableCell className="bg-green-300">{data.COMISION_ACTUAL ?? '-'} %</TableCell>
+                    <TableCell className="bg-neutral-100">{data.SEGURO_ANTERIOR ?? '-'} %</TableCell>
+                    <TableCell className="bg-green-300">{data.SEGURO_ACTUAL ?? '-'} %</TableCell>
+                    <TableCell className="bg-neutral-100">{data.SEGUROTOPE_ANTERIOR ?? '-'} </TableCell>
+                    <TableCell className="bg-green-300">{data.SEGUROTOPE_ACTUAL ?? '-'} </TableCell>
+                    <TableCell className="bg-neutral-100">{data.TOTAL_ANTERIOR ?? '-'} %</TableCell>
+                    <TableCell className="bg-green-300">{data.TOTAL_ACTUAL ?? '-'} %</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
