@@ -151,50 +151,50 @@ export const CrearEmpleado = () => {
         {
             title: "Información Personal",
             fields: [
-                { label: "Nombre", value: `${formData.nombre} ${formData.apellidoPaterno} ${formData.apellidoMaterno}` },
-                { label: "Documento", value: formData.documento },
-                { label: "Sexo", value: formData.sexo },
-                { label: "Estado Civil", value: formData.estadoCivil },
-                { label: "N° de Hijos", value: formData.nroHijos },
-                { label: "Teléfono", value: formData.telefono },
-                { label: "Correo", value: formData.correo },
+                { label: "Nombre", value: `${formData.nombre.toUpperCase()} ${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}` },
+                { label: "Documento", value: formData.documento.toUpperCase() },
+                { label: "Sexo", value: formData.sexo.toUpperCase() },
+                { label: "Estado Civil", value: formData.estadoCivil.toUpperCase() },
+                { label: "N° de Hijos", value: formData.nroHijos.toUpperCase() },
+                { label: "Teléfono", value: formData.telefono.toUpperCase() },
+                { label: "Correo", value: formData.correo.toUpperCase() },
             ]
         },
         {
             title: "Datos Laborales",
             fields: [
-                { label: "Cargo", value: formData.cargo },
-                { label: "Sueldo", value: `S/ ${formData.sueldo}` },
-                { label: "Fecha Inicio", value: formData.fecIniciGestion },
-                { label: "Tipo Comisión", value: formData.tip_comision === "0" ? "NULA" : formData.tip_comision },
-                { label: "Asignación Familiar", value: formData.asignacionfamiliar.toLocaleUpperCase() },
-                { label: "Impuesto Retenido", value: formData.impuestoRetenido },
-                { label: "Ingreso Bruto", value: formData.ingresoBruto },
+                { label: "Cargo", value: formData.cargo.toUpperCase() },
+                { label: "Sueldo", value: `S/ ${formData.sueldo.toUpperCase()}` },
+                { label: "Fecha Inicio", value: formData.fecIniciGestion.toUpperCase() },
+                { label: "Tipo Comisión", value: formData.tip_comision === "0" ? "NULA" : formData.tip_comision.toUpperCase() },
+                { label: "Asignación Familiar", value: formData.asignacionfamiliar.toUpperCase() },
+                { label: "Impuesto Retenido", value: formData.impuestoRetenido.toUpperCase() },
+                { label: "Ingreso Bruto", value: formData.ingresoBruto.toUpperCase() },
             ]
         },
         {
             title: "Datos de AFP",
             fields: [
-                { label: "AFP", value: formData.afp === "0" ? "NO TIENE AFP" : formData.afp },
-                { label: "Régimen", value: formData.tipoContrato },
+                { label: "AFP", value: formData.afp === "0" ? "NO TIENE AFP" : formData.afp.toUpperCase() },
+                { label: "Régimen", value: formData.tipoContrato.toUpperCase() },
             ]
         },
         {
             title: "Ubicación",
             fields: [
-                { label: "Dirección", value: formData.dir },
-                { label: "Departamento", value: formData.dep },
-                { label: "Provincia", value: formData.prov },
-                { label: "Distrito", value: formData.dist },
+                { label: "Dirección", value: formData.dir.toUpperCase() },
+                { label: "Departamento", value: formData.dep.toUpperCase() },
+                { label: "Provincia", value: formData.prov.toUpperCase() },
+                { label: "Distrito", value: formData.dist.toUpperCase() },
             ]
         },
         {
             title: "Datos de Nacimiento",
             fields: [
-                { label: "Fecha Nacimiento", value: formData.fecNacimiento },
-                { label: "Departamento", value: formData.depNacimiento },
-                { label: "Provincia", value: formData.provNacimiento },
-                { label: "Distrito", value: formData.distNacimiento },
+                { label: "Fecha Nacimiento", value: formData.fecNacimiento.toUpperCase() },
+                { label: "Departamento", value: formData.depNacimiento.toUpperCase() },
+                { label: "Provincia", value: formData.provNacimiento.toUpperCase() },
+                { label: "Distrito", value: formData.distNacimiento.toUpperCase() },
             ]
         }
     ]
@@ -272,20 +272,31 @@ export const CrearEmpleado = () => {
     const validateStep = (step) => {
         const errors = {}
         if (step === 0) {
-            if (!formData.nombre.trim()) errors.nombre = "Nombre es requerido"
-            if (!formData.apellidoPaterno.trim()) errors.apellidoPaterno = "Apellido paterno es requerido"
-            if (!formData.apellidoMaterno.trim()) errors.apellidoMaterno = "Apellido materno es requerido"
-            if (!formData.fecIniciGestion) errors.fecIniciGestion = "Fecha de inicio es requerida"
-            if (!formData.sexo) errors.sexo = "Sexo es requerido"
-            if (!formData.estadoCivil) errors.estadoCivil = "Estado civil es requerido"
-            if (!formData.cargo.trim()) errors.cargo = "Cargo es requerido"
-            if (formData.nroHijos === "" || parseInt(formData.nroHijos) < 0 || parseInt(formData.nroHijos) >= 20) {
-                errors.nroHijos = "Debe ser un número entre 0 y 20"
+            if (!formData.nombre.trim()) errors.nombre = "Nombre es requerido";
+            if (!formData.apellidoPaterno.trim()) errors.apellidoPaterno = "Apellido paterno es requerido";
+            if (!formData.apellidoMaterno.trim()) errors.apellidoMaterno = "Apellido materno es requerido";
+            if (!formData.fecIniciGestion) errors.fecIniciGestion = "Fecha de inicio es requerida";
+            if (!formData.sexo) errors.sexo = "Sexo es requerido";
+            if (!formData.estadoCivil) errors.estadoCivil = "Estado civil es requerido";
+            if (!formData.cargo.trim()) errors.cargo = "Cargo es requerido";
+
+            // Validación para número de hijos (solo números enteros positivos entre 0 y 20)
+            const hijos = formData.nroHijos;
+            if (hijos === "" || !/^\d+$/.test(hijos) || parseInt(hijos) < 0 || parseInt(hijos) > 20) {
+                errors.nroHijos = "Debe ser un número entero entre 0 y 20";
             }
-            if (!formData.telefono.trim()) errors.telefono = "Teléfono es requerido"
-            if (!isValidEmail(formData.correo)) errors.correo = "Correo electrónico inválido"
-            if (!formData.fecNacimiento) errors.fecNacimiento = "Fecha de nacimiento es requerida"
-            if (!formData.asignacionfamiliar) errors.asignacionfamiliar = "Asignación familiar es requerida"
+
+            // Validación para teléfono (exactamente 9 dígitos, solo números)
+            const telefono = formData.telefono.trim();
+            if (!telefono) {
+                errors.telefono = "Teléfono es requerido";
+            } else if (!/^\d{9}$/.test(telefono)) {
+                errors.telefono = "Debe tener exactamente 9 dígitos numéricos";
+            }
+
+            if (!isValidEmail(formData.correo)) errors.correo = "Correo electrónico inválido";
+            if (!formData.fecNacimiento) errors.fecNacimiento = "Fecha de nacimiento es requerida";
+            if (!formData.asignacionfamiliar) errors.asignacionfamiliar = "Asignación familiar es requerida";
         }
         else if (step === 1) {
             if (!formData.dir.trim()) errors.dir = "Dirección es requerida"
@@ -324,14 +335,9 @@ export const CrearEmpleado = () => {
     const handleChange = (e) => {
         const { name, value } = e.target
 
-
-        const newValue = e.target.type === 'number'
-            ? Number(value)
-            : value
-
         setFormData(prev => ({
             ...prev,
-            [name]: e.target.type === 'number' ? (isNaN(newValue) ? prev[name] : newValue) : value
+            [name]: e.target.type === 'number' ? (isNaN(value) ? prev[name] : value) : value
         }))
 
         // Limpiar error si existe
@@ -747,7 +753,7 @@ export const CrearEmpleado = () => {
         try {
             showDialog('verifying')
             const response = await axios.get(
-                `http://localhost:4000/api/empleados/validarEmpleado/${formData.documento}`
+                `${import.meta.env.VITE_BACKEND_URL}/api/empleados/validarEmpleado/${formData.documento}`
             )
             const employeeData = response.data.data[0]
 
