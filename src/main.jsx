@@ -30,7 +30,7 @@ createRoot(document.getElementById("root")).render(
     <DataProvider>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/finanzas" element={
+        <Route path="/rrhh" element={
           <RutaProtegida>
             <FinanzasLayout />
           </RutaProtegida>

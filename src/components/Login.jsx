@@ -41,7 +41,7 @@ export const Login = () => {
                 setToken(token.data.token)
                 messageApi.success("¡Bienvenido!");
                 setTimeout(() => {
-                    navegar("/finanzas/empleados-listar");
+                    navegar("/rrhh/empleados-listar");
                 }, 1000);
             } else {
                 messageApi.error("Credenciales incorrectas");

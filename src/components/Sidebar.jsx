@@ -32,20 +32,20 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             children: [
                 {
                     key: 'empleados-listar',
-                    label: <Link to="/finanzas/empleados-listar">Lista Empleados</Link>,
+                    label: <Link to="/rrhh/empleados-listar">Lista Empleados</Link>,
                 },
                 {
                     key: 'empleados-crear',
-                    label: <Link to="/finanzas/empleados-crear">Registro Empleado</Link>,
+                    label: <Link to="/rrhh/empleados-crear">Registro Empleado</Link>,
                 },
                 {
                     key: 'empleados-cesar',
-                    label: <Link to="/finanzas/empleados-cesar">Cese de Empleado</Link>,
+                    label: <Link to="/rrhh/empleados-cesar">Cese de Empleado</Link>,
                 },
 
                 {
                     key: 'cambiar-fecha-cese',
-                    label: <Link to="/finanzas/cambiar-fecha-cese">Cambiar Fec. Cese</Link>,
+                    label: <Link to="/rrhh/cambiar-fecha-cese">Cambiar Fec. Cese</Link>,
                 },
             ]
         },
@@ -56,43 +56,43 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             children: [
                 {
                     key: 'empleados-afp',
-                    label: <Link to="/finanzas/empleados-afp">SP Empleados</Link>,
+                    label: <Link to="/rrhh/empleados-afp">SP Empleados</Link>,
                 },
                 {
                     key: 'cambios-afp',
-                    label: <Link to="/finanzas/cambios-afp">Cambios SP</Link>,
+                    label: <Link to="/rrhh/cambios-afp">Cambios SP</Link>,
                 },
                 {
                     key: 'info-afp',
-                    label: <Link to="/finanzas/info-afp">Info. SP</Link>,
+                    label: <Link to="/rrhh/info-afp">Info. SP</Link>,
                 },
             ],
         },/*
         {
             key: 'eps',
             icon: <MedicineBoxOutlined />,
-            label: <Link to="/finanzas/eps">EPS</Link>,
+            label: <Link to="/rrhh/eps">EPS</Link>,
         },*/
         {
             key: 'sueldo-minimo',
             icon: <EuroCircleOutlined />,
-            label: <Link to="/finanzas/sueldo-minimo">Sueldo Minimo</Link>,
+            label: <Link to="/rrhh/sueldo-minimo">Sueldo Minimo</Link>,
         },
 
         {
             key: 'horas-extra',
             icon: <ClockCircleOutlined />,
-            label: <Link to="/finanzas/horas-extra">Horas Extra</Link>,
+            label: <Link to="/rrhh/horas-extra">Horas Extras</Link>,
         },
         {
             key: 'contrato',
             icon: <FileTextOutlined />,
-            label: <Link to="/finanzas/contrato">Régimen Laboral</Link>,
+            label: <Link to="/rrhh/contrato">Régimen Laboral</Link>,
         },/*
         {
             key: 'retencion-judicial',
             icon: <BankOutlined />,
-            label: <Link to="/finanzas/retencion-judicial">Retención Judicial</Link>,
+            label: <Link to="/rrhh/retencion-judicial">Retención Judicial</Link>,
         },*/
 
         // {
@@ -103,11 +103,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
 
         //         {
         //             key: 'historico-descuento',
-        //             label: <Link to="/finanzas/historialDescuentos">Histórico</Link>,
+        //             label: <Link to="/rrhh/historialDescuentos">Histórico</Link>,
         //         },
         //         {
         //             key: 'carga-descuentos',
-        //             label: <Link to="/finanzas/cargarDescuentos">Cargar Datos</Link>,
+        //             label: <Link to="/rrhh/cargarDescuentos">Cargar Datos</Link>,
         //         },                
 
         //     ],
@@ -116,12 +116,12 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         // {
         //     key: 'comisiones',
         //     icon: <PercentageOutlined />,
-        //     label: <Link to="/finanzas/comisiones">Comisiones</Link>,
+        //     label: <Link to="/rrhh/comisiones">Comisiones</Link>,
         // },
         // {
         //     key: 'descanso-medicos',
         //     icon: <MedicineBoxOutlined />,
-        //     label: <Link to="/finanzas/descanso-medicos">Descanso Médicos</Link>,
+        //     label: <Link to="/rrhh/descanso-medicos">Descanso Médicos</Link>,
         // },
 
         {

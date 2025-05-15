@@ -781,7 +781,7 @@ export const CrearEmpleado = () => {
     if (registro) {
         return (
             <>
-                <Dialog open={dialogState.documentoInput} onOpenChange={() => navegar("/finanzas/empleados-listar")}>
+                <Dialog open={dialogState.documentoInput} onOpenChange={() => navegar("/rrhh/empleados-listar")}>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                             <DialogTitle className="text-center">Ingrese el documento del empleado</DialogTitle>
@@ -1036,7 +1036,7 @@ export const CrearEmpleado = () => {
                                 className="w-full "
                                 onClick={() => {
                                     setIsSuccess(false)
-                                    navegar("/finanzas/empleados-listar")
+                                    navegar("/rrhh/empleados-listar")
                                 }}
                             >
                                 Aceptar

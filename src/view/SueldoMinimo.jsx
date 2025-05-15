@@ -128,9 +128,9 @@ export const SueldoMinimo = () => {
                         {data.map((datos, index) => (
                             <TableRow key={index} className="hover:bg-blue-50">
                                 <TableCell className="text-center text-md">{`S/. ${parseFloat(datos.montoSueldo).toFixed(2)}`}</TableCell>
-                                <TableCell className="text-center text-md">{(datos.mesInicio.split("T")[0]).split("-").reverse().slice(1).join("-")}</TableCell>
+                                <TableCell className="text-center text-md">{(datos.mesInicio.split("T")[0])}</TableCell>
                                 <TableCell className="text-center text-md">
-                                    {datos.mesFin ? (datos.mesFin.split("T")[0]).split("-").reverse().slice(1).join("-") : "VIGENTE"}
+                                    {datos.mesFin ? (datos.mesFin.split("T")[0]) : "VIGENTE"}
                                 </TableCell>
                             </TableRow>
                         ))}
