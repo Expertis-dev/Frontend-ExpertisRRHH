@@ -70,7 +70,7 @@ export const Login = () => {
                         onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/80" }}
                     />
                     <h1 className="text-2xl font-bold text-gray-800 font-sans text-center">
-                        DATA ENTRY - FINANZAS
+                        EXPERTIS RR.HH
                     </h1>
                     <p className="text-gray-500 mt-2">Ingrese sus credenciales</p>
                 </div>
