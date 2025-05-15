@@ -264,7 +264,9 @@ export const ListarEmpleados = () => {
       `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoCeses/${idPersona}`
     );
-    setDatosCese(response.data.data[0]);
+
+    console.log(response.data.data);
+    setDatosCese(response.data.data);
   };
 
   const HistoricoPuestos = async (idPersona) => {
@@ -272,8 +274,8 @@ export const ListarEmpleados = () => {
       `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoPuestoTrabajo/${idPersona}`
     );
-    setDatosPuestos(response.data.data[0]);
-    setUltimoPuesto(ObtenerUltimo(response.data.data[0]));
+    setDatosPuestos(response.data.data);
+    setUltimoPuesto(ObtenerUltimo(response.data.data));
   };
 
   const HistoricoAFP = async (idPersona) => {
@@ -281,7 +283,7 @@ export const ListarEmpleados = () => {
       `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoAFP/${idPersona}`
     );
-    setDatosAFP(response.data.data[0]);
+    setDatosAFP(response.data.data);
   };
 
   const HistoricoAsignacionFamiliar = async (idPersona) => {
@@ -289,8 +291,8 @@ export const ListarEmpleados = () => {
       `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoAsignacionFamiliar/${idPersona}`
     );
-    setDatosAsigFam(response.data.data[0]);
-    setUltimoAsigFam(ObtenerUltimo(response.data.data[0]));
+    setDatosAsigFam(response.data.data);
+    setUltimoAsigFam(ObtenerUltimo(response.data.data));
   };
 
   const HistoricoSueldo = async (idPersona) => {
@@ -298,8 +300,8 @@ export const ListarEmpleados = () => {
       `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoSueldos/${idPersona}`
     );
-    setDatosSueldos(response.data.data[0]);
-    setUltimoSueldo(ObtenerUltimo(response.data.data[0]));
+    setDatosSueldos(response.data.data);
+    setUltimoSueldo(ObtenerUltimo(response.data.data));
   };
 
   const openDetails = async (employee) => {
