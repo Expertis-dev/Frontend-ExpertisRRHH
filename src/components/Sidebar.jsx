@@ -87,7 +87,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         {
             key: 'contrato',
             icon: <FileTextOutlined />,
-            label: <Link to="/finanzas/contrato">Contratos</Link>,
+            label: <Link to="/finanzas/contrato">Régimen Laboral</Link>,
         },/*
         {
             key: 'retencion-judicial',

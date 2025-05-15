@@ -59,7 +59,7 @@ export const CambiarFecCese = () => {
 
                     if (response.status === 200 && response.data.data && response.data.data.length > 0) {
                         // Ordenar por fecha de cese (más reciente primero)
-                        const cesesOrdenados = [...response.data.data[0]].sort((a, b) =>
+                        const cesesOrdenados = [...response.data.data].sort((a, b) =>
                             new Date(b.fecCese) - new Date(a.fecCese)
                         );
 

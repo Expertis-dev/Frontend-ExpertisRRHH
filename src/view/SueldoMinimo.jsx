@@ -128,9 +128,9 @@ export const SueldoMinimo = () => {
                         {data.map((datos, index) => (
                             <TableRow key={index} className="hover:bg-blue-50">
                                 <TableCell className="text-center text-md">{`S/. ${parseFloat(datos.montoSueldo).toFixed(2)}`}</TableCell>
-                                <TableCell className="text-center text-md">{datos.mesInicio.split("T")[0]}</TableCell>
+                                <TableCell className="text-center text-md">{(datos.mesInicio.split("T")[0]).split("-").reverse().slice(1).join("-")}</TableCell>
                                 <TableCell className="text-center text-md">
-                                    {datos.mesFin ? datos.mesFin.split("T")[0] : "VIGENTE"}
+                                    {datos.mesFin ? (datos.mesFin.split("T")[0]).split("-").reverse().slice(1).join("-") : "VIGENTE"}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -196,7 +196,7 @@ export const SueldoMinimo = () => {
                             <AlertTriangle className="h-8 w-8 text-yellow-600" />
                         </div>
                         <p className="text-gray-600 text-center">
-                            ¿Está seguro de agregar un nuevo sueldo mínimo de S/. {nuevoSueldo} a partir del {dayjs(fechaInicio).format('DD/MM/YYYY')}?
+                            ¿Está seguro de agregar un nuevo sueldo mínimo de S/. {nuevoSueldo} a partir del {dayjs(fechaInicio).format('MM/YYYY')}?
                         </p>
                     </div>
                     <DialogFooter>

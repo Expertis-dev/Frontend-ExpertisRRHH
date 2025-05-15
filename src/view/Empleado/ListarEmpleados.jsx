@@ -54,7 +54,7 @@ const SelectField = ({
       <SelectTrigger className={error ? "border-red-500" : ""}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="max-h-72 overflow-auto">
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}
@@ -252,7 +252,7 @@ export const ListarEmpleados = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const [year, month, day] = dateString.split("T")[0].split("-");
-    return `${day}/${month}/${year}`;
+    return `${month}/${year}`;
   };
 
   const ObtenerUltimo = (datos) => {
@@ -264,8 +264,6 @@ export const ListarEmpleados = () => {
       `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoCeses/${idPersona}`
     );
-
-    console.log(response.data.data);
     setDatosCese(response.data.data);
   };
 
@@ -274,6 +272,7 @@ export const ListarEmpleados = () => {
       `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoPuestoTrabajo/${idPersona}`
     );
+    console.log(response.data.data)
     setDatosPuestos(response.data.data);
     setUltimoPuesto(ObtenerUltimo(response.data.data));
   };
@@ -285,7 +284,6 @@ export const ListarEmpleados = () => {
     );
     setDatosAFP(response.data.data);
   };
-
   const HistoricoAsignacionFamiliar = async (idPersona) => {
     const response = await axios.get(
       `${import.meta.env.VITE_BACKEND_URL
@@ -1147,7 +1145,7 @@ export const ListarEmpleados = () => {
               <hr className="py-1" />
               {selectedField === "salary" && (
                 <>
-                  <div className="flex justify-between w-2/3">
+                  <div className="flex justify-between w-full">
                     <p className="text-red-500">
                       <span className="font-medium text-black">Anterior sueldo:</span>{" "}
                       {ultimoSueldo.sueldoFijo}
@@ -1160,7 +1158,7 @@ export const ListarEmpleados = () => {
                   <div>
                     <p>
                       <span className="font-medium">Codigo Mes: </span>
-                      {formData.salary.cod_mes}
+                      {formData.salary.cod_mes.split("-").reverse().slice(1).join("-")}
                     </p>
                   </div>
                 </>
@@ -1173,7 +1171,7 @@ export const ListarEmpleados = () => {
                   </p>
                   <p>
                     <span className="font-medium">Codigo Mes:</span>{" "}
-                    {formData.position.cod_mes}
+                    {formData.position.cod_mes.split("-").reverse().slice(1).join("-")}
                   </p>
                 </>
               )}
@@ -1191,7 +1189,7 @@ export const ListarEmpleados = () => {
                   </div>
                   <p>
                     <span className="font-medium">Codigo Mes:</span>{" "}
-                    {formData.familyAllowance.cod_mes}
+                    {formData.familyAllowance.cod_mes.split("-").reverse().slice(1).join("-")}
                   </p>
                 </>
               )}
@@ -1326,7 +1324,7 @@ export const ListarEmpleados = () => {
                     <TableCell>{employee.CODIGO}</TableCell>
                     <TableCell>{employee.nombreCompleto}</TableCell>
                     <TableCell>{employee.documento}</TableCell>
-                    <TableCell>{formatDate(employee.fecIngreso)}</TableCell>
+                    <TableCell>{employee.fecIngreso? employee.fecIngreso.split("T")[0] : "N/A"}</TableCell>
                     <TableCell>{employee.estadoLaboral}</TableCell>
                     <TableCell>
                       <Button
@@ -1423,7 +1421,7 @@ export const ListarEmpleados = () => {
                     <div className="space-y-1">
                       <p>
                         <span className="font-semibold">Ingreso:</span>{" "}
-                        {formatDate(selectedEmployee.fecIngreso)}
+                        {selectedEmployee.fecIngreso.split("T")[0]}
                       </p>
                       <p>
                         <span className="font-semibold">Telefono:</span>{" "}
@@ -1465,7 +1463,7 @@ export const ListarEmpleados = () => {
                       </p>
                       <p>
                         <span className="font-semibold">Fech. Nacimiento:</span>{" "}
-                        {formatDate(selectedEmployee.fecNacimiento)}
+                        {selectedEmployee.fecNacimiento.split("T")[0]}
                       </p>
                     </div>
                   </div>
@@ -1648,7 +1646,7 @@ export const ListarEmpleados = () => {
                               <TableCell>
                                 {formatDate(cese.fecIngreso)}
                               </TableCell>
-                              <TableCell>{formatDate(cese.fecCese)}</TableCell>
+                              <TableCell>{cese.fecCese.split("T")[0]}</TableCell>
                               <TableCell>{cese.motivo}</TableCell>
                             </TableRow>
                           ))}
