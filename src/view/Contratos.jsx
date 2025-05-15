@@ -73,7 +73,7 @@ export const Contratos = () => {
         transition={{ duration: 0.3 }}
         className="text-center text-2xl font-bold mb-6 text-gray-800 dark:text-white"
       >
-        MODALIDAD DE CONTRATACIÓN
+        CONSULTA RÉGIMEN
       </motion.h1>
 
       {error && (
