@@ -81,8 +81,8 @@ export const AFPempleado = () => {
                   <TableCell className="">{empleado.nombreCompleto}</TableCell>
                   <TableCell>{empleado.SISTEMA_DE_PENSION}</TableCell>
                   <TableCell>{empleado.tipoComision}</TableCell>
-                  <TableCell>{empleado.mesInicio.split("T")[0]}</TableCell>
-                  <TableCell>{empleado.mesFin === null ? "N/A" : empleado.mesFin.split("T")[0]}</TableCell>
+                  <TableCell>{(empleado.mesInicio.split("T")[0]).split("-").reverse().slice(1).join("-")}</TableCell>
+                  <TableCell>{empleado.mesFin === null ? "N/A" : (empleado.mesFin.split("T")[0]).split("-").reverse().slice(1).join("-")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

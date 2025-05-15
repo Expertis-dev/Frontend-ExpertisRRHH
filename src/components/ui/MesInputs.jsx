@@ -47,7 +47,7 @@ export const DatePickerFirstDay = ({ handleDateChange, mesInicio }) => {
 
       {selectedDate && (
         <div className="text-sm mt-2 p-2 bg-gray-100 rounded">
-          Fecha seleccionada: <strong>{selectedDate.format("DD MMMM YYYY")}</strong>
+          Fecha seleccionada: <strong>{selectedDate.format("MMMM YYYY")}</strong>
         </div>
       )}
     </div>

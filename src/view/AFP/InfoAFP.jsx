@@ -289,8 +289,8 @@ export const InfoAFP = () => {
             <TableBody>
               {filtroAFP.map((afp, key) => (
                 <TableRow key={key} className="border-t hover:bg-blue-50 transition-colors">
-                  <TableCell>{afp.codMesInicio.split("T")[0]}</TableCell>
-                  <TableCell>{afp.codMesFin ? afp.codMesFin.split("T")[0] : "N/A"}</TableCell>
+                  <TableCell>{(afp.codMesInicio.split("T")[0]).split("-").reverse().slice(1).join("-")}</TableCell>
+                  <TableCell>{afp.codMesFin ? (afp.codMesFin.split("T")[0]).split("-").reverse().slice(1).join("-") : "N/A"}</TableCell>
                   <TableCell>{afp.SISTEMA_DE_PENSION}</TableCell>
                   <TableCell>{afp.tipoComision}</TableCell>
                   <TableCell>{afp.aportacion * 100} %</TableCell>

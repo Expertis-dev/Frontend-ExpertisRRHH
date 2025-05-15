@@ -58,10 +58,10 @@ export const Login = () => {
     const isFormValid = credenciales.usuario && credenciales.contraseña;
 
     return (
-        <div className="min-h-screen flex flex-col gap-12 md:flex-row items-center justify-center p-4 bg-gradient-to-br from-[#001529] to-blue-900">
+        <div className="min-h-screen flex flex-col gap-12 md:flex-row items-center justify-center p-10 bg-gradient-to-br from-[#001529] to-blue-900">
             {contextHolder}
 
-            <div className="w-full md:w-1/2 lg:w-1/3 xl:w-2/6 bg-white rounded-xl shadow-2xl p-8 transform transition-all duration-500 hover:scale-105">
+            <div className="w-full md:w-1/2 lg:w-1/3 xl:w-2/6 bg-white rounded-xl shadow-2xl p-8 transform transition-all duration-500 ">
                 <div className="flex flex-col items-center mb-8">
                     <img
                         className="w-20 h-20 mb-4"

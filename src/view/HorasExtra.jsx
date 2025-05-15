@@ -697,7 +697,7 @@ export const HorasExtra = () => {
                 <span className="font-medium text-gray-700 dark:text-gray-300">Total Horas:</span>
                 <span className="font-semibold text-blue-600 dark:text-blue-400">
                   {formData.horaInicio && formData.horaFin ?
-                    ((new Date(`2000-01-01T${formData.horaFin}`) - new Date(`2000-01-01T${formData.horaInicio}`)) / (1000 * 60 * 60)) : 0} horas
+                    ((new Date(`2000-01-01T${formData.horaFin}`) - new Date(`2000-01-01T${formData.horaInicio}`)) / (1000 * 60 * 60)).toFixed(2) : 0} horas
                 </span>
               </div>
             </div>

@@ -163,10 +163,10 @@ export const Contratos = () => {
                     </span>
                   </td>
                   <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 text-center">
-                    {contract.mesInicio ? contract.mesInicio.split("T")[0] : "-"}
+                    {contract.mesInicio ? (contract.mesInicio.split("T")[0]).split("-").reverse().slice(1).join("-") : "-"}
                   </td>
                   <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 text-center">
-                    {contract.mesFin ? contract.mesFin.split("T")[0] : "-"}
+                    {contract.mesFin ? (contract.mesFin.split("T")[0]).split("-").reverse().slice(1).join("-") : "-"}
                   </td>
                 </motion.tr>
               ))
