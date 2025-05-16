@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { Check, Eye, Pencil, ChevronLeft, X, ChevronRight } from "lucide-react";
+import { MagnifyingGlassIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { Check, Eye, Pencil, ChevronLeft, X, ChevronRight, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,7 +33,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { DatePickerFirstDay } from "@/components/ui/MesInputs";
 import { PlusCircleOutlined } from "@ant-design/icons";
-
+import { DatePicker } from 'antd';
+const { RangePicker } = DatePicker;
 const SelectField = ({
   label,
   name,
@@ -95,7 +97,9 @@ export const ListarEmpleados = () => {
   const [loading, setLoading] = useState(true);
   const [selectedField, setSelectedField] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
-
+  const [estadoEmpleado, setEstadoEmpleado] = useState("VIGENTE");
+  const [todosEmpleados, setTodosEmpleados] = useState([]);
+  const [filtroDias, setFiltroDias] = useState([])
   const [formData, setFormData] = useState({
     salary: { amount: "", valid: false, cod_mes: "" },
     position: { title: "", cod_mes: "", valid: false },
@@ -121,17 +125,23 @@ export const ListarEmpleados = () => {
         `${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`
       );
       const datos = response.data.recordset;
-      const dataEmpleados = datos.filter(dato => dato.nombreCompleto !== null)
-      setEmpleados(
-        dataEmpleados.sort((a, b) =>
-          a.nombreCompleto.localeCompare(b.nombreCompleto)
-        )
-      );
-      setFilteredEmpleados(
-        dataEmpleados.sort((a, b) =>
-          a.nombreCompleto.localeCompare(b.nombreCompleto)
-        )
-      );
+
+      // Filtrar empleados con nombreCompleto y ordenar
+      const dataEmpleados = datos
+        .filter(dato => dato.nombreCompleto !== null)
+        .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto));
+
+      // Guardar todos los empleados
+      setTodosEmpleados(dataEmpleados);
+
+      // Filtrar por estado
+      setEmpleados(dataEmpleados.filter(dato =>
+        String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
+      ));
+
+      setFilteredEmpleados(dataEmpleados.filter(dato =>
+        String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
+      ));
       const cargosResponse = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarCargos`
       );
@@ -220,20 +230,53 @@ export const ListarEmpleados = () => {
     }
   }, [formData, selectedField]);
 
+
+  const filtrarPorRangoFechas = (empleados, rangoFechas) => {
+    try {
+      const fechaInicio = new Date(rangoFechas[0]);
+      const fechaFin = new Date(rangoFechas[1]);
+
+      if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
+        throw new Error('Fechas inválidas en el rango');
+      }
+
+      return empleados.filter(empleado => {
+        if (!empleado?.fecIngreso) return false;
+
+        try {
+          const fechaEmpleado = new Date(empleado.fecIngreso);
+          return !isNaN(fechaEmpleado.getTime()) &&
+            fechaEmpleado >= fechaInicio &&
+            fechaEmpleado <= fechaFin;
+        } catch {
+          return false;
+        }
+      });
+    } catch (error) {
+      console.error("Error al filtrar por fechas:", error);
+      return []; // Retorna array vacío en caso de error
+    }
+  };
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
+
+    // Base para filtrar según el estado seleccionado
+    let baseEmpleados = estadoEmpleado === "VIGENTE"
+      ? empleados
+      : todosEmpleados.filter(dato =>
+        String(dato.estadoLaboral).trim().toUpperCase() === estadoEmpleado.toUpperCase()
+      );
+    if (Array.isArray(filtroDias) && filtroDias.length == 2) {
+      baseEmpleados = filtrarPorRangoFechas(baseEmpleados, filtroDias);
+    }
     if (query === "") {
-      setFilteredEmpleados(empleados);
+      setFilteredEmpleados(baseEmpleados);
     } else {
-      const filtered = empleados.filter((emp) => {
+      const filtered = baseEmpleados.filter((emp) => {
         if (!emp) return false;
-        const documento = emp.documento
-          ? emp.documento.toString().toLowerCase()
-          : "";
+        const documento = emp.documento ? emp.documento.toString().toLowerCase() : "";
         const codigo = emp.CODIGO ? emp.CODIGO.toString().toLowerCase() : "";
-        const nombre = emp.nombreCompleto
-          ? emp.nombreCompleto.toString().toLowerCase()
-          : "";
+        const nombre = emp.nombreCompleto ? emp.nombreCompleto.toString().toLowerCase() : "";
         return (
           documento.includes(query) ||
           codigo.includes(query) ||
@@ -242,7 +285,7 @@ export const ListarEmpleados = () => {
       });
       setFilteredEmpleados(filtered);
     }
-  }, [searchQuery, empleados]);
+  }, [searchQuery, estadoEmpleado, empleados, todosEmpleados, filtroDias]);
 
   const handleSearchChange = (e) => {
     const inputValue = e.target.value;
@@ -251,7 +294,7 @@ export const ListarEmpleados = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    const [year, month, day] = dateString.split("T")[0].split("-");
+    const [year, month] = dateString.split("T")[0].split("-");
     return `${month}/${year}`;
   };
 
@@ -274,7 +317,10 @@ export const ListarEmpleados = () => {
     );
     console.log(response.data.data)
     setDatosPuestos(response.data.data);
-    setUltimoPuesto(ObtenerUltimo(response.data.data));
+    if (response.data.data.length > 0) {
+      setUltimoPuesto(ObtenerUltimo(response.data.data));
+    }
+
   };
 
   const HistoricoAFP = async (idPersona) => {
@@ -290,7 +336,9 @@ export const ListarEmpleados = () => {
       }/api/empleados/historicoAsignacionFamiliar/${idPersona}`
     );
     setDatosAsigFam(response.data.data);
-    setUltimoAsigFam(ObtenerUltimo(response.data.data));
+    if (response.data.data.length > 0) {
+      setUltimoAsigFam(ObtenerUltimo(response.data.data));
+    }
   };
 
   const HistoricoSueldo = async (idPersona) => {
@@ -299,7 +347,9 @@ export const ListarEmpleados = () => {
       }/api/empleados/historicoSueldos/${idPersona}`
     );
     setDatosSueldos(response.data.data);
-    setUltimoSueldo(ObtenerUltimo(response.data.data));
+    if (response.data.data.length > 0) {
+      setUltimoSueldo(ObtenerUltimo(response.data.data));
+    }
   };
 
   const openDetails = async (employee) => {
@@ -1282,20 +1332,84 @@ export const ListarEmpleados = () => {
         LISTA DE EMPLEADOS
       </h1>
 
-      <div className="py-8 w-full md:w-1/3">
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex items-center gap-2 w-full">
-            <span className="font-medium text-gray-700 whitespace-nowrap">
-              Buscar:
-            </span>
-            <div className="relative w-full">
+      <div className="flex flex-col md:flex-row gap-4 py-8 w-full animate-fade-in">
+        {/* Fila de filtros */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+
+          {/* Buscador */}
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar empleado</label>
+            <div className="relative group">
               <Input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                placeholder="Ingrese DNI, nombre o código"
+                placeholder="DNI, nombre o código"
+                className="pl-10 pr-4 py-1 w-full rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 shadow-sm hover:shadow-md dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors duration-300" />
+              </div>
             </div>
+          </div>
+
+          {/* Rango de fechas */}
+          <div className="flex-1 min-w-[250px]">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rango de fechas</label>
+            <RangePicker
+              onChange={(dates) => {
+                if (dates) {
+                  dates = dates.map(date => date.format("YYYY-MM-DD"));
+                  setFiltroDias(dates);
+                }
+              }}
+              className="w-full py-1 border-gray-300 hover:border-indigo-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gray-800 dark:border-gray-600 dark:[&_input]:bg-gray-800 dark:[&_input]:text-white"
+              popupClassName="dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          {/* Estado del empleado */}
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
+            <Select
+              value={estadoEmpleado}
+              onValueChange={(value) => setEstadoEmpleado(value)}
+            >
+              <SelectTrigger className="w-full border-gray-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 py-1 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg border border-gray-200 shadow-lg animate-pop-in dark:bg-gray-800 dark:border-gray-600">
+                <SelectItem
+                  value="VIGENTE"
+                  className="flex items-center hover:bg-indigo-50 focus:bg-indigo-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors duration-200"
+                >
+                  <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                  <span className="text-gray-800 dark:text-gray-200">VIGENTE</span>
+                </SelectItem>
+                <SelectItem
+                  value="CESADO"
+                  className="flex items-center hover:bg-indigo-50 focus:bg-indigo-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors duration-200"
+                >
+                  <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+                  <span className="text-gray-800 dark:text-gray-200">CESADO</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Botón Limpiar */}
+          <div className="flex items-end min-w-[100px]">
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setFiltroDias(null);
+                setEstadoEmpleado("VIGENTE");
+              }}
+              className="cursor-pointer h-[35px] px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <ArrowPathIcon className="h-4 w-4" />
+              <span>Limpiar</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1324,7 +1438,7 @@ export const ListarEmpleados = () => {
                     <TableCell>{employee.CODIGO}</TableCell>
                     <TableCell>{employee.nombreCompleto}</TableCell>
                     <TableCell>{employee.documento}</TableCell>
-                    <TableCell>{employee.fecIngreso? employee.fecIngreso.split("T")[0] : "N/A"}</TableCell>
+                    <TableCell>{employee.fecIngreso ? employee.fecIngreso.split("T")[0] : "N/A"}</TableCell>
                     <TableCell>{employee.estadoLaboral}</TableCell>
                     <TableCell>
                       <Button
@@ -1463,7 +1577,7 @@ export const ListarEmpleados = () => {
                       </p>
                       <p>
                         <span className="font-semibold">Fech. Nacimiento:</span>{" "}
-                        {selectedEmployee.fecNacimiento.split("T")[0]}
+                        {selectedEmployee.fecNacimiento ? selectedEmployee.fecNacimiento.split("T")[0] : "N/A"}
                       </p>
                     </div>
                   </div>
