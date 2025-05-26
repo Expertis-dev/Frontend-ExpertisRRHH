@@ -6,7 +6,7 @@ import { useData } from '@/provider/Provider';
 import axios from 'axios';
 
 export const Login = () => {
-    const {setNombre, setToken} = useData()
+    const { setNombre, setToken } = useData()
     const [messageApi, contextHolder] = message.useMessage();
     const [credenciales, setCredenciales] = useState({
         usuario: "",
@@ -38,20 +38,16 @@ export const Login = () => {
         setLoading(true);
 
         try {
-            const response = await fetch("./permisos.json");
-            const datos = await response.json();
-            console.log(datos)
-            const usuarioValido = datos.find(
-                (empleado) =>
-                    empleado.usuario.toUpperCase() === credenciales.usuario.toUpperCase() && empleado.contraseña.toUpperCase() === credenciales.contraseña.toUpperCase()
-            );
-            console.log(usuarioValido)
-            
-            if (usuarioValido) {
-                const userIP = await getClientIP();
-                const token = await axios.post( `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, 
-                    { usuario: credenciales.usuario });
-                setNombre(usuarioValido.nombreCompleto)
+            const userIP = await getClientIP();
+            const token = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
+                { usuario: credenciales.usuario, contrasenia: credenciales.contraseña }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Forwarded-For': userIP
+                }
+            });
+            if (token.data.token) {
+                setNombre(credenciales.usuario);
                 setToken(token.data.token)
                 messageApi.success("¡Bienvenido!");
                 setTimeout(() => {
