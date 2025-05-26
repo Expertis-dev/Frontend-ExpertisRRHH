@@ -14,6 +14,18 @@ export const Login = () => {
     });
     const [loading, setLoading] = useState(false);
     const navegar = useNavigate()
+    const getClientIP = async () => {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip || "IP no disponible";
+        } catch (error) {
+            console.error("Error al obtener la IP:", error);
+            return "Error al obtener IP";
+        }
+    }
+
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCredenciales(prev => ({
@@ -36,7 +48,9 @@ export const Login = () => {
             console.log(usuarioValido)
             
             if (usuarioValido) {
-                const token = await axios.post( `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, { usuario: credenciales.usuario })
+                const userIP = await getClientIP();
+                const token = await axios.post( `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, 
+                    { usuario: credenciales.usuario });
                 setNombre(usuarioValido.nombreCompleto)
                 setToken(token.data.token)
                 messageApi.success("¡Bienvenido!");

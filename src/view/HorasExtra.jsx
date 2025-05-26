@@ -1,7 +1,7 @@
 "use client"
-import { Upload, AutoComplete, Modal, DatePicker, TimePicker, notification, Spin } from 'antd';
-import { ToTopOutlined, InboxOutlined, PlusCircleOutlined, InfoCircleOutlined, PaperClipOutlined } from "@ant-design/icons";
-import { Check, Loader2, Search, RefreshCw } from "lucide-react";
+import { Upload, AutoComplete, Modal, DatePicker, TimePicker, Table, Tag } from 'antd';
+import { ToTopOutlined, InboxOutlined, LoadingOutlined, PlusCircleOutlined, InfoCircleOutlined, PaperClipOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { Check, Loader2, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dayjs from 'dayjs';
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,11 @@ export const HorasExtra = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [formIsValid, setFormIsValid] = useState(false)
   const [isCargaMaziva, setIsCargaMaziva] = useState(false)
+  const [isModalCargaMazivaConfirmacion, setIsModalCargaMazivaConfirmacion] = useState(false)
   const [filteredData, setFilteredData] = useState([])
+  const [horasMazivas, setHorasMazivas] = useState([])
   const [error, setError] = useState(null);
+  const [isLoadingSubirCarga, setIsLoadingSubirCarga] = useState(false)
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState({})
   const { nombre } = useData()
   const [file, setFile] = useState(null);
@@ -97,7 +100,73 @@ export const HorasExtra = () => {
       setError("No se pudieron cargar las horas extra");
     }
   }
-
+  const columns = [
+    {
+      title: 'Documento',
+      dataIndex: 'documento',
+      key: 'documento',
+      render: (text, record) => (
+        <span className={record.estado === 'Invalido' ? 'text-red-500 font-medium' : ''}>
+          {text}
+        </span>
+      )
+    },
+    {
+      title: 'Nombre',
+      dataIndex: 'nombre',
+      key: 'nombre',
+      render: (text, record) => (
+        <span className={record.estado === 'Invalido' ? 'text-red-500 font-medium' : ''}>
+          {text}
+        </span>
+      )
+    },
+    {
+      title: 'Fecha',
+      dataIndex: 'fecha',
+      key: 'fecha',
+      align: 'center'
+    },
+    {
+      title: 'Horas Extras',
+      dataIndex: 'cantHoras',
+      key: 'cantHoras',
+      align: 'center'
+    },
+    {
+      title: 'Horario',
+      key: 'horario',
+      align: 'center',
+      render: (_, record) => (
+        <span>{record.horaInicio} - {record.horaFin}</span>
+      )
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'estado',
+      key: 'estado',
+      align: 'center',
+      render: (estado) => (
+        <Tag
+          color={estado === 'Invalido' ? 'red' : 'green'}
+          className="animate-pop-in" // Animación al aparecer
+        >
+          {estado.toUpperCase()}
+        </Tag>
+      )
+    },
+    {
+      title: 'Observaciones',
+      dataIndex: 'observaciones',
+      key: 'observaciones',
+      align: 'center',
+      render: (observaciones) => (
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          {observaciones}
+        </p>
+      )
+    }
+  ];
   useEffect(() => {
     ObtenerEmpleados();
     ObtenerHorasExtra();
@@ -152,12 +221,6 @@ export const HorasExtra = () => {
       setFilteredData(results)
     }
   }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
   const handleAddClick = () => {
     setFormData({
       nombreCompleto: "",
@@ -176,21 +239,26 @@ export const HorasExtra = () => {
   const handleConfirmSubmit = async () => {
     setIsConfirmModalOpen(false)
     setIsLoadingModalOpen(true)
-
+    let diffHoras = 0;
     const inicio = new Date(`2000-01-01T${formData.horaInicio}`);
     const fin = new Date(`2000-01-01T${formData.horaFin}`);
     const diffMs = fin - inicio;
-    const diffHoras = diffMs / (1000 * 60 * 60);
+    if (diffMs < 0) {
+      diffHoras = 0;
+    }
+    const horas = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    diffHoras = `${horas}:${minutos < 10 ? '0' : ''}${minutos}`
     const cuerpo = {
       fecha: formData.fecha,
       horaInicio: formData.horaInicio,
-      cantHoras: parseFloat(diffHoras.toFixed(2)),
+      cantHoras: diffHoras,
       horaFin: formData.horaFin,
       idEmpleado: empleadoSeleccionado.idEmpleado,
       usuario: nombre,
     };
     console.log(cuerpo);
-    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarHorasExtra`, cuerpo)
+    //const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarHorasExtra`, cuerpo)
     console.log(response)
     if (response.status === 200) {
       console.log("Registro exitoso")
@@ -234,26 +302,68 @@ export const HorasExtra = () => {
   };
 
   const handleCargaMaziva = async (e) => {
+    setIsLoadingSubirCarga(true);
     e.preventDefault();
     const formData = new FormData();
     formData.append("archivo", file);
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registrarMazivo`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/registroMasivoHorasExtra`,
         formData
       );
 
       const data = res.data;
       console.log(data);
-
+      setHorasMazivas(data);
+      setIsLoadingSubirCarga(false);
+      setIsCargaMaziva(false);
+      setFile(null);
+      setIsModalCargaMazivaConfirmacion(true);
     } catch (err) {
       console.error(err);
       messageA.error("Error al comparar");
     }
+  }
+  const IngresarCargaMaziva = async () => {
+    setIsModalCargaMazivaConfirmacion(false);
+    setIsLoadingModalOpen(true);
+    const cuerpo = horasMazivas.map(item => {
+      return {
+        ...item,
+        usuario: nombre,
+      };
+    });
+    const data = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/horasExtra/ingresoMasivoHorasExtra`, cuerpo);
+    console.log(data);
+    if (data.status === 200) {
+      setIsLoadingModalOpen(false);
+      setIsSuccessModalOpen(true);
+      setTimeout(() => {
+        setIsSuccessModalOpen(false)
+        ObtenerHorasExtra()
+      }, 3000)
+    }
+  }
+  const formatTimeDifference = (horaInicio, horaFin) => {
+    const diffMs = new Date(`2000-01-01T${horaFin}`) - new Date(`2000-01-01T${horaInicio}`);
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
+    let result = '';
+    if (diffHours > 0) {
+      result += `${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+    }
+    if (diffMinutes > 0) {
+      if (result) result += ' y ';
+      result += `${diffMinutes} minuto${diffMinutes !== 1 ? 's' : ''}`;
+    }
+
+    return result || '0 horas';
   }
 
+  // Uso:
 
   return (
     <div className="w-full p-6 max-w-7xl mx-auto">
@@ -294,14 +404,14 @@ export const HorasExtra = () => {
 
         <motion.div variants={itemVariants} className="relative w-full md:w-96">
           <div className="relative flex items-center justify-end gap-8">
-            {/**
-             * <Button
+
+            <Button
               onClick={() => setIsCargaMaziva(true)}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg">
               <PaperClipOutlined />
               <span>Carga Masiva</span>
             </Button>
-             */}
+
             <Button
               onClick={handleAddClick}
               className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
@@ -313,7 +423,7 @@ export const HorasExtra = () => {
         </motion.div>
       </motion.div>
 
-      {/* Tabla mejorada */}
+      {/* Tabla de horas extra */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -477,17 +587,112 @@ export const HorasExtra = () => {
                   : "bg-gray-300 text-gray-600 cursor-not-allowed"
                   }`}
               >
-                <ToTopOutlined className="h-4 w-4" />
 
-                Cargar
+                {!isLoadingSubirCarga ? (
+                  <>
+                    <ToTopOutlined className="h-4 w-4" />
+                    <span>Subir Archivos</span>
+                  </>) : (
+                  <>
+                    <LoadingOutlined className="h-4 w-4 animate-spin" />
+                    <span>
+                      Cargando...
+                    </span>
+                  </>
+                )}
               </Button>
             </motion.div>
           </motion.div>
         </div>
       </Modal>
 
+      {/* Modal de confirmacion de la carga masiva */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 animate-fade-in">
+            <PlusCircleOutlined className="text-blue-500 text-xl" />
+            <span className="text-xl font-semibold text-gray-800 dark:text-white">
+              Confirmar Carga Masiva
+            </span>
+          </div>
+        }
+        open={isModalCargaMazivaConfirmacion}
+        onCancel={() => setIsModalCargaMazivaConfirmacion(false)}
+        width={850}
+        footer={null}
+        className="dark:[&_.ant-modal-content]:bg-gray-800 animate-scale-in -translate-y-16"
+      >
+        <div className="p-2">
+          {/* Mensaje de resumen */}
+          {horasMazivas.filter(x => x.estado === 'Invalido').length != 0 && (
+            <div className="mb-4 p-2 bg-blue-50 dark:bg-gray-700 rounded-lg animate-fade-in">
+              <div className="flex items-start gap-2">
+                <ExclamationCircleOutlined className="text-blue-500 text-xl mt-1" />
+                <div>
+                  <h3 className="font-medium text-gray-800 dark:text-white mb-1">
+                    Revisa los siguientes registros antes de confirmar
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm">
+                    Los registros marcados en <span className="text-red-500 font-medium">rojo </span>
+                    tienen problemas y no se cargarán al sistema.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Tabla de datos */}
+          <div className='max-h-[45vh] overflow-y-auto'>
+            <Table
+              columns={columns}
+              dataSource={horasMazivas}
+              rowKey={(record) => record.nombre + record.fecha}
+              pagination={false}
+              size="middle"
+              rowClassName={(record) =>
+                record.estado === 'Invalido'
+                  ? 'bg-red-50 dark:bg-red-900/20 animate-pulse-light'
+                  : 'bg-green-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }
+              className="animate-fade-in-up"
+            />
+          </div>
+          {/* Pie de modal con estadísticas */}
+          <div className="mt-6 flex justify-between items-center text-sm">
+            <div className="text-gray-500 dark:text-gray-400">
+              Total registros: <span className="font-medium">{horasMazivas.length}</span>
+            </div>
+            <div className="flex gap-4">
+              <div className="text-green-600 dark:text-green-400">
+                Válidos: <span className="font-medium">
+                  {horasMazivas.filter(x => x.estado !== 'Invalido').length}
+                </span>
+              </div>
+              <div className="text-red-500">
+                Inválidos: <span className="font-medium">
+                  {horasMazivas.filter(x => x.estado === 'Invalido').length}
+                </span>
+              </div>
+            </div>
+          </div>
 
-
+          {/* Botones de acción */}
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              onClick={() => setIsModalCargaMazivaConfirmacion(false)}
+              className="cursor-pointer px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={IngresarCargaMaziva}
+              className={`${horasMazivas.filter(x => x.estado === 'Invalido').length > 0 ? 'bg-gray-300 cursor-not-allowed' : 'cursor-pointer bg-blue-600 hover:bg-blue-700 hover:shadow-lg transition-all transform hover:scale-[1.02]'} px-4 py-2  rounded-md text-white shadow-md `}
+              disabled={horasMazivas.filter(x => x.estado === 'Invalido').length > 0}
+            >
+              Confirmar Carga
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modal de registro mejorado */}
       <Modal
@@ -697,7 +902,8 @@ export const HorasExtra = () => {
                 <span className="font-medium text-gray-700 dark:text-gray-300">Total Horas:</span>
                 <span className="font-semibold text-blue-600 dark:text-blue-400">
                   {formData.horaInicio && formData.horaFin ?
-                    ((new Date(`2000-01-01T${formData.horaFin}`) - new Date(`2000-01-01T${formData.horaInicio}`)) / (1000 * 60 * 60)).toFixed(2) : 0} horas
+                    formatTimeDifference(formData.horaInicio, formData.horaFin)
+                    : '0 horas'}
                 </span>
               </div>
             </div>
