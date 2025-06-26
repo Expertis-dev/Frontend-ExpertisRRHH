@@ -4,11 +4,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trash2, Search, Check, Plus, RefreshCw, Trash, Eye, SquarePen } from "lucide-react";
+import { Search, Check, Plus, RefreshCw, Trash, Eye, SquarePen } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { Table, Input, Modal, Form, DatePicker, AutoComplete, Select, Tag } from "antd";
+import { Table, Input, Modal, Form, DatePicker, AutoComplete, Select, Tag, Checkbox } from "antd";
 import { Button } from "@/components/ui/button";
-import { DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useData } from "@/provider/Provider";
 import axios from "axios";
@@ -33,7 +32,12 @@ const DescansoMedicoTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState([]);
   const [diasFilter, setDiasFilter] = useState(null);
+  const [tieneCITT, setTieneCITT] = useState(false);
 
+  // Efecto para sincronizar el estado local con el formulario
+  useEffect(() => {
+    form.setFieldsValue({ TIENE_CITT: tieneCITT });
+  }, [tieneCITT, form]);
   const columns = [
     {
       title: "Código Mes",
@@ -104,6 +108,14 @@ const DescansoMedicoTable = () => {
   // Estados para eliminación
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState(null);
+
+  // Inicializar valores del formulario
+  useEffect(() => {
+    form.setFieldsValue({
+      TIENE_CITT: false,
+      CITT: undefined
+    });
+  }, [form]);
 
   // Obtener empleados y descansos médicos
   useEffect(() => {
@@ -198,13 +210,17 @@ const DescansoMedicoTable = () => {
         idEmpleado: empleado.idEmpleado,
         usuario: nombre,
         alias: empleado.nombreCompleto,
-        documento: empleado.documento
+        documento: empleado.documento,
+        tipoDM: values.TipoDM,
+        tieneCITT: values.TIENE_CITT,
+        citt: values.CITT,
+        diagnostico: values.diagnostico
+
       };
 
       setDataEnviar(newRecord);
       setIsModalVisible(false);
       setIsModalConfirmar(true);
-      form.resetFields();
     }).catch(console.error);
   };
 
@@ -265,6 +281,7 @@ const DescansoMedicoTable = () => {
 
         setIsSuccess(true);
         setTimeout(() => setIsSuccess(false), 2000);
+        form.resetFields();
       }
     } catch (error) {
       console.error("Error al registrar:", error);
@@ -285,7 +302,14 @@ const DescansoMedicoTable = () => {
     { value: "5_15", label: "5 a 15 días" },
     { value: "mas_15", label: "Más de 15 días" },
   ];
-
+  const Limpieza = () => {
+    setSearchTerm("");
+    setDateRange([]);
+    setDiasFilter(null);
+    form.resetFields();
+    setTieneCITT(false);
+    setIsModalVisible(false);
+  }
   return (
     <div className="flex flex-col items-center min-h-screen p-4">
       <motion.h1
@@ -301,7 +325,7 @@ const DescansoMedicoTable = () => {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-6xl bg-white rounded-xl shadow-lg p-6 mb-6"
+        className="w-full max-w-8xl bg-white rounded-xl shadow-lg p-6 mb-6"
       >
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
@@ -375,9 +399,9 @@ const DescansoMedicoTable = () => {
           </p>
         }
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={Limpieza}
         onOk={handleAddRecord}
-        okText="Continuar"
+        okText="Confirmar"
         cancelText="Cancelar"
         okButtonProps={{ className: "bg-blue-500 hover:bg-blue-600" }}
         width={600}
@@ -403,33 +427,61 @@ const DescansoMedicoTable = () => {
             />
           </Form.Item>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Form.Item name="TipoDM" label={<span className="font-medium">Tipo de Descanso Medico</span>} rules={[{ required: true, message: "Seleccione un tipo de descanso médico" }]}>
-            <Select
-              options={[
-                { value: "Enfermedad", label: "Enfermedad" },
-                { value: "Accidente Comun", label: "Accidente Comun" },
-                { value: "Accidente Trabajo", label: "Accidente Trabajo" },
-              ]}
-              placeholder="Seleccione tipo de descanso médico"
-              className="w-full rounded-lg"
-              onChange={(value) => form.setFieldValue("TipoDM", value)}
-            />
-          </Form.Item>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item
+              name="TipoDM"
+              label={<span className="font-medium">Tipo de Descanso Médico</span>}
+              rules={[{ required: true, message: "Seleccione un tipo de descanso médico" }]}
+            >
+              <Select
+                options={[
+                  { value: "Enfermedad", label: "Enfermedad" },
+                  { value: "Accidente Comun", label: "Accidente Común" },
+                  { value: "Accidente Trabajo", label: "Accidente de Trabajo" },
+                ]}
+                placeholder="Seleccione tipo de descanso médico"
+                className="w-full rounded-lg"
+                onChange={(value) => {
+                  form.setFieldValue("TipoDM", value);
+                }}
+              />
+            </Form.Item>
 
-
-          <Form.Item name="CITT" label={<span className="font-medium">Tiene CITT</span>} rules={[{ required: true, message: "Seleccione un tipo de descanso médico" }]}>
-            <Select
-              options={[
-                { value: "Si", label: "Si" },
-                { value: "No", label: "No" },
-              ]}
-              placeholder="Seleccione si tiene CITT"
-              className="w-full rounded-lg"
-              onChange={(value) => form.setFieldValue("CITT", value)}
-            />
-          </Form.Item>
-        </div>
+            <div className="flex flex-col">
+              <Form.Item
+                name="CITT"
+                label={<Checkbox
+                  checked={tieneCITT}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setTieneCITT(isChecked);
+                    form.setFieldsValue({
+                      TIENE_CITT: isChecked,
+                      CITT: isChecked ? form.getFieldValue('CITT') : undefined
+                    });
+                  }}
+                >
+                  <span className="font-medium">Tiene CITT</span>
+                </Checkbox>}
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (tieneCITT && !value) {
+                        return Promise.reject('Ingrese el CITT');
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+              >
+                <Input
+                  placeholder="Ingrese el CITT"
+                  className="rounded-lg mt-2"
+                  disabled={!tieneCITT}
+                />
+              </Form.Item>
+            </div>
+          </div>
 
           <Form.Item
             name="rangoFechas"
@@ -438,18 +490,18 @@ const DescansoMedicoTable = () => {
           >
             <DatePicker.RangePicker
               className="w-full rounded-lg"
-              onChange={(value) => form.setFieldValue("rangoFechas", value)}
             />
           </Form.Item>
 
           <Form.Item
-            name="rangoFechas"
-            label={<span className="font-medium">Rango de Fechas</span>}
-            rules={[{ required: true, message: "Seleccione un rango de fechas" }]}
+            name="diagnostico"
+            label={<span className="font-medium">Diagnóstico Médico</span>}
+            rules={[{ required: true, message: "Ingrese el diagnóstico médico" }]}
           >
-            <DatePicker.RangePicker
-              className="w-full rounded-lg"
-              disabledDate={(current) => current && current > dayjs().endOf('day')}
+            <Input.TextArea
+              rows={2}
+              placeholder="Ingrese el diagnóstico médico"
+              className="rounded-lg"
             />
           </Form.Item>
         </Form>
@@ -458,40 +510,59 @@ const DescansoMedicoTable = () => {
       {/* Modal de Confirmación REGISTRAR */}
       <Modal
         title={
-          <span className="text-xl font-bold text-green-600">
+          <p className="text-xl text-center pb-4 font-bold text-slate-600">
             Confirmar Registro
-          </span>
+          </p>
         }
         open={isModalConfirmar}
-        onCancel={() => setIsModalConfirmar(false)}
+        onCancel={() => {
+          setIsModalConfirmar(false)
+          setIsModalVisible(true);
+        }}
         onOk={Confirmar}
         okText="Confirmar"
         cancelText="Cancelar"
         okButtonProps={{ className: "bg-green-500 hover:bg-green-600" }}
         width={500}
       >
-        <div className="space-y-3 mt-6">
-          <div className="flex justify-between items-center border-b pb-2">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col ">
             <span className="font-semibold">Empleado:</span>
             <span>{dataEnviar.alias}</span>
           </div>
-          <div className="flex justify-between items-center border-b pb-2">
+          <div className="flex flex-col">
             <span className="font-semibold">DNI:</span>
             <span>{dataEnviar.documento}</span>
           </div>
-          <div className="flex justify-between items-center border-b pb-2">
+          <div className="flex flex-col ">
             <span className="font-semibold">Fecha Inicio:</span>
             <span>{dayjs(dataEnviar.fecInicio).format("DD/MM/YYYY")}</span>
           </div>
-          <div className="flex justify-between items-center border-b pb-2">
+          <div className="flex flex-col ">
             <span className="font-semibold">Fecha Fin:</span>
             <span>{dayjs(dataEnviar.fecFin).format("DD/MM/YYYY")}</span>
           </div>
-          <div className="flex justify-between items-center border-b pb-2">
-            <span className="font-semibold">Días:</span>
-            <Tag color={dataEnviar.cantDias > 15 ? "red" : "green"}>
-              {dataEnviar.cantDias} días
-            </Tag>
+          <div className="flex flex-col ">
+            <span className="font-semibold">Tipo de Descanso Medico:</span>
+            <span>{dataEnviar.tipoDM}</span>
+          </div>
+          <div className="flex flex-col ">
+            <span className="font-semibold">TIENE CITT?</span>
+            <span>{tieneCITT ? "CITT" : "PARTICULAR"}</span>
+          </div>
+          <div className="flex flex-col ">
+            <span className="font-semibold text-red-500">Días:</span>
+            <span className="text-red-500">{dataEnviar.cantDias} días</span>
+          </div>
+          {tieneCITT && (
+            <div className="flex flex-col ">
+              <span className="font-semibold">CITT:</span>
+              <span>{dataEnviar.citt}</span>
+            </div>
+          )}
+          <div className="flex flex-col ">
+            <span className="font-semibold">Diagnostico Medico:</span>
+            <span>{dataEnviar.diagnostico}</span>
           </div>
         </div>
       </Modal>

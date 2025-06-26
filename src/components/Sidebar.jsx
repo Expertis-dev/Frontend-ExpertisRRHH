@@ -7,7 +7,6 @@ import {
     FileTextOutlined,
     MedicineBoxOutlined,
     ClockCircleOutlined,
-    BankOutlined,
     ReconciliationOutlined,
     LogoutOutlined,
     EuroCircleOutlined
@@ -120,7 +119,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         // },
         {
             key: 'licencias',
-            icon: <MedicineBoxOutlined />,
+            icon: <ReconciliationOutlined />,
             label: <Link to="/rrhh/licencias">Licencias</Link>,
         },
         {
