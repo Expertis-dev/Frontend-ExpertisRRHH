@@ -566,8 +566,8 @@ export const Licencias = () => {
                                     <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{item.documento || "---"}</td>
                                     <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{item.Tipo || "OTRO"}</td>
                                     <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{item.TipoGoce || "SN"}</td>
-                                    <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{formatDate(item.fecha_inicio) || "SN"}</td>
-                                    <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{formatDate(item.fecha_fin) || "SN"}</td>
+                                    <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{item.fecha_inicio.split("T")[0].split("-").reverse().join("/") || "SN"}</td>
+                                    <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{item.fecha_fin.split("T")[0].split("-").reverse().join("/") || "SN"}</td>
                                     <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{item.numDias || "SN"} DIAS</td>
                                     <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center text-sm">{item.Detalle || "SN"}</td>
                                     <td className="p-1 border-b border-gray-200 dark:border-gray-700 text-center">
