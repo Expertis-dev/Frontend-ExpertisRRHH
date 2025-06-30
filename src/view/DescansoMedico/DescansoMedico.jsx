@@ -9,6 +9,26 @@ import { motion } from "framer-motion";
 import { CompResultado } from "@/components/CompSucces";
 import { DiffOutlined } from "@ant-design/icons";
 dayjs.locale("es");
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 }
+};
+
+const hoverEffect = {
+  scale: 1.02,
+  transition: { duration: 0.2 }
+};
 
 const DescansoMedicoTable = () => {
   const [data, setData] = useState([]);
@@ -121,19 +141,66 @@ const DescansoMedicoTable = () => {
 
   const handleAddRecord = () => {
     form.validateFields().then(async (values) => {
+      // Buscar empleado por nombre
       const empleado = empleados.find((emp) => emp.nombreCompleto === values.Asesor);
       if (!empleado) {
         form.setFields([{ name: "Asesor", errors: ["Asesor no válido"] }]);
         return;
       }
 
+      // Validar rango de fechas
+      if (!values.rangoFechas || values.rangoFechas.length !== 2) {
+        form.setFields([{ name: "rangoFechas", errors: ["Rango de fechas inválido"] }]);
+        return;
+      }
+
       const [fechaInicio, fechaFin] = values.rangoFechas;
+
+      // Validar que fechas sean válidas
+      if (!fechaInicio.isValid() || !fechaFin.isValid()) {
+        form.setFields([{ name: "rangoFechas", errors: ["Fechas inválidas"] }]);
+        return;
+      }
+
       const cantDias = fechaFin.diff(fechaInicio, "day") + 1;
+      if (cantDias > 30) {
+        form.setFields([{ name: "rangoFechas", errors: ["Cantidad maxima de dias 30"] }]);
+        return;
+      }
+      // Buscar en datos adicionales
+      const empleadoEncontrado = data.find(emp =>
+        emp.documento === empleado.documento && emp.Flag_ultimo === 1
+      );
+
+      // Calcular días acoplados
+      let diasAcoplados = 0;
+      console.log("Empleado encontrado:", empleadoEncontrado);
+      if (empleadoEncontrado.fecha_inicio && empleadoEncontrado.fecha_fin) {
+        const inicioExistente = dayjs(empleadoEncontrado.fecha_inicio);
+        const finExistente = dayjs(empleadoEncontrado.fecha_fin);
+        const inicioNuevo = dayjs(fechaInicio);
+        const finNuevo = dayjs(fechaFin);
+
+        // Calcular la superposición de fechas
+        const inicioSuperposicion = inicioNuevo.isAfter(inicioExistente) ? inicioNuevo : inicioExistente;
+        const finSuperposicion = finNuevo.isBefore(finExistente) ? finNuevo : finExistente;
+
+        // Calcular días de superposición (incluyendo el caso de mismo día)
+        if (inicioSuperposicion.isSame(finSuperposicion, 'day')) {
+          diasAcoplados = 1; // Caso cuando las fechas son iguales
+        } else if (inicioSuperposicion.isBefore(finSuperposicion)) {
+          diasAcoplados = finSuperposicion.diff(inicioSuperposicion, "day") + 1;
+        }
+
+        console.log("Rango existente:", inicioExistente.format("DD-MM-YYYY"), "al", finExistente.format("DD-MM-YYYY"));
+        console.log("Nuevo rango:", inicioNuevo.format("DD-MM-YYYY"), "al", finNuevo.format("DD-MM-YYYY"));
+        console.log("Superposición calculada:", inicioSuperposicion.format("DD-MM-YYYY"), "al", finSuperposicion.format("DD-MM-YYYY"));
+        console.log("Días acoplados:", diasAcoplados);
+      }
 
       const newRecord = {
         fecInicio: fechaInicio.format("YYYY-MM-DD"),
         fecFin: fechaFin.format("YYYY-MM-DD"),
-        cantDias: cantDias.toString(),
         idEmpleado: empleado.idEmpleado,
         usuario: nombre,
         alias: empleado.nombreCompleto,
@@ -141,9 +208,12 @@ const DescansoMedicoTable = () => {
         tipoDM: values.TipoDM,
         tieneCITT: values.TIENE_CITT,
         citt: values.CITT,
-        diagnostico: values.diagnostico
+        diagnostico: values.diagnostico,
+        totalDiasDescansoMedico: empleado.totalDiasDescansoMedico,
+        cantDias: cantDias,
+        diasAcoplados: diasAcoplados || 0
       };
-
+      console.log("Nuevo registro:", newRecord);
       setDataEnviar(newRecord);
       setIsModalVisible(false);
       setIsModalConfirmar(true);
@@ -192,45 +262,113 @@ const DescansoMedicoTable = () => {
   const Confirmar = async () => {
     setIsModalConfirmar(false);
     setIsLoading(true);
-    const cuerpo = {
-      idEmpleado: dataEnviar.idEmpleado,
-      fecInicio: dataEnviar.fecInicio,
-      fecFin: dataEnviar.fecFin,
-      numDias: dataEnviar.cantDias,
-      usuario: dataEnviar.usuario,
-      texto_json: {
-        Tipo: dataEnviar.tipoDM,
-        TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "PARTICULAR",
-        NroCITT: dataEnviar.citt,
-        Diagnostico: dataEnviar.diagnostico,
-      },
-    }
-    console.log("Cuerpo de la solicitud:", cuerpo);
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarDescansoMedico`,
-        {
-          ...cuerpo,
-          texto_json: JSON.stringify(cuerpo.texto_json)
-        }
-      );
 
-      if (response.status === 200) {
-        // Actualizar la lista
-        const updatedResponse = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`
+    try {
+      const sumaDias = dataEnviar.totalDiasDescansoMedico + dataEnviar.cantDias - dataEnviar.diasAcoplados;
+      console.log("Valor total de días:", sumaDias);
+
+      const cuerpoBase = {
+        idEmpleado: dataEnviar.idEmpleado,
+        fecInicio: dataEnviar.fecInicio,
+        fecFin: dataEnviar.fecFin,
+        usuario: dataEnviar.usuario,
+        texto_json: {
+          Tipo: dataEnviar.tipoDM,
+          TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "PARTICULAR",
+          NroCITT: dataEnviar.citt,
+          Diagnostico: dataEnviar.diagnostico,
+        },
+      };
+
+      if (sumaDias > 20) {
+        // Caso cuando excede los 20 días (parte a DM y parte a subsidio)
+        const diasDM = 20 - dataEnviar.totalDiasDescansoMedico;
+        const diasSubsidio = dataEnviar.cantDias - dataEnviar.diasAcoplados - diasDM;
+
+        const cuerpoDM = {
+          ...cuerpoBase,
+          numDias: diasDM,
+        };
+
+        const cuerpoSub = {
+          ...cuerpoBase,
+          numDias: diasSubsidio,
+        };
+
+        console.log("Registrando descanso médico y subsidio...");
+        console.log("Días DM:", diasDM, "Días Subsidio:", diasSubsidio);
+
+        // Ejecutar ambas peticiones en paralelo
+        const [responseDM, responseSub] = await Promise.all([
+          axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarDescansoMedico`,
+            {
+              ...cuerpoDM,
+              texto_json: JSON.stringify(cuerpoDM.texto_json)
+            }
+          ),
+          axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarSubsidio`,
+            {
+              ...cuerpoSub,
+              texto_json: JSON.stringify(cuerpoSub.texto_json)
+            }
+          )
+        ]);
+        console.log("Respuesta DM:", responseDM);
+        console.log("Respuesta Subsidio:", responseSub);
+        if (responseDM.status === 200 && responseSub.status === 200) {
+          await actualizarListado();
+        } else {
+          throw new Error("Error en una de las respuestas");
+        }
+      } else {
+        // Caso cuando no excede los 20 días (todo a DM)
+        const diasDM = dataEnviar.cantDias - dataEnviar.diasAcoplados;
+
+        const cuerpoDM = {
+          ...cuerpoBase,
+          numDias: diasDM,
+        };
+
+        console.log("Registrando solo descanso médico...");
+        console.log("Días DM:", diasDM);
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarDescansoMedico`,
+          {
+            ...cuerpoDM,
+            texto_json: JSON.stringify(cuerpoDM.texto_json)
+          }
         );
-        const sortedData = updatedResponse.data.data
-        setData(sortedData);
-        setIsSuccess(true);
-        setTimeout(() => setIsSuccess(false), 2000);
-        form.resetFields();
-        setTieneCITT(false);
+
+        if (response.status === 200) {
+          await actualizarListado();
+        } else {
+          throw new Error("Error en la respuesta");
+        }
       }
     } catch (error) {
       console.error("Error al registrar:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Función auxiliar para actualizar el listado
+  const actualizarListado = async () => {
+    try {
+      const updatedResponse = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`
+      );
+      setData(updatedResponse.data.data);
+      setIsSuccess(true);
+      setTimeout(() => setIsSuccess(false), 2000);
+      form.resetFields();
+      setTieneCITT(false);
+    } catch (error) {
+      console.error("Error al actualizar listado:", error);
+      throw error; // Relanzamos el error para manejarlo en el catch principal
     }
   };
 
@@ -522,6 +660,7 @@ const DescansoMedicoTable = () => {
                 const empleado = empleados.find((emp) => emp.nombreCompleto === value);
                 if (empleado) {
                   form.setFieldValue("DNI", empleado.documento);
+                  form.setFieldValue("totalDias", empleado.totalDiasDescansoMedico);
                 }
               }}
               placeholder="Buscar empleado"
@@ -604,61 +743,191 @@ const DescansoMedicoTable = () => {
       {/* Modal de Confirmación REGISTRAR */}
       <Modal
         title={
-          <p className="text-xl text-center pb-4 font-bold text-slate-600">
+          <motion.p
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-2xl text-center pb-4 font-bold text-slate-700"
+          >
             Confirmar Registro
-          </p>
+          </motion.p>
         }
         open={isModalConfirmar}
         onCancel={() => {
-          setIsModalConfirmar(false)
+          setIsModalConfirmar(false);
           setIsModalVisible(true);
         }}
         onOk={Confirmar}
         okText="Confirmar"
         cancelText="Cancelar"
-        okButtonProps={{ className: "bg-green-500 hover:bg-green-600" }}
-        width={500}
+        okButtonProps={{
+          className: "bg-green-500 hover:bg-green-600 h-10 px-6",
+          style: { transition: "all 0.3s" }
+        }}
+        cancelButtonProps={{
+          className: "h-10 px-6",
+          style: { transition: "all 0.3s" }
+        }}
+        width={800}
+        bodyStyle={{ padding: "24px" }}
       >
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col ">
-            <span className="font-semibold">Empleado:</span>
-            <span>{dataEnviar.alias}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-semibold">DNI:</span>
-            <span>{dataEnviar.documento}</span>
-          </div>
-          <div className="flex flex-col ">
-            <span className="font-semibold">Fecha Inicio:</span>
-            <span>{dayjs(dataEnviar.fecInicio).format("DD/MM/YYYY")}</span>
-          </div>
-          <div className="flex flex-col ">
-            <span className="font-semibold">Fecha Fin:</span>
-            <span>{dayjs(dataEnviar.fecFin).format("DD/MM/YYYY")}</span>
-          </div>
-          <div className="flex flex-col ">
-            <span className="font-semibold">Tipo de Descanso Medico:</span>
-            <span>{dataEnviar.tipoDM}</span>
-          </div>
-          <div className="flex flex-col ">
-            <span className="font-semibold">Tipo atención</span>
-            <span>{dataEnviar.tieneCITT ? "CITT" : "PARTICULAR"}</span>
-          </div>
-          <div className="flex flex-col ">
-            <span className="font-semibold text-red-500">Días:</span>
-            <span className="text-red-500">{dataEnviar.cantDias} días</span>
-          </div>
-          {dataEnviar.tieneCITT && (
-            <div className="flex flex-col ">
-              <span className="font-semibold">CITT:</span>
-              <span>{dataEnviar.citt}</span>
-            </div>
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={container}
+          className="grid grid-cols-3 gap-4"
+        >
+          {/* Empleado */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Empleado</span>
+            <motion.span
+              whileHover={hoverEffect}
+              className="text-base font-medium text-blue-600 "
+            >
+              {dataEnviar.alias}
+            </motion.span>
+          </motion.div>
+
+          {/* Fechas */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Fecha Inicio</span>
+            <motion.span
+              whileHover={{ x: 5 }}
+              className="text-base text-purple-600 "
+            >
+              {dayjs(dataEnviar.fecInicio).format("DD/MM/YYYY")}
+            </motion.span>
+          </motion.div>
+
+          {/* Tipo DM */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Tipo DM</span>
+            <motion.span
+              whileHover={hoverEffect}
+              className="text-base font-medium text-amber-600"
+            >
+              {dataEnviar.tipoDM}
+            </motion.span>
+          </motion.div>
+          {/* DNI */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">DNI</span>
+            <motion.span
+              whileHover={{ scale: 1.05 }}
+              className="text-base font-mono text-gray-700"
+            >
+              {dataEnviar.documento}
+            </motion.span>
+          </motion.div>
+
+          {/* Fecha Fin */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Fecha Fin</span>
+            <motion.span
+              whileHover={{ x: 5 }}
+              className="text-base text-purple-600"
+            >
+              {dayjs(dataEnviar.fecFin).format("DD/MM/YYYY")}
+            </motion.span>
+          </motion.div>
+
+          {/* Tipo atención */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Tipo atención</span>
+            <motion.span
+              whileHover={{ scale: 1.03 }}
+              className={`text-base font-bold ${dataEnviar.citt ? "text-green-600" : "text-red-600"
+                }`}
+            >
+              {dataEnviar.citt ? "CITT" : "PARTICULAR"}
+            </motion.span>
+          </motion.div>
+
+          {/* Días */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Días Totales </span>
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              className=" rounded-lg"
+            >
+              {dataEnviar.cantDias + dataEnviar.totalDiasDescansoMedico > 20 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="space-y-2"
+                >
+                  <motion.span className="flex items-center text-orange-800">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                    {dataEnviar.cantDias} días Totales
+                  </motion.span>
+                  <motion.span className="flex items-center text-neutral-700">
+                    <span className="w-2 h-2 bg-neutral-500 rounded-full mr-2"></span>
+                    {dataEnviar.diasAcoplados} días Acoplados
+                  </motion.span>
+                  <motion.span className="flex items-center text-blue-700">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    {20 - dataEnviar.totalDiasDescansoMedico} días de Descanso Médico
+                  </motion.span>
+                  <motion.span className="flex items-center text-red-700">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    {dataEnviar.cantDias - dataEnviar.diasAcoplados - (20 - dataEnviar.totalDiasDescansoMedico)} días de Subsidios
+                  </motion.span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="space-y-2"
+                >
+                  <motion.span className="flex items-center text-neutral-700">
+                    <span className="w-2 h-2 bg-neutral-500 rounded-full mr-2"></span>
+                    {dataEnviar.diasAcoplados} días Acoplados
+                  </motion.span>
+                  <motion.span className="flex items-center text-neutral-700">
+                    <span className="w-2 h-2 bg-neutral-500 rounded-full mr-2"></span>
+                    {dataEnviar.cantDias - dataEnviar.diasAcoplados} días de Descanso Médico
+                  </motion.span>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+
+          {/* CITT */}
+          {dataEnviar.citt && (
+            <motion.div variants={item} className="flex flex-col">
+              <span className="text-sm font-semibold text-gray-500">N° CITT</span>
+              <motion.span
+                whileHover={{ backgroundColor: "#DCFCE7" }}
+                className="text-base font-mono text-green-700"
+              >
+                {dataEnviar.citt}
+              </motion.span>
+            </motion.div>
           )}
-          <div className="flex flex-col ">
-            <span className="font-semibold">Diagnostico Medico:</span>
-            <span>{dataEnviar.diagnostico}</span>
-          </div>
-        </div>
+          {/* Diagnóstico */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Total de días pre Registrados</span>
+            <motion.div
+              whileHover={{ backgroundColor: "#EFF6FF" }}
+              className="rounded-lg"
+            >
+              <span className="text-gray-700 italic">{dataEnviar.totalDiasDescansoMedico} días Registrados</span>
+            </motion.div>
+          </motion.div>
+          {/* Diagnóstico */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Diagnóstico</span>
+            <motion.div
+              whileHover={{ backgroundColor: "#EFF6FF" }}
+              className="rounded-lg"
+            >
+              <span className="text-gray-700 italic">{dataEnviar.diagnostico}</span>
+            </motion.div>
+          </motion.div>
+
+        </motion.div>
       </Modal>
 
       {/* Modal de Confirmación ELIMINAR */}
