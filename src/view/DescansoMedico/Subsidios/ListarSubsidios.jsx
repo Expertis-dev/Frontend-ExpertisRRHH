@@ -1,6 +1,6 @@
-import { Search, Plus, RefreshCw, Trash, Eye, SquarePen, Pencil, CalendarDays, Clock, User } from "lucide-react";
+import { Search, RefreshCw, Trash, Eye, SquarePen, Pencil, CalendarDays, Clock, User } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { Table, Input, Modal, Form, DatePicker, AutoComplete, Select, Tag, Checkbox } from "antd";
+import {  Input, Modal, Form, DatePicker, AutoComplete, Select, Tag, Checkbox } from "antd";
 import { Button } from "@/components/ui/button";
 import dayjs from "dayjs";
 import { useData } from "@/provider/Provider";
@@ -50,8 +50,8 @@ export const ListarSubsidios = () => {
       try {
         setIsLoading(true);
         const [empleadosRes, descansosRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarEmpleadosParaDM`),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`)
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarEmpleadosParaSubsidios`),
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`)
         ]);
         console.log("Datos de descansos médicos:", descansosRes.data.data);
         console.log("Datos de empleados:", empleadosRes.data.data);
@@ -91,7 +91,7 @@ export const ListarSubsidios = () => {
     console.log(diasFilter)
     // Filtro por días
     if (diasFilter) {
-      result = result.filter(item => item.Tipo === diasFilter );
+      result = result.filter(item => item.Tipo === diasFilter);
     }
 
     setFilteredData(result);
@@ -167,7 +167,7 @@ export const ListarSubsidios = () => {
 
       // Actualizar la lista
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`
+        `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`
       );
       const sortedData = response.data.data;
       setData(sortedData);
@@ -210,7 +210,7 @@ export const ListarSubsidios = () => {
       if (response.status === 200) {
         // Actualizar la lista
         const updatedResponse = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`
+          `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`
         );
         const sortedData = updatedResponse.data.data
         setData(sortedData);
@@ -248,9 +248,10 @@ export const ListarSubsidios = () => {
 
   const diasOptions = [
     { value: null, label: "Todos" },
+    { value: "Maternidad", label: "Maternidad" },
     { value: "Enfermedad", label: "Enfermedad" },
-    { value: "Accidente común", label: "Accidente común" },
-    { value: "Accidente trabajo", label: "Accidente trabajo" },
+    { value: "Accidente Común", label: "Accidente Común" },
+    { value: "Accidente Trabajo", label: "Accidente Trabajo" },
   ];
 
   // Manejo del checkbox
@@ -301,7 +302,7 @@ export const ListarSubsidios = () => {
         .then(response => {
           if (response.status === 200) {
             // Actualizar la lista
-            axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`)
+            axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`)
               .then(res => {
                 const sortedData = res.data.data;
                 setData(sortedData);
@@ -366,7 +367,7 @@ export const ListarSubsidios = () => {
             />
           </div>
 
-          <div className="flex gap-4 mt-4 md:mt-0">
+          <div className="flex gap-4">
             <Button
               onClick={handleClearFilters}
               variant="outline"
@@ -376,13 +377,6 @@ export const ListarSubsidios = () => {
               Limpiar
             </Button>
 
-            <Button
-              onClick={() => setIsModalVisible(true)}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Nuevo Registro
-            </Button>
           </div>
         </div>
         <motion.div
@@ -452,21 +446,15 @@ export const ListarSubsidios = () => {
                           >
                             <Pencil className="h-4 w-4 text-green-500" />
                           </Button>
-                          {item.Flag_ultimo === 1 ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Eliminar"
-                              onClick={() => prepareDeleteLicense(item)}
-                            >
-                              <Trash className="h-4 w-4 text-red-500" />
-                            </Button>
-                          ) : (
-                            <div> </div>
-                          )}
 
-
-
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Eliminar"
+                            onClick={() => prepareDeleteLicense(item)}
+                          >
+                            <Trash className="h-4 w-4 text-red-500" />
+                          </Button>
                         </div>
                       </td>
                     </motion.tr>
@@ -825,13 +813,15 @@ export const ListarSubsidios = () => {
                     {recordToView.documento}
                   </p>
                 </div>
-
                 <div className="bg-white dark:bg-gray-700 p-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 ">
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider mb-1">Días Acoplados</label>
-                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                    {recordToView.dias_acoplados || '0'}
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider mb-1">Diagnóstico Médico</label>
+                  <p className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                    {recordToView.Diagnostico || (
+                      <span className="text-gray-400 dark:text-gray-400 italic">No se registró diagnóstico médico</span>
+                    )}
                   </p>
                 </div>
+
               </motion.div>
 
               {/* Columna 2 - Detalles médicos */}
@@ -867,7 +857,7 @@ export const ListarSubsidios = () => {
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider mb-1">Número CITT</label>
                   <p className="text-md font-semibold text-gray-800 dark:text-gray-100">
                     {recordToView.NroCITT || (
-                      <span className="text-gray-400 dark:text-gray-400 italic">No aplica</span>
+                      <span className="text-gray-400 dark:text-gray-400 italic">No tiene</span>
                     )}
                   </p>
                 </div>
@@ -907,25 +897,6 @@ export const ListarSubsidios = () => {
                 </div>
               </motion.div>
             </div>
-
-            {/* Diagnóstico - Full width debajo de las columnas */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.3 }}
-              className="mt-2"
-            >
-              <div className="bg-white dark:bg-gray-700 p-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 ">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider mb-2">Diagnóstico Médico</label>
-                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {recordToView.Diagnostico || (
-                      <span className="text-gray-400 dark:text-gray-400 italic">No se registró diagnóstico médico</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
           </motion.div>
         )}
       </Modal>

@@ -175,9 +175,9 @@ const DescansoMedicoTable = () => {
       // Calcular días acoplados
       let diasAcoplados = 0;
       console.log("Empleado encontrado:", empleadoEncontrado);
-      if (empleadoEncontrado.fecha_inicio && empleadoEncontrado.fecha_fin) {
-        const inicioExistente = dayjs(empleadoEncontrado.fecha_inicio);
-        const finExistente = dayjs(empleadoEncontrado.fecha_fin);
+      if (empleadoEncontrado && empleadoEncontrado.fecha_inicio && empleadoEncontrado.fecha_fin) {
+        const inicioExistente = dayjs(empleadoEncontrado.fecha_inicio).add(1, 'day'); // Sumar un día al inicio existente
+        const finExistente = dayjs(empleadoEncontrado.fecha_fin).add(1, 'day'); // Sumar un día al fin existente
         const inicioNuevo = dayjs(fechaInicio);
         const finNuevo = dayjs(fechaFin);
 
@@ -285,18 +285,54 @@ const DescansoMedicoTable = () => {
         const diasDM = 20 - dataEnviar.totalDiasDescansoMedico;
         const diasSubsidio = dataEnviar.cantDias - dataEnviar.diasAcoplados - diasDM;
 
+        // Convertir fechas a objetos Date para manipulación
+        const fechaInicioDM = new Date(dataEnviar.fecInicio);
+        const fechaFinDM = new Date(fechaInicioDM);
+        fechaFinDM.setDate(fechaInicioDM.getDate() + diasDM + dataEnviar.diasAcoplados + 0); // Restamos 1 porque el primer día ya cuenta
+
+        // Fechas para el subsidio (empieza al día siguiente del fin del DM)
+        const fechaInicioSubsidio = new Date(fechaFinDM);
+        fechaInicioSubsidio.setDate(fechaFinDM.getDate() + 1);
+        const fechaFinSubsidio = new Date(fechaInicioSubsidio);
+        fechaFinSubsidio.setDate(fechaInicioSubsidio.getDate() + diasSubsidio - 1);
+
+        // Formatear fechas a formato YYYY-MM-DD (o el formato que necesites)
+        function formatDate(date) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+
         const cuerpoDM = {
-          ...cuerpoBase,
+          idEmpleado: dataEnviar.idEmpleado,
+          fecInicio: dataEnviar.fecInicio,
+          fecFin: formatDate(fechaFinDM),
           numDias: diasDM,
+          usuario: dataEnviar.usuario,
+          texto_json: {
+            Tipo: dataEnviar.tipoDM,
+            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "PARTICULAR",
+            NroCITT: dataEnviar.citt,
+            Diagnostico: dataEnviar.diagnostico,
+          },
         };
 
         const cuerpoSub = {
-          ...cuerpoBase,
+          idEmpleado: dataEnviar.idEmpleado,
+          fecInicio: formatDate(fechaInicioSubsidio),
+          fecFin: dataEnviar.fecFin,
+          usuario: dataEnviar.usuario,
           numDias: diasSubsidio,
+          texto_json: {
+            TipoSubsidio: dataEnviar.tipoDM,
+            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "PARTICULAR",
+            NroCITT: dataEnviar.citt,
+            Diagnostico: dataEnviar.diagnostico,
+          },
         };
-
-        console.log("Registrando descanso médico y subsidio...");
-        console.log("Días DM:", diasDM, "Días Subsidio:", diasSubsidio);
+        console.log("Cuerpo DM:", cuerpoDM);
+        console.log("Cuerpo Subsidio:", cuerpoSub);
 
         // Ejecutar ambas peticiones en paralelo
         const [responseDM, responseSub] = await Promise.all([
@@ -314,7 +350,7 @@ const DescansoMedicoTable = () => {
               texto_json: JSON.stringify(cuerpoSub.texto_json)
             }
           )
-        ]);
+        ])
         console.log("Respuesta DM:", responseDM);
         console.log("Respuesta Subsidio:", responseSub);
         if (responseDM.status === 200 && responseSub.status === 200) {
@@ -787,18 +823,6 @@ const DescansoMedicoTable = () => {
               {dataEnviar.alias}
             </motion.span>
           </motion.div>
-
-          {/* Fechas */}
-          <motion.div variants={item} className="flex flex-col">
-            <span className="text-sm font-semibold text-gray-500">Fecha Inicio</span>
-            <motion.span
-              whileHover={{ x: 5 }}
-              className="text-base text-purple-600 "
-            >
-              {dayjs(dataEnviar.fecInicio).format("DD/MM/YYYY")}
-            </motion.span>
-          </motion.div>
-
           {/* Tipo DM */}
           <motion.div variants={item} className="flex flex-col">
             <span className="text-sm font-semibold text-gray-500">Tipo DM</span>
@@ -807,6 +831,16 @@ const DescansoMedicoTable = () => {
               className="text-base font-medium text-amber-600"
             >
               {dataEnviar.tipoDM}
+            </motion.span>
+            {/* Fechas */}
+          </motion.div>
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Fecha Inicio</span>
+            <motion.span
+              whileHover={{ x: 5 }}
+              className="text-base text-cyan-600 "
+            >
+              {dayjs(dataEnviar.fecInicio).format("DD/MM/YYYY")}
             </motion.span>
           </motion.div>
           {/* DNI */}
@@ -820,16 +854,7 @@ const DescansoMedicoTable = () => {
             </motion.span>
           </motion.div>
 
-          {/* Fecha Fin */}
-          <motion.div variants={item} className="flex flex-col">
-            <span className="text-sm font-semibold text-gray-500">Fecha Fin</span>
-            <motion.span
-              whileHover={{ x: 5 }}
-              className="text-base text-purple-600"
-            >
-              {dayjs(dataEnviar.fecFin).format("DD/MM/YYYY")}
-            </motion.span>
-          </motion.div>
+
 
           {/* Tipo atención */}
           <motion.div variants={item} className="flex flex-col">
@@ -842,7 +867,16 @@ const DescansoMedicoTable = () => {
               {dataEnviar.citt ? "CITT" : "PARTICULAR"}
             </motion.span>
           </motion.div>
-
+          {/* Fecha Fin */}
+          <motion.div variants={item} className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-500">Fecha Fin</span>
+            <motion.span
+              whileHover={{ x: 5 }}
+              className="text-base text-cyan-600"
+            >
+              {dayjs(dataEnviar.fecFin).format("DD/MM/YYYY")}
+            </motion.span>
+          </motion.div>
           {/* Días */}
           <motion.div variants={item} className="flex flex-col">
             <span className="text-sm font-semibold text-gray-500">Días Totales </span>
@@ -1025,7 +1059,7 @@ const DescansoMedicoTable = () => {
                   disabled: false
                 },
                 {
-                  value: "PARTICULAR",
+                  value: "Particular",
                   label: "Particular",
                   disabled: recordToDelete?.TipoAtencion !== "CITT"
                 }
