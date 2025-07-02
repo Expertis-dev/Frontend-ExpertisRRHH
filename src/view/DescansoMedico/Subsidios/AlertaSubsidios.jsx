@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { DatePicker } from 'antd';
+import { Tag } from 'antd';
 import { Search, RefreshCw, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
@@ -59,12 +58,12 @@ export const AlertaSubsidios = () => {
       return subsidios.filter(subsidio => {
         const fechaInicioSubsidio = dayjs(subsidio.fechaInicio);
         return (
-          fechaInicioSubsidio.isAfter(fechaInicioRango) || 
+          fechaInicioSubsidio.isAfter(fechaInicioRango) ||
           fechaInicioSubsidio.isSame(fechaInicioRango)
         ) && (
-          fechaInicioSubsidio.isBefore(fechaFinRango) || 
-          fechaInicioSubsidio.isSame(fechaFinRango)
-        );
+            fechaInicioSubsidio.isBefore(fechaFinRango) ||
+            fechaInicioSubsidio.isSame(fechaFinRango)
+          );
       });
     } catch (error) {
       console.error("Error al filtrar por fechas:", error);
@@ -117,15 +116,15 @@ export const AlertaSubsidios = () => {
       {/* Filtros */}
       <div className="flex items-center gap-4 mb-4 p-4 rounded-lg">
         <div className="relative flex items-center">
-            <Input
-              type="text"
-              placeholder="Buscar por DNI o nombre"
-              className="pl-10 w-full"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
-          </div>
+          <Input
+            type="text"
+            placeholder="Buscar por DNI o nombre"
+            className="pl-10 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+        </div>
       </div>
 
       {/* Tabla de subsidios */}
@@ -148,25 +147,36 @@ export const AlertaSubsidios = () => {
                 </td>
               </tr>
             ) : filteredData.length > 0 ? (
-              filteredData.map((item, index) => (
-                <motion.tr
-                  key={`${item.documento}-${index}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                  className="bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <td className="p-1 border-b border-gray-200 text-center text-sm">
-                    {item.nombreCompleto || "---"}
-                  </td>
-                  <td className="p-1 border-b border-gray-200 text-center text-sm">
-                    {item.documento || "---"}
-                  </td>
-                  <td className="p-1 border-b border-gray-200 text-center text-sm">
-                    {item.totalDiasDescansoMedico || "---"}
-                  </td>
-                </motion.tr>
-              ))
+              filteredData.map((item, index) => {
+                const tagColor = item.totalDiasDescansoMedico <= 14 ? "green" :
+                  item.totalDiasDescansoMedico <= 17 ? "gold" : "red";
+
+                return (
+                  <motion.tr
+                    key={`${item.documento}-${index}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    className="bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="p-1 border-b border-gray-200 text-center text-sm">
+                      {item.nombreCompleto || "---"}
+                    </td>
+                    <td className="p-1 border-b border-gray-200 text-center text-sm">
+                      {item.documento || "---"}
+                    </td>
+                    <td className="p-1 border-b border-gray-200 text-center text-sm">
+                      {item.totalDiasDescansoMedico !== undefined && item.totalDiasDescansoMedico !== null ? (
+                        <Tag color={tagColor} style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                          {item.totalDiasDescansoMedico}
+                        </Tag>
+                      ) : (
+                        "---"
+                      )}
+                    </td>
+                  </motion.tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan="4" className="py-4 text-center text-gray-500">

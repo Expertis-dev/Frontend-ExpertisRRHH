@@ -1,39 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import { Select, DatePicker, AutoComplete, Input, Checkbox, Modal, Button, Card, Divider, Alert, Typography, Form } from 'antd';
+import { Select, DatePicker, AutoComplete, Input, Checkbox, Modal, Button, Card, Divider, Typography, Form } from 'antd';
 import dayjs from 'dayjs';
-import { LoadingOutlined, CheckCircleFilled, CloseCircleFilled, UserOutlined } from '@ant-design/icons';
+import { LoadingOutlined, UserOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useData } from '@/provider/Provider';
+import { CompResultado } from '@/components/CompSucces';
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 const { Option } = Select;
-
-// Lista de diagnósticos para accidentes y enfermedades
 const DIAGNOSTICOS = {
   ENFERMEDAD: [
-    "Gripe común",
-    "Infección respiratoria aguda",
-    "Gastroenteritis",
-    "Hipertensión arterial",
-    "Diabetes mellitus",
-    "Asma bronquial",
-    "Neumonía",
+    "Acidez",
+    "Amigdalitis aguda",
+    "Asma",
+    "Bronquiolitis aguda",
     "Bronquitis aguda",
-    "Artritis reumatoide",
-    "Osteoartritis",
+    "Cálculo de las vías urinarias",
+    "Caries de la dentina",
+    "Cefalea",
+    "Cervicalgia",
+    "Chalacio",
+    "Ciática",
+    "Cistitis aguda",
+    "Cólera",
+    "Conjuntivitis",
+    "Dermatitis debida a ingestión de alimentos",
+    "Dermatitis debida a otras sustancias ingeridas",
+    "Dermatitis infecciosa",
+    "Diarrea",
+    "Diarrea y gastroenteritis",
+    "Disfagia",
+    "Dispepsia",
+    "Displasia del cuello uterino",
+    "Displasia mamaria benigna",
+    "Dolor en la columna dorsal",
+    "Duodenitis",
+    "Epilepsia",
+    "Esofagitis",
+    "Faringitis aguda",
+    "Fibroadenosis de mama",
+    "Fiebre persistente",
+    "Fiebre tifoidea",
+    "Flatulencia y afecciones afines",
+    "Gastritis aguda hemorrágica",
+    "Gastritis y duodenitis",
+    "Gingivitis aguda",
+    "Glaucoma",
+    "Hemorragia postmenopáusica",
+    "Hepatitis aguda tipo A",
+    "Hernia inguinal",
+    "Hernia umbilical",
+    "Hiperplasia benigna de la próstata",
+    "Laringofaringitis aguda",
+    "Lesiones de la encía",
+    "Lumbago con ciática",
+    "Náusea y vómito",
+    "Otitis externa",
+    "Otitis externa aguda, no infecciosa",
+    "Otras anemias nutricionales",
+    "Otras caries dentales",
+    "Otras conjuntivitis agudas",
+    "Otras dermatitis",
+    "Otras enteritis virales",
+    "Otras gastritis agudas",
+    "Otras rinitis alérgicas",
+    "Prolapso genital femenino",
+    "Prostatitis aguda",
+    "Prurito",
+    "Quemadura solar de primer grado",
+    "Rinitis alérgica",
+    "Rinofaringitis aguda [resfriado común]",
+    "Sindrome del colón irritable",
+    "Sinovitis y tenosinovitis",
+    "Sospecha de glaucoma",
+    "Trastornos de disco lumbar y otros, con radiculopatía",
+    "Ulcera péptica, de sitio no especificado",
+    "Urticaria",
+    "Vaginitis aguda",
+    "Varicela sin complicaciones",
+    "Vulvitis aguda"
   ],
   ACCIDENTE: [
     "Fractura de brazo",
+    "Fractura de pierna",
     "Esguince de tobillo",
     "Luxación de hombro",
     "Herida cortante",
     "Quemadura térmica",
-    "Accidente de tránsito",
-    "Caída de altura",
-    "Lesión por esfuerzo repetitivo",
     "Traumatismo craneoencefálico",
-    "Fractura de pierna",
+    "Lesión por esfuerzo repetitivo",
+    "Accidente de tránsito",
+    "Caída de altura"
   ]
 };
 
@@ -69,7 +127,7 @@ export const RegistrarSubsidios = () => {
   // Cargar empleados según el tipo de subsidio
   useEffect(() => {
     const fetchEmpleados = async () => {
-      setIsLoading(true);
+      //setIsLoading(true);
       try {
         // Cargar todos los empleados
         const responseTodos = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
@@ -105,7 +163,7 @@ export const RegistrarSubsidios = () => {
 
   // Filtrar empleados según tipo de subsidio
   useEffect(() => {
-    if (subsidio.tipo === 'MATERNIDAD') {
+    if (subsidio.tipo === 'Maternidad') {
       setEmpleadosFiltrados(empleados.map(emp => ({
         value: emp.nombreCompleto,
         label: `${emp.nombreCompleto} (${emp.documento})`,
@@ -120,9 +178,9 @@ export const RegistrarSubsidios = () => {
     }
   }, [subsidio.tipo, empleados, empleadosParaSubsidios]);
 
-  // Calcular fechas para maternidad
+  // Calcular fechas para Maternidad
   useEffect(() => {
-    if (subsidio.tipo === 'MATERNIDAD' && subsidio.diagnostico && subsidio.fechaInicio) {
+    if (subsidio.tipo === 'Maternidad' && subsidio.diagnostico && subsidio.fechaInicio) {
       const dias = subsidio.diagnostico === 'PARTO_NORMAL' ? 98 : 128;
       const fechaFin = dayjs(subsidio.fechaInicio).add(dias - 1, 'day').format('YYYY-MM-DD');
 
@@ -198,7 +256,7 @@ export const RegistrarSubsidios = () => {
   const handleBuscarEmpleado = (value) => {
     setInputValue(value);
     if (value.length > 2) {
-      const empleadosDisponibles = subsidio.tipo === 'MATERNIDAD' ? empleados : empleadosParaSubsidios;
+      const empleadosDisponibles = subsidio.tipo === 'Maternidad' ? empleados : empleadosParaSubsidios;
       const filtrados = empleadosDisponibles.filter(emp =>
         emp.nombreCompleto.toLowerCase().includes(value.toLowerCase()) ||
         emp.documento.includes(value))
@@ -209,7 +267,7 @@ export const RegistrarSubsidios = () => {
         }));
       setEmpleadosFiltrados(filtrados);
     } else {
-      const empleadosDisponibles = subsidio.tipo === 'MATERNIDAD' ? empleados : empleadosParaSubsidios;
+      const empleadosDisponibles = subsidio.tipo === 'Maternidad' ? empleados : empleadosParaSubsidios;
       setEmpleadosFiltrados(empleadosDisponibles.map(emp => ({
         value: emp.nombreCompleto,
         label: `${emp.nombreCompleto} (${emp.documento})`,
@@ -267,7 +325,6 @@ export const RegistrarSubsidios = () => {
   const confirmSubmit = async () => {
     setIsConfirmModalVisible(false);
     setIsLoading(true);
-
     try {
       console.log("Enviando datos del subsidio:", subsidio);
       const cuerpo = {
@@ -278,7 +335,7 @@ export const RegistrarSubsidios = () => {
         numDias: subsidio.dias - subsidio.diasAcoplados,
         texto_json: {
           TipoSubsidio: subsidio.tipo,
-          TipoAtencion: subsidio.tieneCITT ? "CITT" : "PARTICULAR",
+          TipoAtencion: subsidio.tieneCITT ? "CITT" : "Particular",
           NroCITT: subsidio.numeroCITT,
           Diagnostico: subsidio.diagnostico,
         },
@@ -290,11 +347,9 @@ export const RegistrarSubsidios = () => {
       if (response.status !== 200) {
         throw new Error('Error al registrar subsidio');
       }
-      // Simulamos un retraso de red
       await new Promise(resolve => setTimeout(resolve, 1500));
-
+      setIsLoading(false);
       setIsSuccessModalVisible(true);
-      // Resetear formulario después de éxito
       form.resetFields();
       setSubsidio({
         tipo: '',
@@ -309,13 +364,14 @@ export const RegistrarSubsidios = () => {
       });
       setInputValue('');
       setDateRange([dayjs(), null]);
+      await new Promise(resolve => setTimeout(resolve, 1500));
     } catch (error) {
       Modal.error({
         title: 'Error',
         content: 'Error al registrar el subsidio. Por favor intente nuevamente.',
       });
     } finally {
-      setIsLoading(false);
+      setIsSuccessModalVisible(false);
     }
   };
 
@@ -355,8 +411,8 @@ export const RegistrarSubsidios = () => {
               >
                 <Option value="Maternidad">Maternidad</Option>
                 <Option value="Enfermedad">Enfermedad</Option>
-                <Option value="Accidente Común">Accidente Común</Option>
-                <Option value="Accidente de Trabajo">Accidente Trabajo</Option>
+                <Option value="Accidente común">Accidente común</Option>
+                <Option value="Accidente trabajo">Accidente trabajo</Option>
               </Select>
             </Form.Item>
 
@@ -375,7 +431,7 @@ export const RegistrarSubsidios = () => {
                 disabled={!subsidio.tipo}
               >
               </AutoComplete>
-              {subsidio.tipo != 'MATERNIDAD' ? (
+              {subsidio.tipo != '' && subsidio.tipo != 'Maternidad' ? (
                 <Text type="secondary" className="text-xs">
                   Solo se muestran empleados que tienen mas de 20 días DM
                 </Text>
@@ -394,13 +450,16 @@ export const RegistrarSubsidios = () => {
                 onChange={(value) => setSubsidio(prev => ({ ...prev, diagnostico: value }))}
                 disabled={subsidio.tipo === ''}
               >
-                {subsidio.tipo === 'MATERNIDAD' ? (
+                {subsidio.tipo === 'Maternidad' ? (
                   <>
                     <Option value="PARTO_NORMAL">Parto Normal (98 días)</Option>
                     <Option value="PARTO_MULTIPLE">Parto Múltiple (128 días)</Option>
                     <Option value="DISCAPACIDAD">Parto con Discapacidad (128 días)</Option>
                   </>
-                ) : (
+                ) : subsidio.tipo === 'Enfermedad' ? (
+                  DIAGNOSTICOS["ENFERMEDAD"]?.map(diagnostico => (
+                    <Option key={diagnostico} value={diagnostico}>{diagnostico}</Option>
+                  ))) : (
                   DIAGNOSTICOS["ACCIDENTE"]?.map(diagnostico => (
                     <Option key={diagnostico} value={diagnostico}>{diagnostico}</Option>
                   )))
@@ -441,11 +500,11 @@ export const RegistrarSubsidios = () => {
             {/* Rango de fechas */}
             <Form.Item
               name="fechaInicio"
-              label={subsidio.tipo === 'MATERNIDAD' ? 'Fecha Inicio' : 'Rango de Fechas'}
+              label={subsidio.tipo === 'Maternidad' ? 'Fecha Inicio' : 'Rango de Fechas'}
               rules={[{ required: true, message: 'Seleccione la fecha de inicio' }]}
-              className={subsidio.tipo === 'MATERNIDAD' ? '' : 'md:col-span-2'}
+              className={subsidio.tipo === 'Maternidad' ? '' : 'md:col-span-2'}
             >
-              {subsidio.tipo === 'MATERNIDAD' ? (
+              {subsidio.tipo === 'Maternidad' ? (
                 <DatePicker
                   style={{ width: '100%' }}
                   value={subsidio.fechaInicio ? dayjs(subsidio.fechaInicio) : null}
@@ -551,12 +610,11 @@ export const RegistrarSubsidios = () => {
                     <h4 className="font-medium text-gray-500 mb-2">Detalles del Subsidio</h4>
                     <div className="space-y-2">
                       <p><span className="font-semibold text-gray-700">Tipo:</span>
-                        <span className={`ml-2 px-2 py-1 rounded text-sm ${subsidio.tipo === 'MATERNIDAD' ? 'bg-pink-100 text-pink-800' :
+                        <span className={`ml-2 px-2 py-1 rounded text-sm ${subsidio.tipo === 'Maternidad' ? 'bg-pink-100 text-pink-800' :
                           subsidio.tipo === 'ENFERMEDAD' ? 'bg-blue-100 text-blue-800' :
                             'bg-orange-100 text-orange-800'
                           }`}>
-                          {subsidio.tipo === 'MATERNIDAD' ? 'Maternidad' :
-                            subsidio.tipo === 'ENFERMEDAD' ? 'Enfermedad' : 'Accidente'}
+                          {subsidio.tipo}
                         </span>
                       </p>
                       <p><span className="font-semibold text-gray-700">Diagnóstico:</span> {subsidio.diagnostico === 'PARTO_NORMAL' ? 'Parto Normal' :
@@ -604,37 +662,27 @@ export const RegistrarSubsidios = () => {
             </Modal>
           )}
         </AnimatePresence>
-
         {/* Modal de Éxito */}
         <Modal
           title={null}
-          visible={isSuccessModalVisible}
-          onOk={() => setIsSuccessModalVisible(false)}
-          onCancel={() => setIsSuccessModalVisible(false)}
-          footer={[
-            <Button key="ok" type="primary" onClick={() => setIsSuccessModalVisible(false)}>
-              Aceptar
-            </Button>
-          ]}
-          centered
+          open={isSuccessModalVisible}
+          width={400}
+          footer={null}
         >
-          <div className="text-center py-6">
-            <CheckCircleFilled style={{ fontSize: '48px', color: '#52c41a' }} />
-            <Title level={3} className="mt-4">¡Registro exitoso!</Title>
-            <Text className="mt-2">El subsidio ha sido registrado correctamente.</Text>
-          </div>
+          <CompResultado tipo="success" titulo={<span>¡Registro exitoso!</span>} mensaje={<span>El subsidio ha sido registrado correctamente.</span>} />
         </Modal>
 
+
+
         {/* Overlay de carga */}
-        {isLoading && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-80 text-center">
-              <LoadingOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
-              <Title level={4} className="mt-4">Procesando solicitud</Title>
-              <Text>Por favor espere...</Text>
-            </Card>
-          </div>
-        )}
+        <Modal
+          title={null}
+          open={isLoading}
+          width={400}
+          footer={null}
+        >
+          <CompResultado tipo="loading" titulo={<span>Procesando solicitud</span>} mensaje={<span>Por favor espere...</span>} />
+        </Modal>
       </Card>
     </div>
   );

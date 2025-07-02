@@ -76,7 +76,7 @@ const DescansoMedicoTable = () => {
         console.log("Datos de descansos médicos:", descansosRes.data.data);
         console.log("Datos de empleados:", empleadosRes.data.data);
         setEmpleados(empleadosRes.data.data);
-        const sortedData = descansosRes.data.data.sort((a, b) => b.codMes?.localeCompare(a.codMes) || 0);
+        const sortedData = descansosRes.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
         setData(sortedData);
         setFilteredData(sortedData);
       } catch (err) {
@@ -222,11 +222,6 @@ const DescansoMedicoTable = () => {
     });
   };
 
-  const handleDeleteClick = (record) => {
-    setRecordToDelete(record);
-    setIsDeleteModalVisible(true);
-  };
-
   const confirmDelete = async () => {
     setIsDeleteModalVisible(false);
     setIsLoading(true);
@@ -247,7 +242,7 @@ const DescansoMedicoTable = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`
       );
-      const sortedData = response.data.data;
+      const sortedData = response.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
       setData(sortedData);
 
       setIsSuccess(true);
@@ -312,7 +307,7 @@ const DescansoMedicoTable = () => {
           usuario: dataEnviar.usuario,
           texto_json: {
             Tipo: dataEnviar.tipoDM,
-            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "PARTICULAR",
+            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "Particular",
             NroCITT: dataEnviar.citt,
             Diagnostico: dataEnviar.diagnostico,
           },
@@ -326,7 +321,7 @@ const DescansoMedicoTable = () => {
           numDias: diasSubsidio,
           texto_json: {
             TipoSubsidio: dataEnviar.tipoDM,
-            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "PARTICULAR",
+            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "Particular",
             NroCITT: dataEnviar.citt,
             Diagnostico: dataEnviar.diagnostico,
           },
@@ -397,7 +392,8 @@ const DescansoMedicoTable = () => {
       const updatedResponse = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`
       );
-      setData(updatedResponse.data.data);
+      const sortedData = updatedResponse.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
+      setData(sortedData);
       setIsSuccess(true);
       setTimeout(() => setIsSuccess(false), 2000);
       form.resetFields();
@@ -713,8 +709,8 @@ const DescansoMedicoTable = () => {
               <Select
                 options={[
                   { value: "Enfermedad", label: "Enfermedad" },
-                  { value: "Accidente Común", label: "Accidente Común" },
-                  { value: "Accidente Trabajo", label: "Accidente de Trabajo" },
+                  { value: "Accidente común", label: "Accidente común" },
+                  { value: "Accidente trabajo", label: "Accidente trabajo" },
                 ]}
                 placeholder="Seleccione tipo de descanso médico"
                 className="w-full rounded-lg"
@@ -818,7 +814,7 @@ const DescansoMedicoTable = () => {
             <span className="text-sm font-semibold text-gray-500">Empleado</span>
             <motion.span
               whileHover={hoverEffect}
-              className="text-base font-medium text-blue-600 "
+              className="text-base font-medium text-slate-600 "
             >
               {dataEnviar.alias}
             </motion.span>
@@ -828,7 +824,7 @@ const DescansoMedicoTable = () => {
             <span className="text-sm font-semibold text-gray-500">Tipo DM</span>
             <motion.span
               whileHover={hoverEffect}
-              className="text-base font-medium text-amber-600"
+              className="text-base font-medium text-slate-600"
             >
               {dataEnviar.tipoDM}
             </motion.span>
@@ -838,7 +834,7 @@ const DescansoMedicoTable = () => {
             <span className="text-sm font-semibold text-gray-500">Fecha Inicio</span>
             <motion.span
               whileHover={{ x: 5 }}
-              className="text-base text-cyan-600 "
+              className="text-base font-bold text-cyan-500"
             >
               {dayjs(dataEnviar.fecInicio).format("DD/MM/YYYY")}
             </motion.span>
@@ -861,10 +857,10 @@ const DescansoMedicoTable = () => {
             <span className="text-sm font-semibold text-gray-500">Tipo atención</span>
             <motion.span
               whileHover={{ scale: 1.03 }}
-              className={`text-base font-bold ${dataEnviar.citt ? "text-green-600" : "text-red-600"
+              className={`text-base font-semibold ${dataEnviar.citt ? "text-green-600" : "text-red-600"
                 }`}
             >
-              {dataEnviar.citt ? "CITT" : "PARTICULAR"}
+              {dataEnviar.citt ? `CITT - ${dataEnviar.citt}` : "PARTICULAR"}
             </motion.span>
           </motion.div>
           {/* Fecha Fin */}
@@ -872,7 +868,7 @@ const DescansoMedicoTable = () => {
             <span className="text-sm font-semibold text-gray-500">Fecha Fin</span>
             <motion.span
               whileHover={{ x: 5 }}
-              className="text-base text-cyan-600"
+              className="text-base font-bold text-cyan-500"
             >
               {dayjs(dataEnviar.fecFin).format("DD/MM/YYYY")}
             </motion.span>
@@ -927,19 +923,6 @@ const DescansoMedicoTable = () => {
               )}
             </motion.div>
           </motion.div>
-
-          {/* CITT */}
-          {dataEnviar.citt && (
-            <motion.div variants={item} className="flex flex-col">
-              <span className="text-sm font-semibold text-gray-500">N° CITT</span>
-              <motion.span
-                whileHover={{ backgroundColor: "#DCFCE7" }}
-                className="text-base font-mono text-green-700"
-              >
-                {dataEnviar.citt}
-              </motion.span>
-            </motion.div>
-          )}
           {/* Diagnóstico */}
           <motion.div variants={item} className="flex flex-col">
             <span className="text-sm font-semibold text-gray-500">Total de días pre Registrados</span>

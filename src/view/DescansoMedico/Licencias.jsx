@@ -227,9 +227,17 @@ export const Licencias = () => {
                 message.error("Debe seleccionar una observación");
                 return false;
             }
+            if (!newLicense.fechaInicio) {
+                message.error("Debe ingresar una fecha de inicio");
+                return false;
+            }
         } else {
             if (!newLicense.nombreCompleto) {
                 message.error("Debe ingresar el nombre del empleado");
+                return false;
+            }
+            if (!newLicense.observacion) {
+                message.error("Debe ingresar una observación");
                 return false;
             }
             if (!newLicense.fechaInicio || !newLicense.fechaFin) {
@@ -520,7 +528,7 @@ export const Licencias = () => {
 
                     <Button
                         onClick={() => setIsModalOpen(true)}
-                        className="mt-4 md:mt-0 bg-green-600 hover:bg-green-700 text-white"
+                        className="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white"
                     >
                         <Plus className="h-4 w-4" />
                         Nueva Licencia
@@ -779,6 +787,7 @@ export const Licencias = () => {
                                     <DatePicker
                                         style={{ width: '100%' }}
                                         value={dayjs(newLicense.fechaFin)}
+                                        disabled={!newLicense.fechaInicio}
                                         onChange={(date) => setNewLicense(prev => ({
                                             ...prev,
                                             fechaFin: date ? date.format('YYYY-MM-DD') : "",

@@ -1,6 +1,6 @@
 import { Search, RefreshCw, Trash, Eye, SquarePen, Pencil, CalendarDays, Clock, User } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import {  Input, Modal, Form, DatePicker, AutoComplete, Select, Tag, Checkbox } from "antd";
+import { Input, Modal, Form, DatePicker, AutoComplete, Select, Tag, Checkbox } from "antd";
 import { Button } from "@/components/ui/button";
 import dayjs from "dayjs";
 import { useData } from "@/provider/Provider";
@@ -21,6 +21,7 @@ export const ListarSubsidios = () => {
   const [form] = Form.useForm();
   const [empleados, setEmpleados] = useState([]);
   const [opciones, setOpciones] = useState([]);
+  const [tiposAtencion, setTiposAtencion] = useState(null);
   const { nombre } = useData();
   // Estados para filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,7 +57,7 @@ export const ListarSubsidios = () => {
         console.log("Datos de descansos médicos:", descansosRes.data.data);
         console.log("Datos de empleados:", empleadosRes.data.data);
         setEmpleados(empleadosRes.data.data);
-        const sortedData = descansosRes.data.data.sort((a, b) => b.codMes?.localeCompare(a.codMes) || 0);
+        const sortedData = descansosRes.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
         setData(sortedData);
         setFilteredData(sortedData);
       } catch (err) {
@@ -94,8 +95,13 @@ export const ListarSubsidios = () => {
       result = result.filter(item => item.Tipo === diasFilter);
     }
 
+    // Filtro por tipos de atención
+    if (tiposAtencion) {
+      result = result.filter(item => item.TipoAtencion === tiposAtencion);
+    }
+
     setFilteredData(result);
-  }, [data, searchTerm, dateRange, diasFilter]);
+  }, [data, searchTerm, dateRange, diasFilter, tiposAtencion]);
 
   const handleBuscarEmpleado = (value) => {
     const nombresValidos = empleados
@@ -144,11 +150,6 @@ export const ListarSubsidios = () => {
     });
   };
 
-  const handleDeleteClick = (record) => {
-    setRecordToDelete(record);
-    setIsDeleteModalVisible(true);
-  };
-
   const confirmDelete = async () => {
     setIsDeleteModalVisible(false);
     setIsLoading(true);
@@ -169,7 +170,7 @@ export const ListarSubsidios = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`
       );
-      const sortedData = response.data.data;
+      const sortedData = response.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
       setData(sortedData);
 
       setIsSuccess(true);
@@ -212,7 +213,7 @@ export const ListarSubsidios = () => {
         const updatedResponse = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`
         );
-        const sortedData = updatedResponse.data.data
+        const sortedData = updatedResponse.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
         setData(sortedData);
         setIsSuccess(true);
         setTimeout(() => setIsSuccess(false), 2000);
@@ -230,11 +231,13 @@ export const ListarSubsidios = () => {
     setSearchTerm("");
     setDateRange([]);
     setDiasFilter(null);
+    setTiposAtencion(null);
   };
 
   const Limpieza = () => {
     setSearchTerm("");
     setDateRange([]);
+    setTiposAtencion(null);
     setDiasFilter(null);
     form.resetFields();
     setTieneCITT(false);
@@ -247,11 +250,16 @@ export const ListarSubsidios = () => {
   };
 
   const diasOptions = [
-    { value: null, label: "Todos" },
+    { value: null, label: "Todos los tipos de subsidios" },
     { value: "Maternidad", label: "Maternidad" },
     { value: "Enfermedad", label: "Enfermedad" },
-    { value: "Accidente Común", label: "Accidente Común" },
-    { value: "Accidente Trabajo", label: "Accidente Trabajo" },
+    { value: "Accidente común", label: "Accidente común" },
+    { value: "Accidente trabajo", label: "Accidente trabajo" },
+  ];
+  const TiposAtencion = [
+    { value: null, label: "Todos los tipos de atención" },
+    { value: "Particular", label: "Particular" },
+    { value: "CITT", label: "CITT" },
   ];
 
   // Manejo del checkbox
@@ -304,7 +312,7 @@ export const ListarSubsidios = () => {
             // Actualizar la lista
             axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`)
               .then(res => {
-                const sortedData = res.data.data;
+                const sortedData = res.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
                 setData(sortedData);
                 setIsSuccess(true);
                 setTimeout(() => setIsSuccess(false), 2000);
@@ -339,7 +347,7 @@ export const ListarSubsidios = () => {
         className="w-full max-w-8xl mb-6"
       >
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
             <div className="relative flex items-center">
               <Input
                 placeholder="Buscar por nombre o DNI"
@@ -359,10 +367,18 @@ export const ListarSubsidios = () => {
             />
 
             <Select
-              placeholder="Filtrar por días"
+              placeholder="Filtrar por tipo de subsidio"
               options={diasOptions}
               value={diasFilter}
               onChange={setDiasFilter}
+              className="w-full rounded-lg"
+            />
+
+            <Select
+              placeholder="Filtrar por tipo de atención"
+              options={TiposAtencion}
+              value={tiposAtencion}
+              onChange={setTiposAtencion}
               className="w-full rounded-lg"
             />
           </div>
@@ -392,7 +408,7 @@ export const ListarSubsidios = () => {
                   <th className="w-60 text-center text-sm font-medium">NOMBRE COMPLETO</th>
                   <th className="p-2 text-center text-sm font-medium">DOCUMENTO</th>
                   <th className="p-1 text-center text-sm font-medium">TIPO SUB.</th>
-                  <th className="px-1 text-center text-sm font-medium">TIPO ATENCION</th>
+                  <th className="px-1 text-center text-sm font-medium">TIPO ATENCIÓN</th>
                   <th className="px-4 text-center text-sm font-medium">NUM. CITT</th>
                   <th className="p-1 text-center text-sm font-medium">FECHA INICIO</th>
                   <th className="p-1 text-center text-sm font-medium">FECHA FIN</th>
@@ -446,15 +462,17 @@ export const ListarSubsidios = () => {
                           >
                             <Pencil className="h-4 w-4 text-green-500" />
                           </Button>
+                          {
+                            item.Flag_ultimo === 1 ? (<Button
+                              variant="ghost"
+                              size="icon"
+                              title="Eliminar"
+                              onClick={() => prepareDeleteLicense(item)}
+                            >
+                              <Trash className="h-4 w-4 text-red-500" />
+                            </Button>) : (<div></div>)
+                          }
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Eliminar"
-                            onClick={() => prepareDeleteLicense(item)}
-                          >
-                            <Trash className="h-4 w-4 text-red-500" />
-                          </Button>
                         </div>
                       </td>
                     </motion.tr>
@@ -927,6 +945,15 @@ export const ListarSubsidios = () => {
         footer={null}
       >
         <CompResultado tipo="success" titulo={<span>Operación exitosa</span>} mensaje={<span>Descanso médico actualizado correctamente.</span>} />
+      </Modal>
+      {/* Overlay de carga */}
+      <Modal
+        title={null}
+        open={isLoading}
+        width={400}
+        footer={null}
+      >
+        <CompResultado tipo="loading" titulo={<span>Procesando solicitud</span>} mensaje={<span>Por favor espere...</span>} />
       </Modal>
     </div>
   );
