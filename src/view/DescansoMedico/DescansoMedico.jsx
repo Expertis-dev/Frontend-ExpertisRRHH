@@ -1,6 +1,6 @@
-import { Search, Plus, RefreshCw, Trash, Eye, SquarePen, Pencil, CalendarDays, Clock, User } from "lucide-react";
+import { Search, Plus, RefreshCw, Trash, Eye, Pencil, CalendarDays, Clock, User } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { Table, Input, Modal, Form, DatePicker, AutoComplete, Select, Tag, Checkbox } from "antd";
+import { Input, Modal, Form, DatePicker, AutoComplete, Select, Checkbox } from "antd";
 import { Button } from "@/components/ui/button";
 import dayjs from "dayjs";
 import { useData } from "@/provider/Provider";
@@ -269,7 +269,7 @@ const DescansoMedicoTable = () => {
         usuario: dataEnviar.usuario,
         texto_json: {
           Tipo: dataEnviar.tipoDM,
-          TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "PARTICULAR",
+          TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "Particular",
           NroCITT: dataEnviar.citt,
           Diagnostico: dataEnviar.diagnostico,
         },
@@ -354,7 +354,6 @@ const DescansoMedicoTable = () => {
           throw new Error("Error en una de las respuestas");
         }
       } else {
-        // Caso cuando no excede los 20 días (todo a DM)
         const diasDM = dataEnviar.cantDias - dataEnviar.diasAcoplados;
 
         const cuerpoDM = {
@@ -393,7 +392,11 @@ const DescansoMedicoTable = () => {
         `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarDescansosMedicos`
       );
       const sortedData = updatedResponse.data.data.sort((a, b) => b.fecha_inicio?.localeCompare(a.fecha_inicio) || 0);
+      const updateEmpleados = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarEmpleadosParaDM`
+      );
       setData(sortedData);
+      setEmpleados(updateEmpleados.data.data);
       setIsSuccess(true);
       setTimeout(() => setIsSuccess(false), 2000);
       form.resetFields();
@@ -586,15 +589,7 @@ const DescansoMedicoTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan="9" className="py-8 text-center">
-                      <div className="flex justify-center">
-                        <RefreshCw className="h-6 w-6 animate-spin text-gray-500" />
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredData.length > 0 ? (
+                {filteredData.length > 0 ? (
                   filteredData.map((item, index) => (
                     <motion.tr
                       key={`${item.documento}-${index}`}
@@ -642,9 +637,6 @@ const DescansoMedicoTable = () => {
                           ) : (
                             <div> </div>
                           )}
-
-
-
                         </div>
                       </td>
                     </motion.tr>
@@ -661,7 +653,6 @@ const DescansoMedicoTable = () => {
           </div>
         </motion.div>
       </motion.div>
-
       {/* Modal de Registro */}
       <Modal
         title={

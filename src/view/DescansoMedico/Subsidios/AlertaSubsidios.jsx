@@ -18,7 +18,7 @@ export const AlertaSubsidios = () => {
       setLoading(true);
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarAlertaSubsidios`);
 
-      let dataSubsidios = [];
+      let dataSubsidios = response.data;
 
       // Manejar diferentes estructuras de respuesta
       if (Array.isArray(response.data)) {
@@ -28,12 +28,10 @@ export const AlertaSubsidios = () => {
       } else if (response.data.recordset) {
         dataSubsidios = response.data.recordset;
       }
-
       // Filtrar y ordenar datos
       dataSubsidios = dataSubsidios
         .filter(dato => dato.nombreCompleto !== null)
-        .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
-
+        .sort((a, b) => a.totalDiasDescansoMedico - b.totalDiasDescansoMedico);
       setData(dataSubsidios);
 
     } catch (error) {
@@ -47,30 +45,6 @@ export const AlertaSubsidios = () => {
     obtenerSubsidios();
   }, []);
 
-  // Filtrar por rango de fechas
-  const filtrarPorRangoFechas = (subsidios, rangoFechas) => {
-    if (!rangoFechas || rangoFechas.length !== 2) return subsidios;
-
-    try {
-      const fechaInicioRango = dayjs(rangoFechas[0]);
-      const fechaFinRango = dayjs(rangoFechas[1]);
-
-      return subsidios.filter(subsidio => {
-        const fechaInicioSubsidio = dayjs(subsidio.fechaInicio);
-        return (
-          fechaInicioSubsidio.isAfter(fechaInicioRango) ||
-          fechaInicioSubsidio.isSame(fechaInicioRango)
-        ) && (
-            fechaInicioSubsidio.isBefore(fechaFinRango) ||
-            fechaInicioSubsidio.isSame(fechaFinRango)
-          );
-      });
-    } catch (error) {
-      console.error("Error al filtrar por fechas:", error);
-      return subsidios;
-    }
-  };
-
   // Filtrar datos
   const filteredData = useMemo(() => {
     let result = [...data];
@@ -81,21 +55,8 @@ export const AlertaSubsidios = () => {
         item.documento?.includes(searchTerm) ||
         item.nombreCompleto?.toLowerCase().includes(searchTerm.toLowerCase()))
     }
-
-    // Filtro por rango de fechas
-    if (dateRange && dateRange.length === 2) {
-      result = filtrarPorRangoFechas(result, dateRange);
-    }
-
     return result;
-  }, [data, searchTerm, dateRange]);
-
-  // Limpiar filtros
-  const handleClearFilters = () => {
-    setSearchTerm("");
-    setDateRange([]);
-  };
-
+  }, [data, searchTerm]);
   // Formatear fecha
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -138,15 +99,7 @@ export const AlertaSubsidios = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="4" className="py-8 text-center">
-                  <div className="flex justify-center">
-                    <RefreshCw className="h-6 w-6 animate-spin text-gray-500" />
-                  </div>
-                </td>
-              </tr>
-            ) : filteredData.length > 0 ? (
+            {filteredData.length > 0 ? (
               filteredData.map((item, index) => {
                 const tagColor = item.totalDiasDescansoMedico <= 14 ? "green" :
                   item.totalDiasDescansoMedico <= 17 ? "gold" : "red";
@@ -179,8 +132,8 @@ export const AlertaSubsidios = () => {
               })
             ) : (
               <tr>
-                <td colSpan="4" className="py-4 text-center text-gray-500">
-                  No se encontraron resultados
+                <td colSpan={3} className="text-center py-4 text-gray-500">
+                  No hay datos para mostrar.
                 </td>
               </tr>
             )}

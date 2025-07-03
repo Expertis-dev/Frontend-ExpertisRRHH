@@ -501,7 +501,37 @@ export const RegistrarSubsidios = () => {
             <Form.Item
               name="fechaInicio"
               label={subsidio.tipo === 'Maternidad' ? 'Fecha Inicio' : 'Rango de Fechas'}
-              rules={[{ required: true, message: 'Seleccione la fecha de inicio' }]}
+              rules={[
+                {
+                  validator: (_, value) => {
+                    // Validación básica de que existe el valor
+                    if (!value) {
+                      return Promise.reject(new Error('Por favor seleccione las fechas'));
+                    }
+
+                    // Validación específica para rangos (no Maternidad)
+                    if (subsidio.tipo !== 'Maternidad') {
+                      // Verificar que ambas fechas están completas
+                      if (!value[0] || !value[1]) {
+                        return Promise.reject(new Error('Debe seleccionar ambas fechas'));
+                      }
+
+                      // Validar rango máximo de 30 días
+                      const diffDays = value[1].diff(value[0], 'days') + 1;
+                      if (diffDays > 30) {
+                        return Promise.reject(new Error('El rango no puede exceder 30 días'));
+                      }
+                    }
+
+                    // Validación para Maternidad (solo fecha de inicio)
+                    if (subsidio.tipo === 'Maternidad' && !value) {
+                      return Promise.reject(new Error('Por favor seleccione la fecha de inicio'));
+                    }
+
+                    return Promise.resolve();
+                  }
+                }
+              ]}
               className={subsidio.tipo === 'Maternidad' ? '' : 'md:col-span-2'}
             >
               {subsidio.tipo === 'Maternidad' ? (
@@ -513,11 +543,28 @@ export const RegistrarSubsidios = () => {
                     setSubsidio(prev => ({ ...prev, fechaInicio }));
                     setDateRange([date, date ? dayjs(date).add(subsidio.dias - 1, 'day') : null]);
                   }}
-                  disabledDate={(current) => current && current > dayjs().endOf('day')}
                 />
               ) : (
                 <RangePicker
-                  onChange={handleDateRangeChange}
+                  onChange={(dates, dateStrings) => {
+                    handleDateRangeChange(dates);
+
+                    // Validación en tiempo real
+                    if (dates) {
+                      if (!dates[0] || !dates[1]) {
+                        message.warning('Debe seleccionar ambas fechas');
+                      } else {
+                        const diffDays = dates[1].diff(dates[0], 'days') + 1;
+                        if (diffDays > 30) {
+                          notification.warning({
+                            message: 'Rango excedido',
+                            description: 'El período seleccionado supera los 30 días permitidos',
+                            duration: 4.5,
+                          });
+                        }
+                      }
+                    }
+                  }}
                   value={dateRange}
                   format="DD/MM/YYYY"
                   className="w-full rounded-lg"
