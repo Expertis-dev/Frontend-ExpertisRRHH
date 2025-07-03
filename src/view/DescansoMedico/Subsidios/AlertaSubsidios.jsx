@@ -1,37 +1,25 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Tag } from 'antd';
-import { Search, RefreshCw, Trash2 } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
-import dayjs from 'dayjs';
+
 
 export const AlertaSubsidios = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState([]);
-
   // Obtener datos de subsidios
   const obtenerSubsidios = async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarAlertaSubsidios`);
-
-      let dataSubsidios = response.data;
-
-      // Manejar diferentes estructuras de respuesta
-      if (Array.isArray(response.data)) {
-        dataSubsidios = response.data;
-      } else if (response.data.data) {
-        dataSubsidios = response.data.data;
-      } else if (response.data.recordset) {
-        dataSubsidios = response.data.recordset;
-      }
       // Filtrar y ordenar datos
-      dataSubsidios = dataSubsidios
+      const dataSubsidios = response.data.data
         .filter(dato => dato.nombreCompleto !== null)
         .sort((a, b) => a.totalDiasDescansoMedico - b.totalDiasDescansoMedico);
+
       setData(dataSubsidios);
 
     } catch (error) {
@@ -45,6 +33,8 @@ export const AlertaSubsidios = () => {
     obtenerSubsidios();
   }, []);
 
+
+
   // Filtrar datos
   const filteredData = useMemo(() => {
     let result = [...data];
@@ -57,11 +47,7 @@ export const AlertaSubsidios = () => {
     }
     return result;
   }, [data, searchTerm]);
-  // Formatear fecha
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    return dayjs(dateString).format('DD/MM/YYYY');
-  };
+
 
   return (
     <div className="w-full max-w-8xl mx-auto">
@@ -99,7 +85,15 @@ export const AlertaSubsidios = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredData.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="4" className="py-8 text-center">
+                  <div className="flex justify-center">
+                    <RefreshCw className="h-6 w-6 animate-spin text-gray-500" />
+                  </div>
+                </td>
+              </tr>
+            ) : filteredData.length > 0 ? (
               filteredData.map((item, index) => {
                 const tagColor = item.totalDiasDescansoMedico <= 14 ? "green" :
                   item.totalDiasDescansoMedico <= 17 ? "gold" : "red";
@@ -132,8 +126,8 @@ export const AlertaSubsidios = () => {
               })
             ) : (
               <tr>
-                <td colSpan={3} className="text-center py-4 text-gray-500">
-                  No hay datos para mostrar.
+                <td colSpan="4" className="py-4 text-center text-gray-500">
+                  No se encontraron resultados
                 </td>
               </tr>
             )}
