@@ -458,6 +458,7 @@ export const ListarSubsidios = () => {
                             variant="ghost"
                             size="icon"
                             title="Editar"
+                            disabled={true}
                             onClick={() => prepareEditLicense(item)}
                           >
                             <Pencil className="h-4 w-4 text-green-500" />
@@ -467,6 +468,7 @@ export const ListarSubsidios = () => {
                               variant="ghost"
                               size="icon"
                               title="Eliminar"
+                              disabled={true}
                               onClick={() => prepareDeleteLicense(item)}
                             >
                               <Trash className="h-4 w-4 text-red-500" />

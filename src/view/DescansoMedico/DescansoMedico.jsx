@@ -167,37 +167,6 @@ const DescansoMedicoTable = () => {
         form.setFields([{ name: "rangoFechas", errors: ["Cantidad maxima de dias 30"] }]);
         return;
       }
-      // Buscar en datos adicionales
-      const empleadoEncontrado = data.find(emp =>
-        emp.documento === empleado.documento && emp.Flag_ultimo === 1
-      );
-
-      // Calcular días acoplados
-      let diasAcoplados = 0;
-      console.log("Empleado encontrado:", empleadoEncontrado);
-      if (empleadoEncontrado && empleadoEncontrado.fecha_inicio && empleadoEncontrado.fecha_fin) {
-        const inicioExistente = dayjs(empleadoEncontrado.fecha_inicio).add(1, 'day'); // Sumar un día al inicio existente
-        const finExistente = dayjs(empleadoEncontrado.fecha_fin).add(1, 'day'); // Sumar un día al fin existente
-        const inicioNuevo = dayjs(fechaInicio);
-        const finNuevo = dayjs(fechaFin);
-
-        // Calcular la superposición de fechas
-        const inicioSuperposicion = inicioNuevo.isAfter(inicioExistente) ? inicioNuevo : inicioExistente;
-        const finSuperposicion = finNuevo.isBefore(finExistente) ? finNuevo : finExistente;
-
-        // Calcular días de superposición (incluyendo el caso de mismo día)
-        if (inicioSuperposicion.isSame(finSuperposicion, 'day')) {
-          diasAcoplados = 1; // Caso cuando las fechas son iguales
-        } else if (inicioSuperposicion.isBefore(finSuperposicion)) {
-          diasAcoplados = finSuperposicion.diff(inicioSuperposicion, "day") + 1;
-        }
-
-        console.log("Rango existente:", inicioExistente.format("DD-MM-YYYY"), "al", finExistente.format("DD-MM-YYYY"));
-        console.log("Nuevo rango:", inicioNuevo.format("DD-MM-YYYY"), "al", finNuevo.format("DD-MM-YYYY"));
-        console.log("Superposición calculada:", inicioSuperposicion.format("DD-MM-YYYY"), "al", finSuperposicion.format("DD-MM-YYYY"));
-        console.log("Días acoplados:", diasAcoplados);
-      }
-
       const newRecord = {
         fecInicio: fechaInicio.format("YYYY-MM-DD"),
         fecFin: fechaFin.format("YYYY-MM-DD"),
@@ -210,8 +179,7 @@ const DescansoMedicoTable = () => {
         citt: values.CITT,
         diagnostico: values.diagnostico,
         totalDiasDescansoMedico: empleado.totalDiasDescansoMedico,
-        cantDias: cantDias,
-        diasAcoplados: diasAcoplados || 0
+        cantDias: cantDias
       };
       console.log("Nuevo registro:", newRecord);
       setDataEnviar(newRecord);
@@ -259,7 +227,7 @@ const DescansoMedicoTable = () => {
     setIsLoading(true);
 
     try {
-      const sumaDias = dataEnviar.totalDiasDescansoMedico + dataEnviar.cantDias - dataEnviar.diasAcoplados;
+      const sumaDias = dataEnviar.totalDiasDescansoMedico + dataEnviar.cantDias;
       console.log("Valor total de días:", sumaDias);
 
       const cuerpoBase = {
@@ -275,107 +243,152 @@ const DescansoMedicoTable = () => {
         },
       };
 
+      // Función para formatear fecha a YYYY-MM-DD
+      function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      // Función para generar el codMes (01-MM-YYYY)
+      function generateCodMes(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        return `01-${month}-${year}`;
+      }
+
+      // Función para dividir un período en múltiples registros por mes
+      // Función para dividir un período en múltiples registros por mes
+      function splitPeriodByMonth(startDate, endDate, tipo) {
+        const result = [];
+        let currentStart = new Date(startDate);
+        const finalEnd = new Date(endDate);
+
+        while (currentStart <= finalEnd) {
+          const currentMonth = currentStart.getMonth();
+          const currentYear = currentStart.getFullYear();
+
+          // Encontrar el último día del mes actual
+          const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+          const periodEnd = new Date(Math.min(lastDayOfMonth, finalEnd));
+
+          // Calcular días del período
+          const diffTime = periodEnd - currentStart;
+          let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir ambos días
+
+          // Verificar si el periodo termina en el último día del mes
+          const isLastDayOfMonth = periodEnd.getDate() === lastDayOfMonth.getDate();
+
+          // Si es el último día del mes, sumamos 1 día adicional
+          if (isLastDayOfMonth) {
+            diffDays += 1;
+          }
+
+          // Crear registro
+          const registro = {
+            idEmpleado: dataEnviar.idEmpleado,
+            fecInicio: formatDate(currentStart),
+            fecFin: formatDate(periodEnd),
+            numDias: diffDays,
+            usuario: dataEnviar.usuario,
+            codMes: generateCodMes(currentStart),
+            texto_json: {
+              ...cuerpoBase.texto_json,
+              ...(tipo === 'subsidio' ? { TipoSubsidio: dataEnviar.tipoDM } : {})
+            }
+          };
+
+          result.push(registro);
+
+          // Mover al primer día del siguiente mes
+          currentStart = new Date(currentYear, currentMonth + 1, 1);
+        }
+
+        return result;
+      }
+
       if (sumaDias > 20) {
         // Caso cuando excede los 20 días (parte a DM y parte a subsidio)
         const diasDM = 20 - dataEnviar.totalDiasDescansoMedico;
-        const diasSubsidio = dataEnviar.cantDias - dataEnviar.diasAcoplados - diasDM;
-
         // Convertir fechas a objetos Date para manipulación
         const fechaInicioDM = new Date(dataEnviar.fecInicio);
+        fechaInicioDM.setDate(fechaInicioDM.getDate() + 1);
         const fechaFinDM = new Date(fechaInicioDM);
-        fechaFinDM.setDate(fechaInicioDM.getDate() + diasDM + dataEnviar.diasAcoplados + 0); // Restamos 1 porque el primer día ya cuenta
-
+        fechaFinDM.setDate(fechaInicioDM.getDate() + diasDM - 1);
+        console.log("Fecha inicio DM:", fechaInicioDM);
+        console.log("Fecha fin DM:", fechaFinDM);
         // Fechas para el subsidio (empieza al día siguiente del fin del DM)
         const fechaInicioSubsidio = new Date(fechaFinDM);
         fechaInicioSubsidio.setDate(fechaFinDM.getDate() + 1);
-        const fechaFinSubsidio = new Date(fechaInicioSubsidio);
-        fechaFinSubsidio.setDate(fechaInicioSubsidio.getDate() + diasSubsidio - 1);
+        const fechaFinSubsidio = new Date(dataEnviar.fecFin);
+        fechaFinSubsidio.setDate(fechaFinSubsidio.getDate() + 1);
 
-        // Formatear fechas a formato YYYY-MM-DD (o el formato que necesites)
-        function formatDate(date) {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
-        }
+        // Dividir períodos por mes
+        const registrosDM = splitPeriodByMonth(fechaInicioDM, fechaFinDM, 'dm');
+        const registrosSubsidio = splitPeriodByMonth(fechaInicioSubsidio, fechaFinSubsidio, 'subsidio');
 
-        const cuerpoDM = {
-          idEmpleado: dataEnviar.idEmpleado,
-          fecInicio: dataEnviar.fecInicio,
-          fecFin: formatDate(fechaFinDM),
-          numDias: diasDM,
-          usuario: dataEnviar.usuario,
-          texto_json: {
-            Tipo: dataEnviar.tipoDM,
-            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "Particular",
-            NroCITT: dataEnviar.citt,
-            Diagnostico: dataEnviar.diagnostico,
-          },
-        };
+        console.log("Registros DM:", registrosDM);
+        console.log("Registros Subsidio:", registrosSubsidio);
 
-        const cuerpoSub = {
-          idEmpleado: dataEnviar.idEmpleado,
-          fecInicio: formatDate(fechaInicioSubsidio),
-          fecFin: dataEnviar.fecFin,
-          usuario: dataEnviar.usuario,
-          numDias: diasSubsidio,
-          texto_json: {
-            TipoSubsidio: dataEnviar.tipoDM,
-            TipoAtencion: dataEnviar.tieneCITT ? "CITT" : "Particular",
-            NroCITT: dataEnviar.citt,
-            Diagnostico: dataEnviar.diagnostico,
-          },
-        };
-        console.log("Cuerpo DM:", cuerpoDM);
-        console.log("Cuerpo Subsidio:", cuerpoSub);
-
-        // Ejecutar ambas peticiones en paralelo
-        const [responseDM, responseSub] = await Promise.all([
+        // Ejecutar peticiones para todos los registros
+        const requestsDM = registrosDM.map(registro =>
           axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarDescansoMedico`,
             {
-              ...cuerpoDM,
-              texto_json: JSON.stringify(cuerpoDM.texto_json)
+              ...registro,
+              texto_json: JSON.stringify(registro.texto_json)
             }
-          ),
+          )
+        );
+
+        const requestsSubsidio = registrosSubsidio.map(registro =>
           axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarSubsidio`,
             {
-              ...cuerpoSub,
-              texto_json: JSON.stringify(cuerpoSub.texto_json)
+              ...registro,
+              texto_json: JSON.stringify(registro.texto_json)
             }
           )
-        ])
-        console.log("Respuesta DM:", responseDM);
-        console.log("Respuesta Subsidio:", responseSub);
-        if (responseDM.status === 200 && responseSub.status === 200) {
+        );
+
+        const responses = await Promise.all([...requestsDM, ...requestsSubsidio]);
+
+        // Verificar todas las respuestas
+        const allSuccess = responses.every(response => response.status === 200);
+        if (allSuccess) {
           await actualizarListado();
         } else {
           throw new Error("Error en una de las respuestas");
         }
       } else {
-        const diasDM = dataEnviar.cantDias - dataEnviar.diasAcoplados;
+        // Caso cuando no excede los 20 días (solo DM)
+        const fechaInicioDM = new Date(dataEnviar.fecInicio);
+        fechaInicioDM.setDate(fechaInicioDM.getDate() + 1);
+        const fechaFinDM = new Date(dataEnviar.fecFin);
+        fechaFinDM.setDate(fechaFinDM.getDate() + 1);
 
-        const cuerpoDM = {
-          ...cuerpoBase,
-          numDias: diasDM,
-        };
+        // Dividir período por mes
+        const registrosDM = splitPeriodByMonth(fechaInicioDM, fechaFinDM, 'dm');
+        console.log("Registros DM:", registrosDM);
 
-        console.log("Registrando solo descanso médico...");
-        console.log("Días DM:", diasDM);
-
-        const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarDescansoMedico`,
-          {
-            ...cuerpoDM,
-            texto_json: JSON.stringify(cuerpoDM.texto_json)
-          }
+        // Ejecutar peticiones para todos los registros
+        const requests = registrosDM.map(registro =>
+          axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarDescansoMedico`,
+            {
+              ...registro,
+              texto_json: JSON.stringify(registro.texto_json)
+            }
+          )
         );
-
-        if (response.status === 200) {
+        const responses = await Promise.all(requests);
+        // Verificar todas las respuestas
+        const allSuccess = responses.every(response => response.status === 200);
+        if (allSuccess) {
           await actualizarListado();
         } else {
-          throw new Error("Error en la respuesta");
+          throw new Error("Error en una de las respuestas");
         }
       }
     } catch (error) {
@@ -621,6 +634,7 @@ const DescansoMedicoTable = () => {
                             variant="ghost"
                             size="icon"
                             title="Editar"
+                            disabled={true}
                             onClick={() => prepareEditLicense(item)}
                           >
                             <Pencil className="h-4 w-4 text-green-500" />
@@ -630,6 +644,7 @@ const DescansoMedicoTable = () => {
                               variant="ghost"
                               size="icon"
                               title="Eliminar"
+                              disabled={true}
                               onClick={() => prepareDeleteLicense(item)}
                             >
                               <Trash className="h-4 w-4 text-red-500" />
@@ -882,17 +897,13 @@ const DescansoMedicoTable = () => {
                     <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
                     {dataEnviar.cantDias} días Totales
                   </motion.span>
-                  <motion.span className="flex items-center text-neutral-700">
-                    <span className="w-2 h-2 bg-neutral-500 rounded-full mr-2"></span>
-                    {dataEnviar.diasAcoplados} días Acoplados
-                  </motion.span>
                   <motion.span className="flex items-center text-blue-700">
                     <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                     {20 - dataEnviar.totalDiasDescansoMedico} días de Descanso Médico
                   </motion.span>
                   <motion.span className="flex items-center text-red-700">
                     <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                    {dataEnviar.cantDias - dataEnviar.diasAcoplados - (20 - dataEnviar.totalDiasDescansoMedico)} días de Subsidios
+                    {dataEnviar.cantDias - (20 - dataEnviar.totalDiasDescansoMedico)} días de Subsidios
                   </motion.span>
                 </motion.div>
               ) : (
@@ -904,11 +915,7 @@ const DescansoMedicoTable = () => {
                 >
                   <motion.span className="flex items-center text-neutral-700">
                     <span className="w-2 h-2 bg-neutral-500 rounded-full mr-2"></span>
-                    {dataEnviar.diasAcoplados} días Acoplados
-                  </motion.span>
-                  <motion.span className="flex items-center text-neutral-700">
-                    <span className="w-2 h-2 bg-neutral-500 rounded-full mr-2"></span>
-                    {dataEnviar.cantDias - dataEnviar.diasAcoplados} días de Descanso Médico
+                    {dataEnviar.cantDias} días de Descanso Médico
                   </motion.span>
                 </motion.div>
               )}

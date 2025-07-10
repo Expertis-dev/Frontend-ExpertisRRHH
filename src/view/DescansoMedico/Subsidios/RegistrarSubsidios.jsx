@@ -108,7 +108,6 @@ export const RegistrarSubsidios = () => {
     numeroCITT: '',
     empleado: null,
     CITT: '',
-    diasAcoplados: 0 // Nuevo estado para días acoplados
   });
 
   // Estados para UI
@@ -119,25 +118,19 @@ export const RegistrarSubsidios = () => {
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState([dayjs(), null]);
-  const [listadoSubsidios, setListadoSubsidios] = useState([]);
-  // Estados para empleados
   const [empleados, setEmpleados] = useState([]);
   const [empleadosParaSubsidios, setEmpleadosParaSubsidios] = useState([]);
   const { nombre } = useData();
   // Cargar empleados según el tipo de subsidio
   useEffect(() => {
     const fetchEmpleados = async () => {
-      //setIsLoading(true);
       try {
-        // Cargar todos los empleados
         const responseTodos = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
         const dataTodos = responseTodos.data.recordset.filter(dato => dato.nombreCompleto !== null);
         const datosFiltradosTodos = dataTodos.filter((empleados) => empleados.estadoLaboral === "VIGENTE");
 
         // Cargar empleados para subsidios
         const responseSubsidios = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarEmpleadosParaSubsidios`);
-        const responseListaSubsidios = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/listarSubsidios`);
-        setListadoSubsidios(responseListaSubsidios.data.data || []);
         setEmpleados(datosFiltradosTodos.sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto)));
         setEmpleadosParaSubsidios(responseSubsidios.data.data || []);
 
@@ -195,44 +188,6 @@ export const RegistrarSubsidios = () => {
     }
   }, [subsidio.tipo, subsidio.diagnostico, subsidio.fechaInicio]);
 
-  // Función para calcular días acoplados
-  const calcularDiasAcoplados = () => {
-    const { empleado, fechaInicio, fechaFin } = subsidio;
-    let diasAcoplados = 0;
-    console.log("Calculando días acoplados...");
-    if (empleado) {
-      const empleadoEncontrado = listadoSubsidios.find(emp => emp.documento === empleado.documento && emp.Flag_ultimo === 1);
-
-      console.log("Empleado encontrado:", empleadoEncontrado);
-      if (empleadoEncontrado && empleadoEncontrado.fecha_inicio && empleadoEncontrado.fecha_fin) {
-        const inicioExistente = dayjs(empleadoEncontrado.fecha_inicio).add(1, 'day'); // Sumar un día al inicio existente
-        const finExistente = dayjs(empleadoEncontrado.fecha_fin).add(1, 'day'); // Sumar un día al fin existente
-        const inicioNuevo = dayjs(fechaInicio);
-        const finNuevo = dayjs(fechaFin);
-
-        // Calcular la superposición de fechas
-        const inicioSuperposicion = inicioNuevo.isAfter(inicioExistente) ? inicioNuevo : inicioExistente;
-        const finSuperposicion = finNuevo.isBefore(finExistente) ? finNuevo : finExistente;
-
-        // Calcular días de superposición (incluyendo el caso de mismo día)
-        if (inicioSuperposicion.isSame(finSuperposicion, 'day')) {
-          diasAcoplados = 1; // Caso cuando las fechas son iguales
-        } else if (inicioSuperposicion.isBefore(finSuperposicion)) {
-          diasAcoplados = finSuperposicion.diff(inicioSuperposicion, "day") + 1;
-        }
-
-        console.log("Rango existente:", inicioExistente.format("DD-MM-YYYY"), "al", finExistente.format("DD-MM-YYYY"));
-        console.log("Nuevo rango:", inicioNuevo.format("DD-MM-YYYY"), "al", finNuevo.format("DD-MM-YYYY"));
-        console.log("Superposición calculada:", inicioSuperposicion.format("DD-MM-YYYY"), "al", finSuperposicion.format("DD-MM-YYYY"));
-        console.log("Días acoplados:", diasAcoplados);
-      }
-    }
-
-    setSubsidio(prev => ({
-      ...prev,
-      diasAcoplados
-    }));
-  };
 
   // Manejar cambio en el rango de fechas
   const handleDateRangeChange = (dates) => {
@@ -295,7 +250,6 @@ export const RegistrarSubsidios = () => {
       fechaFin: '',
       dias: 0,
       empleado: null,
-      diasAcoplados: 0
     }));
     setInputValue('');
     setDateRange([dayjs(), null]);
@@ -325,28 +279,146 @@ export const RegistrarSubsidios = () => {
   const confirmSubmit = async () => {
     setIsConfirmModalVisible(false);
     setIsLoading(true);
+
     try {
       console.log("Enviando datos del subsidio:", subsidio);
-      const cuerpo = {
-        idEmpleado: subsidio.empleado?.idEmpleado,
-        fecInicio: subsidio.fechaInicio,
-        fecFin: subsidio.fechaFin,
-        usuario: nombre,
-        numDias: subsidio.dias - subsidio.diasAcoplados,
-        texto_json: {
-          TipoSubsidio: subsidio.tipo,
-          TipoAtencion: subsidio.tieneCITT ? "CITT" : "Particular",
-          NroCITT: subsidio.numeroCITT,
-          Diagnostico: subsidio.diagnostico,
-        },
+
+      // Función para formatear fecha a YYYY-MM-DD
+      const formatDate = (date) => {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      // Función para generar el codMes (01-MM-YYYY)
+      const generateCodMes = (date) => {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        return `01-${month}-${year}`;
+      };
+
+      // Función para dividir el subsidio por meses
+      const splitSubsidioByMonth = (startDate, endDate, totalDias) => {
+        const result = [];
+        let currentStart = new Date(startDate);
+        const finalEnd = new Date(endDate);
+
+        // Calcular días totales reales para prorrateo
+        const realTotalDays = Math.floor((finalEnd - currentStart) / (1000 * 60 * 60 * 24)) + 1;
+        let remainingDays = totalDias;
+
+        while (currentStart <= finalEnd) {
+          const currentMonth = currentStart.getMonth();
+          const currentYear = currentStart.getFullYear();
+
+          // Encontrar el último día del mes actual
+          const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+          const periodEnd = new Date(Math.min(lastDayOfMonth, finalEnd));
+
+          // Calcular días reales del segmento
+          const segmentRealDays = Math.floor((periodEnd - currentStart) / (1000 * 60 * 60 * 24)) + 1;
+
+          // Calcular días de subsidio para este segmento (prorrateo)
+          let segmentSubsidyDays = Math.round((segmentRealDays / realTotalDays) * totalDias);
+
+          // Ajustar para el último segmento
+          if (remainingDays < segmentSubsidyDays) {
+            segmentSubsidyDays = remainingDays;
+          }
+          remainingDays -= segmentSubsidyDays;
+
+          // Asegurar al menos 1 día
+          if (segmentSubsidyDays < 1 && remainingDays > 0) {
+            segmentSubsidyDays = 1;
+            remainingDays--;
+          }
+          const isLastDayOfMonth = periodEnd.getDate() === lastDayOfMonth.getDate();
+          console.log(currentStart.getDate());
+          // Si es el último día del mes, sumamos 1 día adicional
+          if (isLastDayOfMonth  && currentStart.getDate() !== 1) {
+            segmentSubsidyDays += 1;
+          }
+          // Crear registro del segmento
+          const registro = {
+            idEmpleado: subsidio.empleado?.idEmpleado,
+            fecInicio: formatDate(currentStart),
+            fecFin: formatDate(periodEnd),
+            numDias: segmentSubsidyDays,
+            usuario: nombre,
+            codMes: generateCodMes(currentStart),
+            texto_json: {
+              TipoSubsidio: subsidio.tipo,
+              TipoAtencion: subsidio.tieneCITT ? "CITT" : "Particular",
+              NroCITT: subsidio.numeroCITT,
+              Diagnostico: subsidio.diagnostico,
+            }
+          };
+
+          result.push(registro);
+
+          // Mover al primer día del siguiente mes
+          currentStart = new Date(currentYear, currentMonth + 1, 1);
+        }
+
+        return result;
+      };
+
+      // Dividir el subsidio por meses si cruza meses
+      const startDate = new Date(subsidio.fechaInicio);
+      startDate.setDate(startDate.getDate() + 1); // Sumar un día al inicio para evitar el mismo día
+      const endDate = new Date(subsidio.fechaFin);
+      endDate.setDate(endDate.getDate() + 1); // Sumar un día al fin para evitar el mismo día
+      const totalDias = subsidio.dias;
+
+      // Verificar si cruza meses
+      if (startDate.getMonth() !== endDate.getMonth() || startDate.getFullYear() !== endDate.getFullYear()) {
+        const registrosSubsidio = splitSubsidioByMonth(startDate, endDate, totalDias);
+        console.log("Registros de subsidio divididos:", registrosSubsidio);
+
+        // Enviar todos los registros en paralelo
+        const requests = registrosSubsidio.map(registro =>
+          axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarSubsidio`, {
+            ...registro,
+            texto_json: JSON.stringify(registro.texto_json)
+          })
+        );
+
+        const responses = await Promise.all(requests);
+        const allSuccess = responses.every(response => response.status === 200);
+
+        if (!allSuccess) {
+          throw new Error('Error al registrar uno o más segmentos del subsidio');
+        }
+      } else {
+        // Si no cruza meses, registrar normalmente
+        const cuerpo = {
+          idEmpleado: subsidio.empleado?.idEmpleado,
+          fecInicio: subsidio.fechaInicio,
+          fecFin: subsidio.fechaFin,
+          usuario: nombre,
+          numDias: totalDias,
+          codMes: generateCodMes(startDate),
+          texto_json: {
+            TipoSubsidio: subsidio.tipo,
+            TipoAtencion: subsidio.tieneCITT ? "CITT" : "Particular",
+            NroCITT: subsidio.numeroCITT,
+            Diagnostico: subsidio.diagnostico,
+          },
+        };
+        console.log("Cuerpo del subsidio:", cuerpo);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarSubsidio`, {
+          ...cuerpo,
+          texto_json: JSON.stringify(cuerpo.texto_json)
+        });
+
+        if (response.status !== 200) {
+          throw new Error('Error al registrar subsidio');
+        }
       }
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarSubsidio`, {
-        ...cuerpo,
-        texto_json: JSON.stringify(cuerpo.texto_json)
-      })
-      if (response.status !== 200) {
-        throw new Error('Error al registrar subsidio');
-      }
+
       await new Promise(resolve => setTimeout(resolve, 1500));
       setIsLoading(false);
       setIsSuccessModalVisible(true);
@@ -360,24 +432,24 @@ export const RegistrarSubsidios = () => {
         tieneCITT: false,
         numeroCITT: '',
         empleado: null,
-        diasAcoplados: 0
       });
       setInputValue('');
       setDateRange([dayjs(), null]);
       await new Promise(resolve => setTimeout(resolve, 1500));
     } catch (error) {
+      console.error("Error al registrar subsidio:", error);
       Modal.error({
         title: 'Error',
         content: 'Error al registrar el subsidio. Por favor intente nuevamente.',
       });
     } finally {
+      setIsLoading(false);
       setIsSuccessModalVisible(false);
     }
   };
 
   const onFinish = () => {
     setIsConfirmModalVisible(true);
-    calcularDiasAcoplados();
   };
 
   return (
@@ -681,14 +753,6 @@ export const RegistrarSubsidios = () => {
                           {subsidio.dias} días
                         </span>
                       </p>
-                      {/* Mostrar días acoplados si existen */}
-                      {subsidio.diasAcoplados > 0 && (
-                        <p><span className="font-semibold text-gray-700">Días acoplados:</span>
-                          <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">
-                            {subsidio.diasAcoplados} días
-                          </span>
-                        </p>
-                      )}
                     </div>
                   </div>
 
