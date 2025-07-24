@@ -1,16 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { DatePicker, Modal, Select, message } from 'antd';
+import { DatePicker, Modal, Select, message, AutoComplete } from 'antd';
 const { RangePicker } = DatePicker;
-import { Trash2, Search, RefreshCw, Eye, Trash, Plus } from "lucide-react";
+import { Trash2, Search, RefreshCw, Trash, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { AutoComplete } from 'antd';
 import axios from "axios";
 import dayjs from 'dayjs';
 import { CompResultado } from "@/components/CompSucces";
 import { useData } from "@/provider/Provider";
-
+dayjs.locale("es");
 export const Licencias = () => {
     const { nombre } = useData()
     // Datos de prueba
@@ -204,9 +203,34 @@ export const Licencias = () => {
     };
 
     // Formatear fecha
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        return dayjs(dateString).format('DD/MM/YYYY');
+    const formatDate = (date) => {
+        // Si ya es un objeto Date válido
+        if (date instanceof Date && !isNaN(date)) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Si es una cadena en formato ISO (YYYY-MM-DD)
+        if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return date; // Ya está en el formato correcto
+        }
+
+        // Si es un timestamp numérico
+        if (typeof date === 'number') {
+            const d = new Date(date);
+            if (!isNaN(d)) {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+        }
+
+        // Si no es ninguno de los anteriores, lanza error o retorna valor por defecto
+        console.error('Fecha no válida:', date);
+        return '0000-00-00'; // O lanza un error según tu necesidad
     };
 
     // Calcular días entre fechas
@@ -289,39 +313,26 @@ export const Licencias = () => {
                 throw new Error("Fechas de licencia no válidas");
             }
 
-            // 2. Preparación del payload con estructura clara
-            const payload = {
-                idEmpleado: empleadoEscogido.idEmpleado,
-                fecInicio: newLicense.fechaInicio,
-                fecFin: newLicense.fechaFin,
-                numDias: newLicense.dias,
-                usuario: nombre,
-                texto_json: {
-                    Tipo: newLicense.tipo,
-                    TipoGoce: newLicense.cobertura,
-                    Detalle: newLicense.observacion,
-                }
-            };
+            // Convertir fechas a objetos Date asegurando el formato correcto
+            const fechaInicio = new Date(newLicense.fechaInicio + 'T00:00:00');
+            const fechaFin = new Date(newLicense.fechaFin + 'T00:00:00');
 
-            console.log("Payload de la solicitud:", payload);
+            // Verificar si las fechas están en el mismo mes y año
+            const mismoMes = fechaInicio.getMonth() === fechaFin.getMonth() &&
+                fechaInicio.getFullYear() === fechaFin.getFullYear();
 
+            if (mismoMes) {
+                // Si es el mismo mes, registrar normalmente
+                await registrarLicenciaUnica();
+            } else {
+                // Si abarca varios meses, dividir en registros por mes
+                await registrarLicenciasPorMeses(fechaInicio, fechaFin);
+            }
+
+            // Cerrar modales y limpiar estado
             setIsConfirmModalOpen(false);
             setIsModalOpen(false);
             setEmpleadoEscogido(null);
-            setIsModalLoadingOpen(true);
-            // 3. Envío de la solicitud
-            const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarLicencia`,
-                {
-                    ...payload,
-                    texto_json: JSON.stringify(payload.texto_json) // Convertimos solo la parte JSON
-                }
-            );
-
-            if (response.status !== 200) {
-                throw new Error(`Error en la respuesta del servidor: ${response.status}`);
-            }
-            setIsModalLoadingOpen(false);
             obtenerLicencias();
             handlePostSubmissionFlow();
 
@@ -330,6 +341,103 @@ export const Licencias = () => {
             handleSubmissionError(error);
         }
     };
+
+    // Función para dividir y registrar licencias por meses (versión mejorada)
+    const registrarLicenciasPorMeses = async (fechaInicio, fechaFin) => {
+        let currentStart = new Date(fechaInicio);
+        const endDate = new Date(fechaFin);
+
+        setIsModalLoadingOpen(true);
+
+        try {
+            while (currentStart <= endDate) {
+                // Calcular último día del mes actual
+                const currentEndMonth = new Date(
+                    currentStart.getFullYear(),
+                    currentStart.getMonth() + 1,
+                    0
+                );
+
+                // Ajustar si el fin del mes es mayor que la fecha final de la licencia
+                const endDateForPeriod = currentEndMonth > endDate ? endDate : currentEndMonth;
+
+                // Calcular días en este período (incluyendo ambos días)
+                const diffDays = Math.floor((endDateForPeriod - currentStart) / (1000 * 60 * 60 * 24)) + 1;
+
+                // Formatear fechas correctamente
+                const formattedStart = formatDate(currentStart);
+                const formattedEnd = formatDate(endDateForPeriod);
+
+                // Crear payload para este período
+                const payload = {
+                    idEmpleado: empleadoEscogido.idEmpleado,
+                    fecInicio: formattedStart,
+                    fecFin: formattedEnd,
+                    numDias: diffDays,
+                    usuario: nombre,
+                    texto_json: {
+                        Tipo: newLicense.tipo,
+                        TipoGoce: newLicense.cobertura,
+                        Detalle: newLicense.observacion,
+                        ParteDe: `Licencia original: ${newLicense.fechaInicio} a ${newLicense.fechaFin}`
+                    }
+                };
+
+                console.log('Registrando parte de licencia:', payload);
+
+                // Enviar este período
+                await enviarLicencia(payload);
+
+                // Mover al primer día del siguiente mes
+                currentStart = new Date(
+                    endDateForPeriod.getFullYear(),
+                    endDateForPeriod.getMonth() + 1,
+                    1
+                );
+            }
+        } catch (error) {
+            console.error('Error al registrar licencias por meses:', error);
+            throw error;
+        } finally {
+            setIsModalLoadingOpen(false);
+        }
+    };
+
+    // Función para registrar una licencia única (sin división por meses)
+    const registrarLicenciaUnica = async () => {
+        const payload = {
+            idEmpleado: empleadoEscogido.idEmpleado,
+            fecInicio: newLicense.fechaInicio,
+            fecFin: newLicense.fechaFin,
+            numDias: newLicense.dias,
+            usuario: nombre,
+            texto_json: {
+                Tipo: newLicense.tipo,
+                TipoGoce: newLicense.cobertura,
+                Detalle: newLicense.observacion,
+            }
+        };
+
+        setIsModalLoadingOpen(true);
+        await enviarLicencia(payload);
+        setIsModalLoadingOpen(false);
+    };
+
+    // Función auxiliar para enviar una licencia al backend
+    const enviarLicencia = async (payload) => {
+        const response = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/ausenciasLaborales/registrarLicencia`,
+            {
+                ...payload,
+                texto_json: JSON.stringify(payload.texto_json)
+            }
+        );
+
+        if (response.status !== 200) {
+            throw new Error(`Error en la respuesta del servidor: ${response.status}`);
+        }
+    };
+
     // Función separada para manejar el flujo post-envío exitoso
     const handlePostSubmissionFlow = () => {
         // Mostrar éxito
@@ -584,6 +692,7 @@ export const Licencias = () => {
                                                 variant="ghost"
                                                 size="icon"
                                                 title="Eliminar"
+                                                disabled={true}
                                                 onClick={() => prepareDeleteLicense(item)}
                                             >
                                                 <Trash className="h-4 w-4 text-red-500" />
