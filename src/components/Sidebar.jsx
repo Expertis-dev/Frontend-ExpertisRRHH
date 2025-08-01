@@ -7,7 +7,6 @@ import {
     FileTextOutlined,
     MedicineBoxOutlined,
     ClockCircleOutlined,
-    BankOutlined,
     ReconciliationOutlined,
     LogoutOutlined,
     EuroCircleOutlined
@@ -118,12 +117,35 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         //     icon: <PercentageOutlined />,
         //     label: <Link to="/rrhh/comisiones">Comisiones</Link>,
         // },
-        // {
-        //     key: 'descanso-medicos',
-        //     icon: <MedicineBoxOutlined />,
-        //     label: <Link to="/rrhh/descanso-medicos">Descanso Médicos</Link>,
-        // },
-
+        {
+            key: 'licencias',
+            icon: <ReconciliationOutlined />,
+            label: <Link to="/rrhh/licencias">Licencias</Link>,
+        },
+        {
+            key: 'descanso-medicos',
+            icon: <MedicineBoxOutlined />,
+            label: <Link to="/rrhh/descanso-medicos">Descanso Médicos</Link>,
+        },
+        {
+            key: 'sub4',
+            icon: <MedicineBoxOutlined />,
+            label: "Subsidios",
+            children: [
+                {
+                    key: 'alerta-subsidios',
+                    label: <Link to="/rrhh/subsidios/alerta">Alerta</Link>,
+                },
+                {
+                    key: 'listar-subsidios',
+                    label: <Link to="/rrhh/subsidios/listar">Listar</Link>,
+                },
+                {
+                    key: 'registrar-subsidios',
+                    label: <Link to="/rrhh/subsidios/registrar">Registrar</Link>,
+                },
+            ],
+        },
         {
             key: "cerrar-sesion",
             icon: <LogoutOutlined />,

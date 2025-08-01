@@ -8,7 +8,7 @@ const Input = (({ className, type, ref, ...props }) => {
     <input
       type={type}
       className={cn(
-        "rounded-md py-1 px-4 outline-none ring-1 w-full focus:ring-blue-500 ring-gray-400 text-black bg-gray-100",
+        "rounded-md py-1 px-4 outline-none ring-1 w-full focus:ring-blue-500 ring-gray-400 text-black bg-white",
         className,
       )}
       ref={ref}
