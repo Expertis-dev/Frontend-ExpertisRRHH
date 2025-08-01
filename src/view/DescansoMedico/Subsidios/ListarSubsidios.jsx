@@ -894,7 +894,7 @@ export const ListarSubsidios = () => {
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider mb-1">Fecha Inicio</label>
                   <div className="flex items-center text-cyan-600 ">
                     <CalendarDays className="h-5 w-5 mr-2" />
-                    <span className="text-md font-semibold">{formatDate(recordToView.fecha_inicio)}</span>
+                    <span className="text-md font-semibold">{recordToView.fecha_inicio.split("T")[0].split("-").reverse().join("/")}</span>
                   </div>
                 </div>
 
@@ -902,7 +902,7 @@ export const ListarSubsidios = () => {
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider mb-1">Fecha Fin</label>
                   <div className="flex items-center text-cyan-600">
                     <CalendarDays className="h-5 w-5 mr-2" />
-                    <span className="text-md font-semibold">{formatDate(recordToView.fecha_fin)}</span>
+                    <span className="text-md font-semibold">{recordToView.fecha_fin.split("T")[0].split("-").reverse().join("/")}</span>
                   </div>
                 </div>
 
