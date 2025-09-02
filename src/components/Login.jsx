@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Input, Button, message } from "antd";
+import { Input, message } from "antd";
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/provider/Provider';
 import axios from 'axios';
+import { Button } from './ui/button';
 
 export const Login = () => {
     const { setNombre, setToken } = useData()
@@ -34,9 +35,9 @@ export const Login = () => {
         }));
     };
 
-    const onFinish = async () => {
+    const onFinish = async (e) => {
+        e.preventDefault();
         setLoading(true);
-
         try {
             const userIP = await getClientIP();
             const token = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
@@ -85,9 +86,9 @@ export const Login = () => {
                     <p className="text-gray-500 mt-2">Ingrese sus credenciales</p>
                 </div>
 
-                <form className="space-y-6">
+                <form className="space-y-6" onSubmit={onFinish} >
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Usuario</label>
+                        <label htmlFor='usuario' className="block text-sm font-medium text-gray-700">Usuario</label>
                         <Input
                             name="usuario"
                             size="large"
@@ -100,7 +101,7 @@ export const Login = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+                        <label htmlFor='contraseña' className="block text-sm font-medium text-gray-700">Contraseña</label>
                         <Input.Password
                             name="contraseña"
                             size="large"
@@ -113,16 +114,14 @@ export const Login = () => {
                     </div>
 
                     <div className="flex justify-center pt-4">
-                        <Button
-                            type="primary"
-                            size="large"
+                        <button
+                            type="submit"
                             loading={loading}
-                            onClick={onFinish}
                             disabled={!isFormValid}
-                            className={`w-full ${!isFormValid ? 'cursor-not-allowed' : ''}`}
+                            className={`py-2 rounded-lg border-2 w-full text-base ${!isFormValid ? 'border-neutral-200 cursor-not-allowed bg-neutral-100 text-neutral-400' : ' bg-blue-500 hover:bg-blue-400 text-white cursor-pointer border-blue-100'}`}
                         >
                             {loading ? 'Ingresando...' : 'Ingresar'}
-                        </Button>
+                        </button>
                     </div>
                 </form>
             </div>

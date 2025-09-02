@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner"
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ConfigProvider } from 'antd';
@@ -33,6 +34,9 @@ import { Licencias } from "./view/DescansoMedico/Licencias";
 import { AlertaSubsidios } from "./view/DescansoMedico/Subsidios/AlertaSubsidios";
 import { ListarSubsidios } from "./view/DescansoMedico/Subsidios/ListarSubsidios";
 import { RegistrarSubsidios } from "./view/DescansoMedico/Subsidios/RegistrarSubsidios";
+import { ListarAfiliado } from "./view/EPS/ListarAfiliado";
+import { RegistroEspecial } from "./view/EPS/RegistroEspecial";
+import { ListarDependiente } from "./view/EPS/ListarDependiente";
 
 createRoot(document.getElementById("root")).render(
   <ConfigProvider 
@@ -43,6 +47,7 @@ createRoot(document.getElementById("root")).render(
   >
     <BrowserRouter>
       <DataProvider>
+        <Toaster position="top-right" richColors />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/rrhh" element={
@@ -70,6 +75,10 @@ createRoot(document.getElementById("root")).render(
             <Route path="subsidios/alerta" element={<AlertaSubsidios />} />
             <Route path="subsidios/listar" element={<ListarSubsidios />} />
             <Route path="subsidios/registrar" element={<RegistrarSubsidios />} />
+            {/* RUTAS PARA EL EPS */}
+            <Route path="eps/listar-afiliado" element={<ListarAfiliado />} />
+            <Route path="eps/listar-dependiente" element={<ListarDependiente />} />
+            <Route path="eps/registrar" element={<RegistroEspecial />} />
           </Route>
         </Routes>
       </DataProvider>

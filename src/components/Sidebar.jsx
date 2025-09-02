@@ -66,12 +66,26 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     label: <Link to="/rrhh/info-afp">Info. SP</Link>,
                 },
             ],
-        },/*
+        },
         {
             key: 'eps',
             icon: <MedicineBoxOutlined />,
-            label: <Link to="/rrhh/eps">EPS</Link>,
-        },*/
+            label: "EPS",
+            children: [
+                {
+                    key: 'alerta-eps',
+                    label: <Link to="/rrhh/eps/listar-afiliado">Lista Afiliado</Link>,
+                },
+                {
+                    key: 'listar-eps',
+                    label: <Link to="/rrhh/eps/listar-dependiente">Lista Dependiente</Link>,
+                },
+                {
+                    key: 'registrar-eps',
+                    label: <Link to="/rrhh/eps/registrar">Registro Especial</Link>,
+                },
+            ],
+        },
         {
             key: 'sueldo-minimo',
             icon: <EuroCircleOutlined />,
@@ -162,7 +176,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
         >
             <div style={{
                 height: "auto",
-                padding: '50px 0px 20px 0px',
+                padding: '30px 0px 20px 0px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
