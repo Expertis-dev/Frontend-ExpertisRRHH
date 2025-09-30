@@ -33,6 +33,7 @@ import { Licencias } from "./view/DescansoMedico/Licencias";
 import { AlertaSubsidios } from "./view/DescansoMedico/Subsidios/AlertaSubsidios";
 import { ListarSubsidios } from "./view/DescansoMedico/Subsidios/ListarSubsidios";
 import { RegistrarSubsidios } from "./view/DescansoMedico/Subsidios/RegistrarSubsidios";
+import { Toaster } from "./components/ui/sonner";
 
 createRoot(document.getElementById("root")).render(
   <ConfigProvider 
@@ -43,6 +44,7 @@ createRoot(document.getElementById("root")).render(
   >
     <BrowserRouter>
       <DataProvider>
+        <Toaster position="top-right" richColors />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/rrhh" element={
