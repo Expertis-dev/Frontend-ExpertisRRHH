@@ -15,7 +15,6 @@ import { AFPempleado } from "./view/AFP/AFPempleado.jsx";
 import { CambiosAFP } from "./view/AFP/CambiosAFP.jsx";
 import { InfoAFP } from "./view/AFP/InfoAFP.jsx";
 import { Contratos } from "./view/Contratos.jsx";
-import { Eps } from "./view/EPS.jsx";
 import { HorasExtra } from "./view/HorasExtra.jsx";
 import { RetencionJudicial } from "./view/RetencionJudicial.jsx";
 import { DescansoMedico } from "./view/DescansoMedico/DescansoMedico.jsx";
@@ -62,7 +61,6 @@ createRoot(document.getElementById("root")).render(
             <Route path="cambios-afp" element={<CambiosAFP />} />
             <Route path="info-afp" element={<InfoAFP />} />
             <Route path="contrato" element={<Contratos />} />
-            <Route path="eps" element={<Eps />} />
             <Route path="horas-extra" element={<HorasExtra />} />
             <Route path="retencion-judicial" element={<RetencionJudicial />} />
             <Route path="descanso-medicos" element={<DescansoMedico />} />

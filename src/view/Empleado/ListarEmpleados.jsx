@@ -138,7 +138,7 @@ export const ListarEmpleados = () => {
       setEmpleados(dataEmpleados.filter(dato =>
         String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
       ));
-
+      console.log(dataEmpleados)
       setFilteredEmpleados(dataEmpleados.filter(dato =>
         String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
       ));
