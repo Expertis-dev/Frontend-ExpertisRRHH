@@ -1,4 +1,4 @@
-import { Search, Plus, RefreshCw, Trash, Eye, Pencil, CalendarDays, Clock, User } from "lucide-react";
+import { Search, Plus, RefreshCw, Trash, Eye, Pencil, CalendarDays, Clock, User, Download } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Input, Modal, Form, DatePicker, AutoComplete, Select, Checkbox } from "antd";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { CompResultado } from "@/components/CompSucces";
 import { DiffOutlined } from "@ant-design/icons";
+import { exportToExcel } from "@/logic/ExportarDocumento";
 dayjs.locale("es");
 const container = {
   hidden: { opacity: 0 },
@@ -569,7 +570,23 @@ const DescansoMedicoTable = () => {
               <RefreshCw className="h-4 w-4" />
               Limpiar
             </Button>
-
+            <Button
+              disabled={filteredData.length === 0}
+              onClick={() => {
+                const nuevaData = filteredData.map(({ idAusenciasLaborables, idEmpleado, dias_acoplados, Flag_ultimo, ...rest }) => {
+                  return {
+                    ...rest,
+                    fecha_inicio: rest.fecha_inicio.split("T")[0],
+                    fecha_fin: rest.fecha_fin.split("T")[0],
+                  }
+                });
+                exportToExcel(nuevaData, "LISTA DE DESCANSOS MÉDICOS")
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Download className="h-4 w-4" />
+              Descargar Excel
+            </Button>
             <Button
               onClick={() => setIsModalVisible(true)}
               className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg flex items-center gap-2"
@@ -968,15 +985,15 @@ const DescansoMedicoTable = () => {
             <div className="border rounded-lg p-4 bg-gray-50">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Empleado</label>
+                  <label htmlFor="Empleado" className="block text-sm font-medium text-gray-500">Empleado</label>
                   <p className="text-sm font-semibold">{recordToDelete.nombreCompleto}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Documento</label>
+                  <label htmlFor="Documento" className="block text-sm font-medium text-gray-500">Documento</label>
                   <p className="text-sm font-semibold">{recordToDelete.documento}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Tipo de Descanso</label>
+                  <label htmlFor="TipoDescanso" className="block text-sm font-medium text-gray-500">Tipo de Descanso</label>
                   <p className="text-sm font-semibold">{recordToDelete.Tipo || '---'}</p>
                 </div>
                 <div>

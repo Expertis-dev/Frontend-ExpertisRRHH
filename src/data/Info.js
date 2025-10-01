@@ -1,11 +1,11 @@
 // Catálogo de planes coherente con los datos de afiliados
 export const Planes = [
-    { value: "BRONCE", label: "Bronce", monto: 100 },
-    { value: "CLASICO", label: "Clásico", monto: 150 },
-    { value: "RED_PREFERENTE", label: "Red Preferente", monto: 180 },
-    { value: "INTEGRAL", label: "Integral", monto: 200 },
-    { value: "TOTAL_SALUD", label: "Total Salud", monto: 220 },
-    { value: "PLATINUM", label: "Platinum", monto: 300 }
+    { value: "Bronce", label: "Bronce", monto: 100 },
+    { value: "Clásico", label: "Clásico", monto: 150 },
+    { value: "Red Preferente", label: "Red Preferente", monto: 180 },
+    { value: "Integral", label: "Integral", monto: 200 },
+    { value: "Total Salud", label: "Total Salud", monto: 220 },
+    { value: "Platinum", label: "Platinum", monto: 300 }
 ];
 
 // Afiliados con plan/eps/regímenes y montos alineados al catálogo

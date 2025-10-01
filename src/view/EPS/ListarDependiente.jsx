@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Download, RefreshCw, Users, Filter, FileText } from "lucide-react";
 import { datosDependientes } from "../../data/Info";
+import { exportToExcel } from "@/logic/ExportarDocumento";
 
 const { RangePicker } = DatePicker;
 const { Search: SearchInput } = Input;
@@ -22,16 +23,16 @@ export const ListarDependiente = () => {
             filteredData = filteredData.filter((dependiente) =>
                 dependiente.nombreDependiente.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 dependiente.documentoTitular.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                dependiente.eps?.toLowerCase().includes(searchTerm.toLowerCase())
+                dependiente.nombreTitular?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
-
-        // Filtro por fecha (si se implementara)
         if (dateRange && dateRange.length === 2) {
-            // Aquí podrías agregar lógica de filtrado por fecha
-            // filteredData = filteredData.filter(dependiente => ...)
+            const [start, end] = dateRange; // son objetos dayjs
+            filteredData = filteredData.filter((a) => {
+                const d = dayjs(a.fechaInicio, "DD/MM/YYYY", true);
+                return d.isValid() && d.isBetween(start.startOf("day"), end.endOf("day"), null, "[]");
+            });
         }
-
         setDatosFiltrados(filteredData)
     }, [searchTerm, dateRange])
 
@@ -62,7 +63,7 @@ export const ListarDependiente = () => {
     }
 
     return (
-        <div className="space-y-6 p-4">
+        <div className="space-y-4">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -101,7 +102,11 @@ export const ListarDependiente = () => {
                                 <FileText className="h-4 w-4" />
                                 Ver Especiales
                             </Button>
-                            <Button className="bg-green-600 hover:bg-green-700 text-white">
+                            <Button
+                                disabled={datosFiltrados.length === 0}
+                                onClick={() => exportToExcel(datosFiltrados, "LISTA DE DEPENDIENTES")}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                            >
                                 <Download className="h-4 w-4" />
                                 Descargar Excel
                             </Button>
@@ -172,7 +177,6 @@ export const ListarDependiente = () => {
                         <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                             description="No se encontraron dependientes"
-                            className="py-12"
                         >
                             <Button onClick={handleClearFilters}>
                                 Limpiar filtros
@@ -184,7 +188,7 @@ export const ListarDependiente = () => {
                                 <table className="min-w-full border-collapse">
                                     <thead>
                                         <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-                                            <th className="p-3 text-left text-sm font-semibold text-gray-700">Documento Titular</th>
+                                            <th className="p-3 text-left text-sm font-semibold text-gray-700">Documento</th>
                                             <th className="p-3 text-left text-sm font-semibold text-gray-700">Nombre del Dependiente</th>
                                             <th className="p-3 text-left text-sm font-semibold text-gray-700">Parentesco</th>
                                             <th className="p-3 text-left text-sm font-semibold text-gray-700">Régimen de Salud</th>

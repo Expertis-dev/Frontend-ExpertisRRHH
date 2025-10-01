@@ -170,7 +170,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             collapsible
             collapsed={collapsed}
             onCollapse={onCollapse}
-            width={180}
+            width={200}
         >
             <div style={{
                 height: "auto",
