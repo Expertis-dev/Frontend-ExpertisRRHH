@@ -371,6 +371,12 @@ export const CrearEmpleado = () => {
             setNuevoCargo("")
         }
     }
+    const limpiarTexto = (valor) => {
+        return valor
+            .trim()              // quita espacios al inicio y al final
+            .replace(/\s+/g, " ") // convierte múltiples espacios internos en uno solo
+            .toUpperCase()
+    }
     const handleSubmit = async (e) => {
         try {
             e.preventDefault()
@@ -378,15 +384,16 @@ export const CrearEmpleado = () => {
             setIsLoading(true)
             const fecInicioGestion = formData.fecIniciGestion;
             const fecFinGestion = sumarDiasHabiles(fecInicioGestion, 3);
-
             console.log("Fecha final:", fecFinGestion.format("YYYY-MM-DD"));
-
+            const nombreLimpio = limpiarTexto(formData.nombre || "")
+            const apePatLimpio = limpiarTexto(formData.apellidoPaterno || "")
+            const apeMatLimpio = limpiarTexto(formData.apellidoMaterno || "")
             const datos = {
                 documento: formData.documento,
-                nombre: formData.nombre.toUpperCase(),
-                apellido: `${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
-                nom_completo: `${formData.nombre.toUpperCase()} ${formData.apellidoPaterno.toUpperCase()} ${formData.apellidoMaterno.toUpperCase()}`,
-                alias: `${formData.nombre.toUpperCase().split(" ")[0]} ${formData.apellidoPaterno.toUpperCase()}`,
+                nombre: nombreLimpio,
+                apellido: `${apePatLimpio} ${apeMatLimpio}`.trim(),
+                nom_completo: `${nombreLimpio} ${apePatLimpio} ${apeMatLimpio}`.trim(),
+                alias: `${nombreLimpio.split(" ")[0]} ${apePatLimpio}`.trim(),
                 fecAlta: formData.fecIniciGestion,
                 cargo: formData.cargo.toUpperCase(),
                 correo: formData.correo,
@@ -412,13 +419,11 @@ export const CrearEmpleado = () => {
                 ingresoBruto: formData.ingresoBruto,
                 usuario: "ADMIN"
             }
-
             console.log("Datos a enviar:", datos)
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleado`, datos)
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleadoooo`, datos)
             if (response.status === 200) {
                 setIsLoading(false)
                 setIsSuccess(true)
-
                 console.log("Empleado registrado:", response)
             }
         } catch (error) {
