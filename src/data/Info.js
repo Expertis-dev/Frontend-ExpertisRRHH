@@ -1,11 +1,9 @@
 // Catálogo de planes coherente con los datos de afiliados
 export const Planes = [
-    { value: "Bronce", label: "Bronce", monto: 100 },
-    { value: "Clásico", label: "Clásico", monto: 150 },
-    { value: "Red Preferente", label: "Red Preferente", monto: 180 },
-    { value: "Integral", label: "Integral", monto: 200 },
-    { value: "Total Salud", label: "Total Salud", monto: 220 },
-    { value: "Platinum", label: "Platinum", monto: 300 }
+    { value: "PLAN BASE ESENCIAL ", label: "PLAN BASE ESENCIAL ", monto: 271.00 },
+    { value: "PLAN BASE PLUS", label: "PLAN BASE PLUS", monto: 288.00 },
+    { value: "PLAN ADICIONAL 1", label: "PLAN ADICIONAL 1", monto: 350.00 },
+    { value: "PLAN ADICIONAL 2", label: "PLAN ADICIONAL 2", monto: 508.00 },
 ];
 
 // Afiliados con plan/eps/regímenes y montos alineados al catálogo
