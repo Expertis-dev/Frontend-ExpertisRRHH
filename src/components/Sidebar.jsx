@@ -65,7 +65,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                 },
             ],
         },
-        {
+        /*{
             key: 'eps',
             icon: <MedicineBoxOutlined />,
             label: "EPS",
@@ -83,7 +83,7 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     label: <Link to="/rrhh/eps/registrar">Registro Especial</Link>,
                 },
             ],
-        },
+        },*/
         {
             key: 'sueldo-minimo',
             icon: <EuroCircleOutlined />,
