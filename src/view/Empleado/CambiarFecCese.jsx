@@ -153,7 +153,6 @@ export const CambiarFecCese = () => {
                     {error}
                 </div>
             )}
-
             <div className="mb-6">
                 <label htmlFor="empleado" className="block mb-2 font-medium">
                     Empleado Cesado:

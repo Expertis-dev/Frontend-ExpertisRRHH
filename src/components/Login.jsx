@@ -14,6 +14,7 @@ export const Login = () => {
     });
     const [loading, setLoading] = useState(false);
     const navegar = useNavigate()
+
     const getClientIP = async () => {
         try {
             const response = await fetch('https://api.ipify.org?format=json');
@@ -24,6 +25,7 @@ export const Login = () => {
             return "Error al obtener IP";
         }
     }
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCredenciales(prev => ({
@@ -65,13 +67,13 @@ export const Login = () => {
     const isFormValid = credenciales.usuario && credenciales.contraseña;
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-slate-800 via-slate-900 to-blue-900 relative overflow-hidden">
             {/* Fondo profesional con elementos sutiles */}
             <div className="absolute inset-0 overflow-hidden">
                 {/* Patrón geométrico sutil */}
                 <div className="absolute inset-0 opacity-5">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-400 to-transparent"></div>
-                    <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-tl from-slate-600 to-transparent"></div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-blue-400 to-transparent"></div>
+                    <div className="absolute bottom-0 right-0 w-full h-full bg-linear-to-tl from-slate-600 to-transparent"></div>
                 </div>
 
                 {/* Líneas decorativas sutiles */}
@@ -101,7 +103,7 @@ export const Login = () => {
                             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                             className="relative mb-2"
                         >
-                            <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg border border-slate-600/30">
+                            <div className="w-16 h-16 bg-linear-to-br from-slate-700 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg border border-slate-600/30">
                                 <img
                                     className="w-12 h-12 filter brightness-0 invert"
                                     src="/icono-logo.png"
@@ -201,7 +203,7 @@ export const Login = () => {
                                     w-full py-2 rounded-xl text-base font-semibold transition-all duration-300
                                     ${!isFormValid || loading
                                         ? 'bg-slate-300 text-slate-500 cursor-not-allowed border-2 border-slate-300'
-                                        : 'cursor-pointer bg-gradient-to-r from-slate-700 to-blue-600 hover:from-slate-800 hover:to-blue-700 text-white shadow-lg hover:shadow-xl hover:scale-105 border-2 border-transparent'
+                                        : 'cursor-pointer bg-linear-to-r from-slate-700 to-blue-600 hover:from-slate-800 hover:to-blue-700 text-white shadow-lg hover:shadow-xl hover:scale-105 border-2 border-transparent'
                                     }
                                     flex items-center justify-center gap-3
                                 `}

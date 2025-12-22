@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner"
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ConfigProvider } from 'antd';
@@ -14,7 +15,6 @@ import { AFPempleado } from "./view/AFP/AFPempleado.jsx";
 import { CambiosAFP } from "./view/AFP/CambiosAFP.jsx";
 import { InfoAFP } from "./view/AFP/InfoAFP.jsx";
 import { Contratos } from "./view/Contratos.jsx";
-import { Eps } from "./view/EPS.jsx";
 import { HorasExtra } from "./view/HorasExtra.jsx";
 import { RetencionJudicial } from "./view/RetencionJudicial.jsx";
 import { DescansoMedico } from "./view/DescansoMedico/DescansoMedico.jsx";
@@ -33,7 +33,9 @@ import { Licencias } from "./view/DescansoMedico/Licencias";
 import { AlertaSubsidios } from "./view/DescansoMedico/Subsidios/AlertaSubsidios";
 import { ListarSubsidios } from "./view/DescansoMedico/Subsidios/ListarSubsidios";
 import { RegistrarSubsidios } from "./view/DescansoMedico/Subsidios/RegistrarSubsidios";
-import { Toaster } from "./components/ui/sonner";
+import { ListarAfiliado } from "./view/EPS/ListarAfiliado";
+import { RegistroEspecial } from "./view/EPS/RegistroEspecial";
+import { ListarDependiente } from "./view/EPS/ListarDependiente";
 
 createRoot(document.getElementById("root")).render(
   <ConfigProvider 
@@ -59,7 +61,6 @@ createRoot(document.getElementById("root")).render(
             <Route path="cambios-afp" element={<CambiosAFP />} />
             <Route path="info-afp" element={<InfoAFP />} />
             <Route path="contrato" element={<Contratos />} />
-            <Route path="eps" element={<Eps />} />
             <Route path="horas-extra" element={<HorasExtra />} />
             <Route path="retencion-judicial" element={<RetencionJudicial />} />
             <Route path="descanso-medicos" element={<DescansoMedico />} />
@@ -72,6 +73,10 @@ createRoot(document.getElementById("root")).render(
             <Route path="subsidios/alerta" element={<AlertaSubsidios />} />
             <Route path="subsidios/listar" element={<ListarSubsidios />} />
             <Route path="subsidios/registrar" element={<RegistrarSubsidios />} />
+            {/* RUTAS PARA EL EPS */}
+            <Route path="eps/listar-afiliado" element={<ListarAfiliado />} />
+            <Route path="eps/listar-dependiente" element={<ListarDependiente />} />
+            <Route path="eps/registrar" element={<RegistroEspecial />} />
           </Route>
         </Routes>
       </DataProvider>

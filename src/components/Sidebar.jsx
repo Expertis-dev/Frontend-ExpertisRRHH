@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate,Link } from "react-router-dom";
 import {
     TeamOutlined,
     FileTextOutlined,
@@ -12,7 +11,6 @@ import {
     EuroCircleOutlined
 } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
-import { Link } from 'react-router-dom';
 import { useData } from '@/provider/Provider';
 const { Sider } = Layout;
 
@@ -66,11 +64,25 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
                     label: <Link to="/rrhh/info-afp">Info. SP</Link>,
                 },
             ],
-        },/*
-        {
+        },
+        /*{
             key: 'eps',
             icon: <MedicineBoxOutlined />,
-            label: <Link to="/rrhh/eps">EPS</Link>,
+            label: "EPS",
+            children: [
+                {
+                    key: 'alerta-eps',
+                    label: <Link to="/rrhh/eps/listar-afiliado">Lista Afiliado</Link>,
+                },
+                {
+                    key: 'listar-eps',
+                    label: <Link to="/rrhh/eps/listar-dependiente">Lista Dependiente</Link>,
+                },
+                {
+                    key: 'registrar-eps',
+                    label: <Link to="/rrhh/eps/registrar">Registro Especial</Link>,
+                },
+            ],
         },*/
         {
             key: 'sueldo-minimo',
@@ -158,11 +170,11 @@ export const Sidebar = ({ collapsed, onCollapse }) => {
             collapsible
             collapsed={collapsed}
             onCollapse={onCollapse}
-            width={180}
+            width={200}
         >
             <div style={{
                 height: "auto",
-                padding: '50px 0px 20px 0px',
+                padding: '30px 0px 20px 0px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
