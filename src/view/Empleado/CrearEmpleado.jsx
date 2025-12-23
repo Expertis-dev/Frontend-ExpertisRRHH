@@ -421,7 +421,7 @@ export const CrearEmpleado = () => {
                 usuario: "ADMIN"
             }
             console.log("Datos a enviar:", datos)
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleadoooo`, datos)
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleado`, datos)
             if (response.status === 200) {
                 setIsLoading(false)
                 setIsSuccess(true)
