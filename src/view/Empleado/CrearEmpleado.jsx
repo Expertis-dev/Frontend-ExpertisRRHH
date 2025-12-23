@@ -371,7 +371,6 @@ export const CrearEmpleado = () => {
             setNuevoCargo("")
         }
     }
-    // helper genérico para limpiar nombres
     const limpiarTexto = (valor) => {
         return valor
             .trim()              // quita espacios al inicio y al final
