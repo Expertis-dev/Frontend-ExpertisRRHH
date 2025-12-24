@@ -1,15 +1,22 @@
 import { DatePicker, Input, Card, Tag, Tooltip, Empty, Select } from "antd";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Download, Eye, Pencil, RefreshCw, Users, Filter, FileText, UserPlus } from "lucide-react";
-import { datosAfiliados, Planes } from "../../data/Info";
+import { Planes } from "../../data/Info"; // datosAfiliados se eliminará o se reemplazará
 import { DetalleAfiliado } from "./DetalleAfiliado";
 import { ModalRegistroAfiliado } from "./ModalRegistroAfiliado";
 import { ModalEditAfiliado } from "./ModalEditAfiliado";
 import { exportToExcel } from "@/logic/ExportarDocumento";
-import dayjs from "dayjs";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import 'dayjs/locale/es';
+
+dayjs.extend(utc);
+dayjs.locale('es');
 import isBetween from "dayjs/plugin/isBetween";
+import axios from "axios";
+import { toast } from "sonner";
 dayjs.extend(isBetween);
 
 const { RangePicker } = DatePicker;
@@ -21,18 +28,38 @@ export const ListarAfiliado = () => {
   const [dateRange, setDateRange] = useState([]); // guardamos [] o [dayjs, dayjs]
   const [isVer, setIsVer] = useState(false);
   const [selectAfiliado, setSelectAfiliado] = useState({});
+  const [datosAfiliados2, setDatosAfiliados2] = useState([]); // Nuevo estado para los datos del backend
   const [searchTerm, setSearchTerm] = useState("");
   const [crearAfiliado, setCrearAfiliado] = useState(false);
+ 
+  
+  useEffect(() => {
+    const fetchAfiliados = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarAfiliadosEPS`); // Reemplaza con tu endpoint real
+        console.log("Respuesta del servidor:", response.data);
+        setDatosAfiliados2(response.data); // Asume que la respuesta es un array de afiliados
+      } catch (error) {
+        console.error("Error al obtener los afiliados:", error);
+        toast.error("Error al cargar la lista de afiliados", {
+          description: "No se pudieron obtener los datos del servidor.",
+        });
+      }
+    };
+
+    fetchAfiliados();
+  }, []);
+
 
   // 1) Calcular filtrados sin estado derivado
   const datosFiltrados = useMemo(() => {
-    let data = [...datosAfiliados];
-
+    let data = [...datosAfiliados2]; // Usa los datos del backend
+     console.log("Datos originales:", data);
     // Buscar (nombre, documento, eps)
     const q = searchTerm.trim().toLowerCase();
     if (q) {
       data = data.filter((a) =>
-        [a.nombreCompleto, a.documento, a.eps ?? ""]
+        [a.NombreCompleto, a.Documento, a.Plan ?? ""]
           .map((v) => String(v).toLowerCase())
           .some((v) => v.includes(q))
       );
@@ -41,7 +68,7 @@ export const ListarAfiliado = () => {
     // Plan (igualdad estricta normalizada)
     const plan = (planSeleccionado || "").trim().toLowerCase();
     if (plan) {
-      data = data.filter((a) => (a.plan ?? "").toLowerCase() === plan);
+      data = data.filter((a) => (a.Plan ?? "").toLowerCase() === plan);
     }
 
     // Rango de fechas (opcional: usando fechaInicio en formato DD/MM/YYYY)
@@ -53,8 +80,8 @@ export const ListarAfiliado = () => {
       });
     }
 
-    return data;
-  }, [searchTerm, planSeleccionado, dateRange]);
+    return data; // Retorna los datos filtrados
+  }, [searchTerm, planSeleccionado, dateRange, datosAfiliados2]); // Agrega datosAfiliados2 como dependencia
 
   // 2) Limpiar filtros
   const handleClearFilters = () => {
@@ -65,8 +92,8 @@ export const ListarAfiliado = () => {
 
   const getPlanColor = (plan) => {
     const planColors = {
-      Integral: "blue",
-      "Red Preferente": "purple",
+      "PLANADICIONAL2": "blue",
+      "PLAN BASE PLUS": "purple",
       "Total Salud": "green",
       Clásico: "orange",
     };
@@ -203,34 +230,33 @@ export const ListarAfiliado = () => {
                   <tbody>
                     {datosFiltrados.map((fila, index) => (
                       <motion.tr
-                        key={`${fila.documento}-${index}`}
+                        key={`${fila.Documento}-${index}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: index * 0.03 }}
                         className="bg-white hover:bg-gray-50 border-b last:border-b-0 transition-colors cursor-pointer"
                       >
-                        <td className="p-3 text-sm font-medium text-gray-900">{fila.documento}</td>
+                        <td className="p-3 text-sm font-medium text-gray-900">{fila.Documento}</td>
                         <td className="p-3">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{fila.nombreCompleto}</div>
-                            <div className="text-xs text-gray-500">{fila.regimenSalud}</div>
+                            <div className="text-sm font-medium text-gray-900">{fila.NombreCompleto}</div>                            
                           </div>
                         </td>
                         <td className="p-3">
-                          <Tag color={getPlanColor(fila.plan)}>{fila.plan}</Tag>
+                          <Tag color={getPlanColor(fila.plan?.split(' ').join(''))}>{fila.Plan}</Tag>
                         </td>
-                        <td className="p-3 text-sm text-gray-700">{fila.eps}</td>
+                        <td className="p-3 text-sm text-gray-700">{fila.Tipo}</td>
                         <td className="p-3 text-center">
                           <span
                             className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                              fila.nroDependientes > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                              fila.totalDependientes > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                             }`}
                           >
-                            {fila.nroDependientes}
+                            {fila.totalDependientes}
                           </span>
                         </td>
-                        <td className="p-3 text-sm text-gray-600">{fila.fechaInicio}</td>
-                        <td className="p-3 text-sm text-gray-600">{fila.fechaFin || "Indefinido"}</td>
+                        <td className="p-3 text-sm text-gray-600">{dayjs.utc(fila.mesInicio).format('DD/MM/YYYY')}</td>
+                        <td className="p-3 text-sm text-gray-600">{ fila.mesFin ? dayjs.utc(fila.mesFin).format('DD/MM/YYYY') :""}</td>
                         <td className="p-3">
                           <div className="flex justify-center gap-1">
                             <Tooltip title="Ver detalles">
