@@ -31,14 +31,13 @@ export const ListarAfiliado = () => {
   const [datosAfiliados2, setDatosAfiliados2] = useState([]); // Nuevo estado para los datos del backend
   const [searchTerm, setSearchTerm] = useState("");
   const [crearAfiliado, setCrearAfiliado] = useState(false);
- 
-  
   useEffect(() => {
     const fetchAfiliados = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarAfiliadosEPS`); // Reemplaza con tu endpoint real
-        console.log("Respuesta del servidor:", response.data);
-        setDatosAfiliados2(response.data); // Asume que la respuesta es un array de afiliados
+        const datosFiltrados = response.data.filter(afiliado => afiliado.mesFin === null);
+        console.log("Respuesta del servidor:", datosFiltrados);
+        setDatosAfiliados2(datosFiltrados); // Asume que la respuesta es un array de afiliados
       } catch (error) {
         console.error("Error al obtener los afiliados:", error);
         toast.error("Error al cargar la lista de afiliados", {
@@ -54,7 +53,7 @@ export const ListarAfiliado = () => {
   // 1) Calcular filtrados sin estado derivado
   const datosFiltrados = useMemo(() => {
     let data = [...datosAfiliados2]; // Usa los datos del backend
-     console.log("Datos originales:", data);
+    console.log("Datos originales:", data);
     // Buscar (nombre, documento, eps)
     const q = searchTerm.trim().toLowerCase();
     if (q) {
@@ -93,9 +92,9 @@ export const ListarAfiliado = () => {
   const getPlanColor = (plan) => {
     const planColors = {
       "PLANADICIONAL2": "blue",
-      "PLAN BASE PLUS": "purple",
-      "Total Salud": "green",
-      Clásico: "orange",
+      "PLANBASEPLUS": "purple",
+      "PLANADICIONAL1": "green",
+      "PLANBASEESENCIAL": "orange",
     };
     return planColors[plan] || "default";
   };
@@ -236,27 +235,26 @@ export const ListarAfiliado = () => {
                         transition={{ duration: 0.2, delay: index * 0.03 }}
                         className="bg-white hover:bg-gray-50 border-b last:border-b-0 transition-colors cursor-pointer"
                       >
-                        <td className="p-3 text-sm font-medium text-gray-900">{fila.Documento}</td>
+                        <td className="p-3 text-sm text-gray-900">{fila.Documento}</td>
                         <td className="p-3">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{fila.NombreCompleto}</div>                            
+                            <div className="text-sm font-medium text-gray-900">{fila.NombreCompleto}</div>
                           </div>
                         </td>
                         <td className="p-3">
-                          <Tag color={getPlanColor(fila.plan?.split(' ').join(''))}>{fila.Plan}</Tag>
+                          <Tag color={getPlanColor(fila.Plan?.split(' ').join(''))}>{fila.Plan}</Tag>
                         </td>
                         <td className="p-3 text-sm text-gray-700">{fila.Tipo}</td>
                         <td className="p-3 text-center">
                           <span
-                            className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                              fila.totalDependientes > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-                            }`}
+                            className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${fila.totalDependientes > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-600"
+                              }`}
                           >
                             {fila.totalDependientes}
                           </span>
                         </td>
                         <td className="p-3 text-sm text-gray-600">{dayjs.utc(fila.mesInicio).format('DD/MM/YYYY')}</td>
-                        <td className="p-3 text-sm text-gray-600">{ fila.mesFin ? dayjs.utc(fila.mesFin).format('DD/MM/YYYY') :""}</td>
+                        <td className="p-3 text-sm text-gray-600">{fila.mesFin ? dayjs.utc(fila.mesFin).format('DD/MM/YYYY') : "VIGENTE"}</td>
                         <td className="p-3">
                           <div className="flex justify-center gap-1">
                             <Tooltip title="Ver detalles">
@@ -265,6 +263,7 @@ export const ListarAfiliado = () => {
                                 size="icon"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log("Afiliado seleccionado para ver:", fila);
                                   setSelectAfiliado(fila);
                                   setIsVer(true);
                                 }}

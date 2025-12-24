@@ -10,14 +10,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { DatePicker, Input, Select } from "antd"
 import { Pencil, Trash, User, Users, Calendar, FileText, Plus, Eye, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EditarDependiente } from "./EditarDependiente";
 import { toast } from "sonner";
 import { ModalEliminarDependiente } from "./ModalEliminarDependiente ";
+import axios from "axios";
 
 export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
     const [isEliminar, setIsEliminar] = useState(false)
+    const [historicoAfiliado, setHistoricoAfiliado] = useState([])
+    const [dependientes, setDependientes] = useState([])
     const [selectDependiente, setSelectDependiente] = useState({})
+    const [selectHistoricoAfi, setSelectHistoricoAfi] = useState(null)
     const [isEditarDep, setIsEditarDep] = useState(false)
     const [nuevoDependiente, setNuevoDependiente] = useState({
         nombre: "",
@@ -29,6 +33,44 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
         sexo: "",
         parentesco: ""
     })
+    useEffect(() => {
+        if (isVer) {
+            const fetchHistorial = async () => {
+                try {
+                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/historicoAfiliacionesPorIdAfiliado`, { idAfiliado: selectAfiliado.idAfiliadoTitular }); // Reemplaza con tu endpoint real
+                    console.log("Respuesta del servidor:", response.data);
+                    setHistoricoAfiliado(response.data); // Asume que la respuesta es un array de afiliados
+                } catch (error) {
+                    console.error("Error al obtener el historico:", error);
+                    toast.error("Error al cargar el historico", {
+                        description: "No se pudieron obtener los datos del servidor",
+                    });
+                }
+            };
+            fetchHistorial();
+        }
+    }, [isVer]);
+    useEffect(() => {
+        if (isVer && selectHistoricoAfi) {
+            const fetchDependientes = async () => {
+                try {
+                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/obtenerDependientesPorIdMovEPS`, 
+                    { 
+                        idAfiliado: selectHistoricoAfi.idAfiliado,
+                        idMovEPS: selectHistoricoAfi.idMovEPS }); // Reemplaza con tu endpoint real
+                    console.log("Respuesta del servidor:", response.data);
+                    setDependientes(response.data); // Asume que la respuesta es un array de afiliados
+                } catch (error) {
+                    console.error("Error al obtener el historico:", error);
+                    toast.error("Error al cargar el historico", {
+                        description: "No se pudieron obtener los datos del servidor",
+                    });
+                }
+            };
+            fetchDependientes()
+        }
+    }, [selectHistoricoAfi, isVer]);
+
 
     const handleRegistrarDependiente = (e) => {
         e.preventDefault();
@@ -96,12 +138,12 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     <InfoItem
                         label="Nombre Completo"
-                        value={selectAfiliado.nombreCompleto}
+                        value={selectAfiliado.NombreCompleto}
                         icon={<User className="h-4 w-4" />}
                     />
                     <InfoItem
                         label="DNI"
-                        value={selectAfiliado.documento}
+                        value={selectAfiliado.Documento}
                         icon={<FileText className="h-4 w-4" />}
                     />
                     <InfoItem
@@ -111,17 +153,17 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                     />
                     <InfoItem
                         label="EPS"
-                        value={selectAfiliado.eps}
+                        value={selectAfiliado.Tipo}
                         icon={<Users className="h-4 w-4" />}
                     />
                     <InfoItem
                         label="Nº Dependientes"
-                        value={selectAfiliado.nroDependientes}
+                        value={selectAfiliado.totalDependientes}
                         icon={<Users className="h-4 w-4" />}
                     />
                     <InfoItem
                         label="Plan EPS"
-                        value={selectAfiliado.plan}
+                        value={selectAfiliado.Plan}
                         icon={<FileText className="h-4 w-4" />}
                     />
                 </div>
@@ -148,15 +190,15 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {selectAfiliado.historial && selectAfiliado.historial.length > 0 ?
-                                        selectAfiliado.historial.map((item, i) => (
-                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                                <td className="p-1">{item.regimen || "-"}</td>
-                                                <td className="p-1">{item.eps || "-"}</td>
-                                                <td className="p-1">{item.plan || "-"}</td>
-                                                <td className="p-1">{item.monto ? `S/. ${item.monto}` : "-"}</td>
-                                                <td className="p-1">{item.fechaInicio || "-"}</td>
-                                                <td className="p-1">{item.fechaFin || "-"}</td>
+                                    {historicoAfiliado && historicoAfiliado.length > 0 ?
+                                        historicoAfiliado.map((item, i) => (
+                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={()=>setSelectHistoricoAfi(item)}>
+                                                <td className="p-1">{item[""] || "-"}</td>
+                                                <td className="p-1">{item.tipo || "-"}</td>
+                                                <td className="p-1">{item.nombrePlan || "-"}</td>
+                                                <td className="p-1">{item.costo ? `S/. ${item.costo}` : "-"}</td>
+                                                <td className="p-1">{item.mesInicio.split("T")[0] || "-"}</td>
+                                                <td className="p-1">{item.mesFin ? item.mesFin.split("T")[0] : "VIGENTE"}</td>
                                             </tr>
                                         )) : (
                                             <tr>
@@ -209,17 +251,17 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                            {selectAfiliado.dependientes && selectAfiliado.dependientes.length > 0 ?
-                                                selectAfiliado.dependientes.map((dep, i) => (
+                                            {dependientes && dependientes.length > 0 ?
+                                                dependientes.map((dep, i) => (
                                                     <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                                        <td className="p-1 font-medium">{dep.nombre || "-"}</td>
+                                                        <td className="p-1 font-medium">{dep.nombreAfiliado || "-"}</td>
                                                         <td className="p-1">
                                                             <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs">
                                                                 {dep.parentesco || "-"}
                                                             </span>
                                                         </td>
                                                         <td className="p-1">{dep.sexo || "-"}</td>
-                                                        <td className="p-1">{dep.fechaNac || "-"}</td>
+                                                        <td className="p-1">{dep.fecNacimiento.split("T")[0] || "-"}</td>
                                                         <td className="p-1">
                                                             <div className="flex items-center gap-2">
                                                                 <Button
@@ -384,7 +426,7 @@ const InfoItem = ({ label, value, icon }) => (
             <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">{label}</span>
         </div>
         <span className="text-sm font-semibold text-gray-800 dark:text-white truncate">
-            {value || "No especificado"}
+            {value}
         </span>
     </div>
 );
