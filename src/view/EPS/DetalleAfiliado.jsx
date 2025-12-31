@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import PropTypes from "prop-types";
 import {
     Dialog,
@@ -6,9 +5,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { DatePicker, Input, Select } from "antd"
-import { Pencil, Trash, User, Users, Calendar, FileText, Plus, Eye, History } from "lucide-react";
+import { Pencil, Trash, User, Users, Calendar, FileText, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { EditarDependiente } from "./EditarDependiente";
@@ -48,6 +46,10 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                 }
             };
             fetchHistorial();
+        } else{
+            setHistoricoAfiliado([]);
+            setDependientes([]);
+            setSelectHistoricoAfi(null);
         }
     }, [isVer]);
     useEffect(() => {
@@ -70,57 +72,6 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
             fetchDependientes()
         }
     }, [selectHistoricoAfi, isVer]);
-
-
-    const handleRegistrarDependiente = (e) => {
-        e.preventDefault();
-
-        // Validaciones básicas
-        if (!nuevoDependiente.nombre.trim()) {
-            toast.error("Campo requerido", {
-                description: "El nombre es obligatorio"
-            });
-            return;
-        }
-
-        if (!nuevoDependiente.parentesco) {
-            toast.error("Campo requerido", {
-                description: "El parentesco es obligatorio"
-            });
-            return;
-        }
-        console.log("Nuevo dependiente:", nuevoDependiente);
-        toast.success("Dependiente registrado", {
-            description: "El dependiente se ha registrado correctamente"
-        });
-        // Limpiar formulario
-        setNuevoDependiente({
-            nombre: "",
-            apellidoPaterno: "",
-            apellidoMaterno: "",
-            fechaNacimiento: "",
-            tipoDocumento: "",
-            numeroDocumento: "",
-            sexo: "",
-            parentesco: ""
-        });
-    }
-
-    const handleEliminarDependiente = (dependiente) => {
-        // Aquí iría la lógica para eliminar
-        console.log("Eliminar dependiente:", dependiente);
-        toast.success("Dependiente eliminado", {
-            description: "El dependiente se ha eliminado correctamente"
-        });
-    }
-
-    const handleInputChange = (field, value) => {
-        setNuevoDependiente(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    }
-
     return (
         <Dialog open={isVer} onOpenChange={setIsVer}>
             <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
@@ -223,21 +174,7 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                             Dependientes
                         </h3>
                     </div>
-
-                    <Tabs defaultValue="listar" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 mb-2">
-                            <TabsTrigger value="listar" className="flex items-center gap-2">
-                                <Eye className="h-4 w-4" />
-                                Listar Dependientes
-                            </TabsTrigger>
-                            <TabsTrigger value="registrar" className="flex items-center gap-2">
-                                <Plus className="h-4 w-4" />
-                                Registrar Dependiente
-                            </TabsTrigger>
-                        </TabsList>
-
                         {/* Listar dependientes */}
-                        <TabsContent value="listar" className="space-y-4">
                             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                                 <div className="overflow-x-auto max-h-[250px]">
                                     <table className="min-w-full text-sm">
@@ -302,10 +239,8 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                                     </table>
                                 </div>
                             </div>
-                        </TabsContent>
 
-                        {/* Registrar dependiente */}
-                        <TabsContent value="registrar" className="space-y-4">
+                        {/* Registrar dependiente 
                             <form onSubmit={handleRegistrarDependiente} className="">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                     <FormField
@@ -396,11 +331,9 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                                     </Button>
                                 </div>
                             </form>
-                        </TabsContent>
-                    </Tabs>
+                            */}
                 </div>
             </DialogContent>
-
             <EditarDependiente
                 setSelectDependiente={setSelectDependiente}
                 selectDependiente={selectDependiente}
@@ -431,7 +364,7 @@ const InfoItem = ({ label, value, icon }) => (
     </div>
 );
 
-const FormField = ({ label, value, onChange, disabled, required }) => (
+export const FormField = ({ label, value, onChange, disabled, required }) => (
     <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {label} {required && <span className="text-red-500">*</span>}
@@ -446,7 +379,7 @@ const FormField = ({ label, value, onChange, disabled, required }) => (
     </div>
 );
 
-const SelectField = ({ label, value, onChange, options, required }) => (
+export const SelectField = ({ label, value, onChange, options, required }) => (
     <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {label} {required && <span className="text-red-500">*</span>}
@@ -465,7 +398,7 @@ const SelectField = ({ label, value, onChange, options, required }) => (
     </div>
 );
 
-const DateField = ({ label, value, onChange, required }) => (
+export const DateField = ({ label, value, onChange, required }) => (
     <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {label} {required && <span className="text-red-500">*</span>}

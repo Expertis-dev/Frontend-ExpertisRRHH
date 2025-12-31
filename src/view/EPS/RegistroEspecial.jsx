@@ -3,7 +3,6 @@ import { Input, DatePicker, Select, Card, Divider, Modal } from "antd";
 import { useState, useMemo } from "react";
 import dayjs from "dayjs";
 import { toast } from "sonner";
-import { Planes } from "../../data/Info";
 import {
     User,
     Mail,
@@ -19,11 +18,13 @@ import {
     Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useData } from "@/provider/Provider";
 
 const { Option } = Select;
 
 export const RegistroEspecial = () => {
     const [ubigeo, setUbigeo] = useState({});
+    const { planEPS } = useData();
     const [data, setData] = useState({
         nombres: "",
         apellidoPaterno: "",
@@ -116,7 +117,7 @@ export const RegistroEspecial = () => {
 
     // Plan seleccionado
     const planSeleccionado = useMemo(() =>
-        Planes.find(p => p.value === data.plan) || Planes[0],
+        planEPS.find(p => p.value === data.plan) || planEPS[0],
         [data.plan]
     );
 
@@ -424,11 +425,11 @@ export const RegistroEspecial = () => {
                                         onChange={(value) => setData(s => ({
                                             ...s,
                                             plan: value,
-                                            montoPlan: Planes.find(p => p.value === value)?.monto ?? s.montoPlan,
+                                            montoPlan: planEPS.find(p => p.value === value)?.monto ?? s.montoPlan,
                                         }))}
                                         disabled={isLoading}
                                     >
-                                        {Planes.map(plan => (
+                                        {planEPS.map(plan => (
                                             <Option key={plan.value} value={plan.value}>
                                                 {plan.label}
                                             </Option>
