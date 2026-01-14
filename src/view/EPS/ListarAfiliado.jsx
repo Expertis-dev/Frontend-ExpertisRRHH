@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Download, Eye, Pencil, RefreshCw, Users, Filter, FileText, UserPlus } from "lucide-react";
-import { Planes } from "../../data/Info"; // datosAfiliados se eliminará o se reemplazará
+
 import { DetalleAfiliado } from "./DetalleAfiliado";
 import { ModalRegistroAfiliado } from "./ModalRegistroAfiliado";
 import { ModalEditAfiliado } from "./ModalEditAfiliado";
@@ -17,6 +17,7 @@ dayjs.locale('es');
 import isBetween from "dayjs/plugin/isBetween";
 import axios from "axios";
 import { toast } from "sonner";
+import { useData } from "@/provider/Provider";
 dayjs.extend(isBetween);
 
 const { RangePicker } = DatePicker;
@@ -31,6 +32,8 @@ export const ListarAfiliado = () => {
   const [datosAfiliados2, setDatosAfiliados2] = useState([]); // Nuevo estado para los datos del backend
   const [searchTerm, setSearchTerm] = useState("");
   const [crearAfiliado, setCrearAfiliado] = useState(false);
+  const [verEspeciales, setVerEspeciales] = useState(false)
+  const { planEPS} = useData();
   useEffect(() => {
     const fetchAfiliados = async () => {
       try {
@@ -45,9 +48,21 @@ export const ListarAfiliado = () => {
         });
       }
     };
-
-    fetchAfiliados();
-  }, []);
+    const fetchEspeciales = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarAfiliadosEPS-especiales`); // Reemplaza con tu endpoint real
+        const datosFiltrados = response.data.filter(afiliado => afiliado.mesFin === null);
+        console.log("Respuesta del servidor:", datosFiltrados);
+        setDatosAfiliados2(datosFiltrados); // Asume que la respuesta es un array de afiliados
+      } catch (error) {
+        console.error("Error al obtener los afiliados:", error);
+        toast.error("Error al cargar la lista de afiliados", {
+          description: "No se pudieron obtener los datos del servidor.",
+        });
+      }
+    };
+    verEspeciales ? fetchEspeciales() : fetchAfiliados();
+  }, [verEspeciales]);
 
 
   // 1) Calcular filtrados sin estado derivado
@@ -122,9 +137,11 @@ export const ListarAfiliado = () => {
           }
           extra={
             <div className="flex flex-wrap gap-3">
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Button
+                onClick={() => setVerEspeciales(!verEspeciales)}
+                className="bg-amber-600 hover:bg-amber-700 text-white">
                 <FileText className="h-4 w-4" />
-                Ver Especiales
+                {verEspeciales ? "Ver Afiliados" : "Ver Especiales"}
               </Button>
               <Button
                 disabled={datosFiltrados.length === 0}
@@ -134,7 +151,7 @@ export const ListarAfiliado = () => {
                 <Download className="h-4 w-4" />
                 Descargar Excel
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setCrearAfiliado(true)}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setCrearAfiliado(true)} disabled={verEspeciales}>
                 <UserPlus className="h-4 w-4" />
                 Registrar Nuevo Afiliado
               </Button>
@@ -172,7 +189,7 @@ export const ListarAfiliado = () => {
                 onChange={(value) => setPlanSeleccionado((value ?? "").toString())} // ← maneja allowClear
                 options={
                   // Asegura que options.label y .value existan
-                  (Planes ?? []).map((p) => ({
+                  (planEPS ?? []).map((p) => ({
                     label: p.label ?? p.value,
                     value: (p.value ?? "").toString().toLowerCase(), // normaliza a minúsculas
                   }))
@@ -201,7 +218,7 @@ export const ListarAfiliado = () => {
           title={
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-gray-600" />
-              <span className="font-semibold">Lista de Afiliados</span>
+              <span className="font-semibold">{verEspeciales ? "Lista de Afiliados Especiales" : "Lista de Afiliados"}</span>
               <Tag color="blue">{datosFiltrados.length} registros</Tag>
             </div>
           }
@@ -301,7 +318,7 @@ export const ListarAfiliado = () => {
 
       {/* Modales */}
       <DetalleAfiliado isVer={isVer} selectAfiliado={selectAfiliado} setIsVer={setIsVer} />
-      <ModalRegistroAfiliado isCrear={crearAfiliado} setIsCrear={setCrearAfiliado} />
+      <ModalRegistroAfiliado isCrear={crearAfiliado} setIsCrear={setCrearAfiliado} afiliados= {datosAfiliados2} />
       <ModalEditAfiliado isEdit={isEdit} setSelectAfiliado={setSelectAfiliado} selectAfiliado={selectAfiliado} setIsEdit={setIsEdit} />
     </div>
   );

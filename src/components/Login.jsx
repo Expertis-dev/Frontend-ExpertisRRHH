@@ -7,7 +7,7 @@ import axios from 'axios';
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 export const Login = () => {
-    const { setNombre, setToken } = useData()
+    const { setNombre, setToken, setPlanEPS } = useData()
     const [credenciales, setCredenciales] = useState({
         usuario: "",
         contraseña: ""
@@ -46,9 +46,12 @@ export const Login = () => {
                     'X-Forwarded-For': userIP
                 }
             });
-            if (token.data.token) {
+            const planes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarPlanesEPS`)
+            console.log("Respuesta de permisos:", planes.data);
+            localStorage.setItem("planesEPS", JSON.stringify(planes.data)); // ✅ correcto
+            if (token.data.token && planes.status === 200) {
                 setNombre(credenciales.usuario);
-                setToken(token.data.token)
+                setToken(token.data.token);
                 toast.success("¡Bienvenido!");
                 setTimeout(() => {
                     navegar("/rrhh/empleados-listar");

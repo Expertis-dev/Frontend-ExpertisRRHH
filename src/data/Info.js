@@ -1,11 +1,3 @@
-// Catálogo de planes coherente con los datos de afiliados
-export const Planes = [
-    { value: "PLAN BASE ESENCIAL ", label: "PLAN BASE ESENCIAL ", monto: 271.00 },
-    { value: "PLAN BASE PLUS", label: "PLAN BASE PLUS", monto: 288.00 },
-    { value: "PLAN ADICIONAL 1", label: "PLAN ADICIONAL 1", monto: 350.00 },
-    { value: "PLAN ADICIONAL 2", label: "PLAN ADICIONAL 2", monto: 508.00 },
-];
-
 // Afiliados con plan/eps/regímenes y montos alineados al catálogo
 export const datosAfiliados = [
     {

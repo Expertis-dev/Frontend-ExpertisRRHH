@@ -1,19 +1,34 @@
 import { DatePicker, Input, Card, Tag, Empty } from "antd"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Download, RefreshCw, Users, Filter, FileText } from "lucide-react";
-import { datosDependientes } from "../../data/Info";
 import { exportToExcel } from "@/logic/ExportarDocumento";
+import axios from "axios";
 
 const { RangePicker } = DatePicker;
 const { Search: SearchInput } = Input;
 
 export const ListarDependiente = () => {
     const [dateRange, setDateRange] = useState([])
-    const [datosFiltrados, setDatosFiltrados] = useState(datosDependientes)
     const [searchTerm, setSearchTerm] = useState("")
-
+    const [datosDependientes, setDatosDependientes] = useState([])
+    useEffect(() => {
+        const fetchDependientes = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarDependientes`); // Reemplaza con tu endpoint real
+                const datosDependientes = response.data.filter(dependiente => dependiente.mesFin === null);
+                console.log("Respuesta del servidor:", datosDependientes);
+                setDatosDependientes(datosDependientes); // Asume que la respuesta es un array de dependientes
+            } catch (error) {
+                console.error("Error al obtener los dependientes:", error);
+                toast.error("Error al cargar la lista de dependientes", {
+                    description: "No se pudieron obtener los datos del servidor.",
+                });
+            }
+        };
+        fetchDependientes();
+    }, []);
     // Filtrado de datos
     useMemo(() => {
         let filteredData = datosDependientes;
@@ -21,8 +36,8 @@ export const ListarDependiente = () => {
         // Filtro por búsqueda
         if (searchTerm.trim() !== "") {
             filteredData = filteredData.filter((dependiente) =>
-                dependiente.nombreDependiente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                dependiente.documentoTitular.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                dependiente.nombreAfiliado.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                dependiente.docTitular.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 dependiente.nombreTitular?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
@@ -33,7 +48,7 @@ export const ListarDependiente = () => {
                 return d.isValid() && d.isBetween(start.startOf("day"), end.endOf("day"), null, "[]");
             });
         }
-        setDatosFiltrados(filteredData)
+        setDatosDependientes(filteredData)
     }, [searchTerm, dateRange])
 
     const handleClearFilters = () => {
@@ -103,8 +118,8 @@ export const ListarDependiente = () => {
                                 Ver Especiales
                             </Button>
                             <Button
-                                disabled={datosFiltrados.length === 0}
-                                onClick={() => exportToExcel(datosFiltrados, "LISTA DE DEPENDIENTES")}
+                                disabled={datosDependientes.length === 0}
+                                onClick={() => exportToExcel(datosDependientes, "LISTA DE DEPENDIENTES")}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                             >
                                 <Download className="h-4 w-4" />
@@ -168,12 +183,12 @@ export const ListarDependiente = () => {
                             <Users className="h-5 w-5 text-gray-600" />
                             <span className="font-semibold">Lista de Dependientes</span>
                             <Tag color="blue">
-                                {datosFiltrados.length} registros
+                                {datosDependientes.length} registros
                             </Tag>
                         </div>
                     }
                 >
-                    {datosFiltrados.length === 0 ? (
+                    {datosDependientes.length === 0 ? (
                         <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                             description="No se encontraron dependientes"
@@ -200,21 +215,21 @@ export const ListarDependiente = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {datosFiltrados.map((fila, index) => (
+                                        {datosDependientes.map((fila, index) => (
                                             <motion.tr
-                                                key={`${fila.documentoTitular}-${fila.nombreDependiente}-${index}`}
+                                                key={`${fila.docTitular}-${fila.nombreAfiliado}-${index}`}
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2, delay: index * 0.03 }}
                                                 className="bg-white hover:bg-gray-50 border-b last:border-b-0 transition-colors"
                                             >
                                                 <td className="p-3 text-sm font-medium text-gray-900">
-                                                    {fila.documentoTitular}
+                                                    {fila.docTitular}
                                                 </td>
                                                 <td className="p-3">
                                                     <div>
                                                         <div className="text-sm font-medium text-gray-900">
-                                                            {fila.nombreDependiente}
+                                                            {fila.nombreAfiliado}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -224,18 +239,18 @@ export const ListarDependiente = () => {
                                                     </Tag>
                                                 </td>
                                                 <td className="p-3 text-sm text-gray-700">
-                                                    {fila.regimenSalud}
+                                                    {fila.tipo}
                                                 </td>
                                                 <td className="p-3">
-                                                    <Tag color={getPlanColor(fila.plan)}>
-                                                        {fila.plan}
+                                                    <Tag color={getPlanColor(fila.nombrePlan)}>
+                                                        {fila.nombrePlan}
                                                     </Tag>
                                                 </td>
                                                 <td className="p-3 text-sm text-gray-700">
                                                     {fila.eps}
                                                 </td>
                                                 <td className="p-3 text-sm text-gray-600">
-                                                    {fila.fechaInicio}
+                                                    {fila.mesInicio}
                                                 </td>
                                                 <td className="p-3 text-sm text-gray-600">
                                                     {fila.fechaFin || 'Indefinido'}
