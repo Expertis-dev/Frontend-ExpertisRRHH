@@ -1,7 +1,10 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { MagnifyingGlassIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import { Check, Eye, Pencil, ChevronLeft, X, ChevronRight, } from "lucide-react";
+import {
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import { Check, Eye, Pencil, ChevronLeft, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,7 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { DatePickerFirstDay } from "@/components/ui/MesInputs";
 import { PlusCircleOutlined } from "@ant-design/icons";
-import { DatePicker } from 'antd';
+import { DatePicker } from "antd";
 const { RangePicker } = DatePicker;
 const SelectField = ({
   label,
@@ -74,8 +77,8 @@ export const ListarEmpleados = () => {
   const [deps, setDeps] = useState([]);
   const [provincias, setProvincias] = useState([]);
   const [distritos, setDistritos] = useState([]);
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [modalCargo, setModalCargo] = useState(false);
   const [nuevoCargo, setNuevoCargo] = useState("");
   const [ultimoSueldo, setUltimoSueldo] = useState({});
@@ -99,7 +102,7 @@ export const ListarEmpleados = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [estadoEmpleado, setEstadoEmpleado] = useState("VIGENTE");
   const [todosEmpleados, setTodosEmpleados] = useState([]);
-  const [filtroDias, setFiltroDias] = useState([])
+  const [filtroDias, setFiltroDias] = useState([]);
   const [formData, setFormData] = useState({
     salary: { amount: "", valid: false, cod_mes: "" },
     position: { title: "", cod_mes: "", valid: false },
@@ -116,7 +119,8 @@ export const ListarEmpleados = () => {
       valid: false,
     },
   });
-
+  // Después de: const [exportando, setExportando] = useState(false); NO SE VE
+  const [exportando, setExportando] = useState(false); // Agrega esta línea
   const [allStepsValid, setAllStepsValid] = useState(false);
 
   const obtenerEmpleados = async () => {
@@ -128,20 +132,26 @@ export const ListarEmpleados = () => {
 
       // Filtrar empleados con nombreCompleto y ordenar
       const dataEmpleados = datos
-        .filter(dato => dato.nombreCompleto !== null)
+        .filter((dato) => dato.nombreCompleto !== null)
         .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto));
 
       // Guardar todos los empleados
       setTodosEmpleados(dataEmpleados);
 
       // Filtrar por estado
-      setEmpleados(dataEmpleados.filter(dato =>
-        String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
-      ));
-      console.log(dataEmpleados)
-      setFilteredEmpleados(dataEmpleados.filter(dato =>
-        String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
-      ));
+      setEmpleados(
+        dataEmpleados.filter(
+          (dato) =>
+            String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
+        )
+      );
+      console.log(dataEmpleados);
+      setFilteredEmpleados(
+        dataEmpleados.filter(
+          (dato) =>
+            String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
+        )
+      );
       const cargosResponse = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarCargos`
       );
@@ -230,24 +240,25 @@ export const ListarEmpleados = () => {
     }
   }, [formData, selectedField]);
 
-
   const filtrarPorRangoFechas = (empleados, rangoFechas) => {
     try {
       const fechaInicio = new Date(rangoFechas[0]);
       const fechaFin = new Date(rangoFechas[1]);
 
       if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
-        throw new Error('Fechas inválidas en el rango');
+        throw new Error("Fechas inválidas en el rango");
       }
 
-      return empleados.filter(empleado => {
+      return empleados.filter((empleado) => {
         if (!empleado?.fecIngreso) return false;
 
         try {
           const fechaEmpleado = new Date(empleado.fecIngreso);
-          return !isNaN(fechaEmpleado.getTime()) &&
+          return (
+            !isNaN(fechaEmpleado.getTime()) &&
             fechaEmpleado >= fechaInicio &&
-            fechaEmpleado <= fechaFin;
+            fechaEmpleado <= fechaFin
+          );
         } catch {
           return false;
         }
@@ -261,11 +272,14 @@ export const ListarEmpleados = () => {
     const query = searchQuery.trim().toLowerCase();
 
     // Base para filtrar según el estado seleccionado
-    let baseEmpleados = estadoEmpleado === "VIGENTE"
-      ? empleados
-      : todosEmpleados.filter(dato =>
-        String(dato.estadoLaboral).trim().toUpperCase() === estadoEmpleado.toUpperCase()
-      );
+    let baseEmpleados =
+      estadoEmpleado === "VIGENTE"
+        ? empleados
+        : todosEmpleados.filter(
+            (dato) =>
+              String(dato.estadoLaboral).trim().toUpperCase() ===
+              estadoEmpleado.toUpperCase()
+          );
     if (Array.isArray(filtroDias) && filtroDias.length == 2) {
       baseEmpleados = filtrarPorRangoFechas(baseEmpleados, filtroDias);
     }
@@ -274,9 +288,13 @@ export const ListarEmpleados = () => {
     } else {
       const filtered = baseEmpleados.filter((emp) => {
         if (!emp) return false;
-        const documento = emp.documento ? emp.documento.toString().toLowerCase() : "";
+        const documento = emp.documento
+          ? emp.documento.toString().toLowerCase()
+          : "";
         const codigo = emp.CODIGO ? emp.CODIGO.toString().toLowerCase() : "";
-        const nombre = emp.nombreCompleto ? emp.nombreCompleto.toString().toLowerCase() : "";
+        const nombre = emp.nombreCompleto
+          ? emp.nombreCompleto.toString().toLowerCase()
+          : "";
         return (
           documento.includes(query) ||
           codigo.includes(query) ||
@@ -304,7 +322,8 @@ export const ListarEmpleados = () => {
 
   const HistoricoCese = async (idPersona) => {
     const response = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL
+      `${
+        import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoCeses/${idPersona}`
     );
     setDatosCese(response.data.data);
@@ -312,27 +331,29 @@ export const ListarEmpleados = () => {
 
   const HistoricoPuestos = async (idPersona) => {
     const response = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL
+      `${
+        import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoPuestoTrabajo/${idPersona}`
     );
-    console.log(response.data.data)
+    console.log(response.data.data);
     setDatosPuestos(response.data.data);
     if (response.data.data.length > 0) {
       setUltimoPuesto(ObtenerUltimo(response.data.data));
     }
-
   };
 
   const HistoricoAFP = async (idPersona) => {
     const response = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL
+      `${
+        import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoAFP/${idPersona}`
     );
     setDatosAFP(response.data.data);
   };
   const HistoricoAsignacionFamiliar = async (idPersona) => {
     const response = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL
+      `${
+        import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoAsignacionFamiliar/${idPersona}`
     );
     setDatosAsigFam(response.data.data);
@@ -343,7 +364,8 @@ export const ListarEmpleados = () => {
 
   const HistoricoSueldo = async (idPersona) => {
     const response = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL
+      `${
+        import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoSueldos/${idPersona}`
     );
     setDatosSueldos(response.data.data);
@@ -354,7 +376,7 @@ export const ListarEmpleados = () => {
 
   const openDetails = async (employee) => {
     setSelectedEmployee(employee);
-    console.log(employee)
+    console.log(employee);
     setDetailsOpen(true);
     setLoadingDetails(true);
 
@@ -466,9 +488,7 @@ export const ListarEmpleados = () => {
       case "familyAllowance":
         return data.cod_mes !== "";
       case "personalData":
-        return (
-          !!data.estadoCivil
-        );
+        return !!data.estadoCivil;
       default:
         return false;
     }
@@ -487,7 +507,7 @@ export const ListarEmpleados = () => {
   const handleSubmit = async () => {
     try {
       setEditOpen(false);
-      setIsLoading(true)
+      setIsLoading(true);
       if (!selectedField || !formData[selectedField].valid) {
         alert("Por favor complete todos los campos correctamente");
         return;
@@ -495,7 +515,7 @@ export const ListarEmpleados = () => {
 
       // Datos comunes para todos los casos
       const basePayload = {
-        idEmpleado: selectedEmployee.idEmpleado
+        idEmpleado: selectedEmployee.idEmpleado,
       };
 
       let endpoint = "";
@@ -503,7 +523,9 @@ export const ListarEmpleados = () => {
 
       switch (selectedField) {
         case "salary":
-          endpoint = `${import.meta.env.VITE_BACKEND_URL}/api/empleados/modificarSueldo`
+          endpoint = `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/empleados/modificarSueldo`;
           requestData = {
             ...basePayload,
             sueldo: formData.salary.amount,
@@ -512,28 +534,36 @@ export const ListarEmpleados = () => {
           };
           break;
 
-        case 'position':
-          endpoint = `${import.meta.env.VITE_BACKEND_URL}/api/empleados/modificarPuestoTrabajo`
+        case "position":
+          endpoint = `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/empleados/modificarPuestoTrabajo`;
           requestData = {
             ...basePayload,
             cargo_puestotrabajo: formData.position.title,
             mesInicio: formData.position.cod_mes,
-            usuario: "ADMIN"
+            usuario: "ADMIN",
           };
           break;
 
         case "familyAllowance":
-          endpoint = `${import.meta.env.VITE_BACKEND_URL}/api/empleados/modificarAsignacionFamiliar`
+          endpoint = `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/empleados/modificarAsignacionFamiliar`;
           requestData = {
             ...basePayload,
-            asignacionfamiliar: formData.familyAllowance.hasAllowance ? "SI" : "NO",
+            asignacionfamiliar: formData.familyAllowance.hasAllowance
+              ? "SI"
+              : "NO",
             mesInicio: formData.familyAllowance.cod_mes,
             usuario: "ADMIN",
           };
           break;
 
         case "personalData":
-          endpoint = `${import.meta.env.VITE_BACKEND_URL}/api/empleados/modificarDatosPersonales`
+          endpoint = `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/empleados/modificarDatosPersonales`;
           requestData = {
             ...basePayload,
             correo: formData.personalData.correo,
@@ -541,10 +571,19 @@ export const ListarEmpleados = () => {
             numero_hijos: formData.personalData.nroHijos,
             estadoCivil: formData.personalData.estadoCivil,
             direccion: formData.personalData.direccion.toUpperCase(),
-            departamento: formData.personalData.dep === "" ? selectedEmployee.departamento : formData.personalData.dep.toUpperCase(),
-            provincia: formData.personalData.prov === "" ? selectedEmployee.provincia : formData.personalData.prov.toUpperCase(),
-            distrito: formData.personalData.dist === "" ? selectedEmployee.distrito : formData.personalData.dist.toUpperCase(),
-            usuario: "ADMIN"
+            departamento:
+              formData.personalData.dep === ""
+                ? selectedEmployee.departamento
+                : formData.personalData.dep.toUpperCase(),
+            provincia:
+              formData.personalData.prov === ""
+                ? selectedEmployee.provincia
+                : formData.personalData.prov.toUpperCase(),
+            distrito:
+              formData.personalData.dist === ""
+                ? selectedEmployee.distrito
+                : formData.personalData.dist.toUpperCase(),
+            usuario: "ADMIN",
           };
           break;
 
@@ -552,15 +591,15 @@ export const ListarEmpleados = () => {
           throw new Error("Campo no válido");
       }
       // Descomentar cuando el endpoint esté listo:
-      console.log('Enviando datos:', requestData, endpoint);
+      console.log("Enviando datos:", requestData, endpoint);
 
       // Descomentar cuando el endpoint esté listo:
       const response = await axios.put(endpoint, requestData);
       if (response) {
-        setIsLoading(false)
-        setIsSuccess(true)
+        setIsLoading(false);
+        setIsSuccess(true);
       }
-      console.log('Respuesta:', response.data);
+      console.log("Respuesta:", response.data);
 
       const updatedEmpleados = empleados.map((emp) =>
         emp.idPersona === selectedEmployee.idPersona
@@ -576,9 +615,8 @@ export const ListarEmpleados = () => {
       alert("Ocurrió un error al guardar los cambios");
     } finally {
       setTimeout(() => {
-        setIsSuccess(false)
-
-      }, 2000)
+        setIsSuccess(false);
+      }, 2000);
     }
   };
 
@@ -594,7 +632,7 @@ export const ListarEmpleados = () => {
       ...(selectedField === "familyAllowance" && {
         asignacionfamiliar: formData.familyAllowance.hasAllowance ? "Sí" : "No",
       }),
-      ...(selectedField === 'personalData' && {
+      ...(selectedField === "personalData" && {
         correo: formData.personalData.correo,
         telefono: formData.personalData.telefono,
         numero_hijos: formData.personalData.nroHijos,
@@ -603,11 +641,301 @@ export const ListarEmpleados = () => {
           direccion: formData.personalData.direccion.toUpperCase(),
           departamento: formData.personalData.dep.toUpperCase(),
           provincia: formData.personalData.prov.toUpperCase(),
-          distrito: formData.personalData.dist.toUpperCase()
-        })
-      })
+          distrito: formData.personalData.dist.toUpperCase(),
+        }),
+      }),
     };
   };
+
+  // Después de las funciones existentes (después de mapFormDataToEmployee)
+  // Agrega estas funciones:
+  // Función para consolidar datos (VERSIÓN CORREGIDA)
+// Función para consolidar datos (VERSIÓN CON MES INICIO Y MES FIN POR PERÍODO)
+
+// Función para consolidar datos (VERSIÓN CORREGIDA - SIN PERÍODOS VACÍOS)
+const consolidarDatosEmpleado = () => {
+  if (!selectedEmployee) return [];
+  
+  // 1. Extraer todos los períodos reales de cada histórico
+  const extraerPeriodos = (historico, claveValor, claveComision = "") => {
+    const periodos = [];
+    
+    if (Array.isArray(historico)) {
+      historico.forEach(item => {
+        if (item.mesInicio) {
+          periodos.push({
+            mesInicio: formatDate(item.mesInicio),
+            mesFin: item.mesFin ? formatDate(item.mesFin) : "N/A",
+            valor: item[claveValor] || "",
+            comision: claveComision ? item[claveComision] || "" : ""
+          });
+        }
+      });
+    }
+    
+    return periodos;
+  };
+  
+  const periodosPuestos = extraerPeriodos(datosPuestos, "CARGO");
+  const periodosSueldos = extraerPeriodos(datosSueldos, "sueldoFijo");
+  const periodosAFP = extraerPeriodos(datosAFP, "SP", "tipoComision");
+  const periodosAsignacion = extraerPeriodos(datosAsigFam, "asignacion");
+  
+  console.log("=== PERÍODOS EXTRAÍDOS ===");
+  console.log("Puestos:", periodosPuestos);
+  console.log("Sueldos:", periodosSueldos);
+  console.log("AFP:", periodosAFP);
+  console.log("Asignación:", periodosAsignacion);
+  
+  // 2. Obtener TODOS los meses donde hay cambios REALES (solo inicio de períodos)
+  const mesesDeCambioReal = new Set();
+  
+  // Solo agregar meses de INICIO (no de fin)
+  [periodosPuestos, periodosSueldos, periodosAFP, periodosAsignacion].forEach(periodos => {
+    periodos.forEach(p => {
+      if (p.mesInicio && p.mesInicio !== "N/A") {
+        mesesDeCambioReal.add(p.mesInicio);
+      }
+    });
+  });
+  
+  // Ordenar meses de cambio
+  const mesesCambioOrdenados = Array.from(mesesDeCambioReal).sort((a, b) => {
+    const [mesA, anioA] = a.split('/').map(Number);
+    const [mesB, anioB] = b.split('/').map(Number);
+    return (anioA - anioB) || (mesA - mesB);
+  });
+  
+  console.log("Meses de cambio real:", mesesCambioOrdenados);
+  
+  // 3. Función para convertir mes a número
+  const mesANumero = (mes) => {
+    if (mes === "N/A") return Infinity;
+    const [mesStr, anioStr] = mes.split('/').map(Number);
+    return anioStr * 100 + mesStr;
+  };
+  
+  // 4. Función para encontrar valor vigente en un mes específico
+  const encontrarValorVigente = (fecha, periodos, esComision = false) => {
+    const fechaNum = mesANumero(fecha);
+    
+    for (const periodo of periodos) {
+      const inicioNum = mesANumero(periodo.mesInicio);
+      const finNum = mesANumero(periodo.mesFin);
+      
+      if (fechaNum >= inicioNum && fechaNum <= finNum) {
+        return esComision ? periodo.comision : periodo.valor;
+      }
+    }
+    
+    return esComision ? "" : (periodos === periodosAsignacion ? "NO" : "");
+  };
+  
+  // 5. Crear filas SOLO para períodos entre cambios reales
+  const filasConsolidadas = [];
+  
+  for (let i = 0; i < mesesCambioOrdenados.length; i++) {
+    const mesInicio = mesesCambioOrdenados[i];
+    let mesFin = "N/A";
+    
+    // Determinar el mesFin (si hay siguiente cambio, es el mes anterior a ese cambio)
+    if (i < mesesCambioOrdenados.length - 1) {
+      const siguienteCambio = mesesCambioOrdenados[i + 1];
+      const [mesSig, anioSig] = siguienteCambio.split('/').map(Number);
+      
+      // Calcular mes anterior al siguiente cambio
+      let mesFinNum = mesSig - 1;
+      let anioFinNum = anioSig;
+      
+      if (mesFinNum < 1) {
+        mesFinNum = 12;
+        anioFinNum -= 1;
+      }
+      
+      mesFin = `${mesFinNum.toString().padStart(2, '0')}/${anioFinNum}`;
+    }
+    
+    // Obtener valores vigentes en este período
+    const cargo = encontrarValorVigente(mesInicio, periodosPuestos);
+    const sueldo = encontrarValorVigente(mesInicio, periodosSueldos);
+    const sistemaPension = encontrarValorVigente(mesInicio, periodosAFP);
+    const tipoComision = encontrarValorVigente(mesInicio, periodosAFP, true);
+    const asignacion = encontrarValorVigente(mesInicio, periodosAsignacion);
+    
+    // Solo crear fila si hay al menos un valor no vacío
+    const tieneDatos = cargo || sueldo || sistemaPension || asignacion !== "NO";
+    
+    if (tieneDatos) {
+      // Calcular edad
+      const calcularEdad = (mes) => {
+        if (!selectedEmployee.fecNacimiento) return selectedEmployee.Edad || 0;
+        
+        const [mesNum, anioNum] = mes.split('/').map(Number);
+        const fechaNac = new Date(selectedEmployee.fecNacimiento);
+        const fechaRef = new Date(anioNum, mesNum - 1, 1);
+        
+        let edad = fechaRef.getFullYear() - fechaNac.getFullYear();
+        const diffMes = fechaRef.getMonth() - fechaNac.getMonth();
+        
+        if (diffMes < 0 || (diffMes === 0 && fechaRef.getDate() < fechaNac.getDate())) {
+          edad--;
+        }
+        
+        return edad;
+      };
+      
+      const edad = calcularEdad(mesInicio);
+      
+      filasConsolidadas.push({
+        dni: selectedEmployee.documento,
+        codigo: selectedEmployee.CODIGO,
+        nombre: selectedEmployee.nombreCompleto,
+        edad: edad,
+        correo: selectedEmployee.correo,
+        telefono: selectedEmployee.telefono,
+        estado: selectedEmployee.estadoLaboral,
+        fechaIngreso: selectedEmployee.fecIngreso?.split('T')[0] || "",
+        fechaNacimiento: selectedEmployee.fecNacimiento?.split('T')[0] || "",
+        direccion: selectedEmployee.direccion,
+        departamento: selectedEmployee.departamento,
+        provincia: selectedEmployee.provincia,
+        distrito: selectedEmployee.distrito,
+        estadoCivil: selectedEmployee.estadoCivil,
+        numHijos: selectedEmployee.nroHijos,
+        cantIngresos: selectedEmployee.CantidadIngresos,
+        mesInicio: mesInicio,
+        mesFin: mesFin,
+        cargo: cargo,
+        sistemaPension: sistemaPension,
+        tipoComision: tipoComision,
+        sueldo: sueldo,
+        asignacionFamiliar: asignacion
+      });
+    }
+  }
+  
+  console.log("=== FILAS GENERADAS ===");
+  filasConsolidadas.forEach((fila, idx) => {
+    console.log(`Fila ${idx + 1}: ${fila.mesInicio} - ${fila.mesFin} | Cargo: ${fila.cargo} | Sueldo: ${fila.sueldo} | SP: ${fila.sistemaPension}`);
+  });
+  
+  return filasConsolidadas;
+};
+
+  // Función para exportar a Excel
+  // Función para exportar a Excel
+const handleExportarClick = async () => {
+  try {
+    setExportando(true);
+    
+    // 1. Consolidar datos
+    const datosConsolidados = consolidarDatosEmpleado();
+    
+    if (datosConsolidados.length === 0) {
+      alert("No hay datos para exportar");
+      setExportando(false);
+      return;
+    }
+    
+    console.log("=== DATOS PARA EXPORTAR ===");
+    console.log(datosConsolidados);
+    
+    // 2. Importar XLSX dinámicamente
+    const XLSX = await import('xlsx');
+    
+    // 3. DEFINIR LAS COLUMNAS CON MES INICIO Y MES FIN
+    const columnas = [
+      { header: "DNI", key: "dni" },
+      { header: "Código", key: "codigo" },
+      { header: "Nombre", key: "nombre" },
+      { header: "Edad", key: "edad" },
+      { header: "Correo", key: "correo" },
+      { header: "Teléfono", key: "telefono" },
+      { header: "Estado", key: "estado" },
+      { header: "Fecha Ingreso", key: "fechaIngreso" },
+      { header: "Fecha Nacimiento", key: "fechaNacimiento" },
+      { header: "Dirección", key: "direccion" },
+      { header: "Departamento", key: "departamento" },
+      { header: "Provincia", key: "provincia" },
+      { header: "Distrito", key: "distrito" },
+      { header: "Estado Civil", key: "estadoCivil" },
+      { header: "Num.Hijos", key: "numHijos" },
+      { header: "Cant.Ingresos", key: "cantIngresos" },
+      // AQUÍ ESTÁN LAS COLUMNAS DE MES INICIO Y MES FIN
+      { header: "Mes Inicio", key: "mesInicio" },
+      { header: "Mes Fin", key: "mesFin" },
+      { header: "Cargo", key: "cargo" },
+      { header: "Sistema Pensión", key: "sistemaPension" },
+      { header: "Tipo Comisión", key: "tipoComision" },
+      { header: "Sueldo", key: "sueldo" },
+      { header: "Asignación Familiar", key: "asignacionFamiliar" }
+    ];
+    
+    // 4. Crear array de datos para Excel
+    const wsData = [
+      columnas.map(col => col.header), // Encabezados
+      ...datosConsolidados.map(fila => {
+        // Mapear cada fila según las columnas definidas
+        return columnas.map(col => {
+          const valor = fila[col.key];
+          
+          // Formatear valores específicos si es necesario
+          if (col.key === "sueldo" && valor === 0) {
+            return "";
+          }
+          if (col.key === "asignacionFamiliar" && valor === "NO") {
+            return "";
+          }
+          
+          return valor !== undefined ? valor : "";
+        });
+      })
+    ];
+    
+    console.log("=== DATOS PARA EXCEL ===");
+    console.log(wsData);
+    
+    // 5. Crear libro y hoja de Excel
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    
+    // 6. Ajustar anchos de columnas
+    const wscols = columnas.map(col => {
+      // Ajustar ancho según el tipo de dato
+      if (col.key === "nombre" || col.key === "direccion") {
+        return { wch: 30 };
+      } else if (col.key === "cargo") {
+        return { wch: 35 };
+      } else if (col.key === "correo") {
+        return { wch: 25 };
+      } else {
+        return { wch: 15 };
+      }
+    });
+    ws['!cols'] = wscols;
+    
+    // 7. Agregar hoja al libro
+    const nombreHoja = selectedEmployee.nombreCompleto.substring(0, 31); // Máximo 31 caracteres
+    XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+    
+    // 8. Generar nombre del archivo
+    const fechaActual = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `historico_${selectedEmployee.documento}_${fechaActual}.xlsx`;
+    
+    // 9. Descargar archivo
+    XLSX.writeFile(wb, nombreArchivo);
+    
+    console.log("✅ Archivo exportado exitosamente:", nombreArchivo);
+    console.log("Columnas exportadas:", columnas.map(c => c.header));
+    
+  } catch (error) {
+    console.error("❌ Error al exportar:", error);
+    alert("Hubo un error al exportar el archivo. Por favor, intente nuevamente.");
+  } finally {
+    setExportando(false);
+  }
+};
+
   const getFieldLabel = (selectedField) => {
     switch (selectedField) {
       case "salary":
@@ -687,8 +1015,7 @@ export const ListarEmpleados = () => {
         return (
           <div className="space-y-4 py-4">
             <DialogDescription className="text-center">
-              Complete los datos para modificar{" "}
-              {getFieldLabel(selectedField)}
+              Complete los datos para modificar {getFieldLabel(selectedField)}
             </DialogDescription>
 
             {selectedField === "salary" && (
@@ -733,11 +1060,11 @@ export const ListarEmpleados = () => {
                       !formData.salary.valid && (
                         <p className="text-sm text-red-500">
                           {parseFloat(formData.salary.amount) ===
-                            ultimoSueldo.sueldoFijo
+                          ultimoSueldo.sueldoFijo
                             ? "El sueldo que quiere ingresar es el mismo al sueldo actual"
-                            : (parseFloat(formData.salary.amount) < 1200
-                              ? "El monto mínimo permitido es 1200"
-                              : "")}
+                            : parseFloat(formData.salary.amount) < 1200
+                            ? "El monto mínimo permitido es 1200"
+                            : ""}
                         </p>
                       )}
                   </div>
@@ -759,7 +1086,7 @@ export const ListarEmpleados = () => {
                                 prev.salary.amount !== "" &&
                                 parseFloat(prev.salary.amount) >= 1200 &&
                                 parseFloat(prev.salary.amount) !==
-                                ultimoSueldo.sueldoFijo &&
+                                  ultimoSueldo.sueldoFijo &&
                                 hasDate,
                             },
                           }));
@@ -840,9 +1167,9 @@ export const ListarEmpleados = () => {
                   <p className="text-sm text-red-500">
                     {!formData.position.title
                       ? "Por favor seleccione un cargo"
-                      : (!formData.position.cod_mes
-                        ? "Por favor seleccione una fecha"
-                        : "Complete todos los campos requeridos")}
+                      : !formData.position.cod_mes
+                      ? "Por favor seleccione una fecha"
+                      : "Complete todos los campos requeridos"}
                   </p>
                 )}
                 <Dialog
@@ -932,7 +1259,7 @@ export const ListarEmpleados = () => {
                           No
                         </Button>
                       </div>
-                    ) : (ultimoAsigFam.asignacion === "SI" ? (
+                    ) : ultimoAsigFam.asignacion === "SI" ? (
                       <div>
                         <Button
                           variant={
@@ -968,7 +1295,7 @@ export const ListarEmpleados = () => {
                           Sí
                         </Button>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
@@ -997,7 +1324,7 @@ export const ListarEmpleados = () => {
               </div>
             )}
 
-            {selectedField === 'personalData' && (
+            {selectedField === "personalData" && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
@@ -1005,7 +1332,11 @@ export const ListarEmpleados = () => {
                     <Input
                       id="correo"
                       value={formData.personalData.correo}
-                      onChange={(e) => handleFieldChange('personalData', { correo: e.target.value })}
+                      onChange={(e) =>
+                        handleFieldChange("personalData", {
+                          correo: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -1013,7 +1344,11 @@ export const ListarEmpleados = () => {
                     <Input
                       id="telefono"
                       value={formData.personalData.telefono}
-                      onChange={(e) => handleFieldChange('personalData', { telefono: e.target.value })}
+                      onChange={(e) =>
+                        handleFieldChange("personalData", {
+                          telefono: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -1024,7 +1359,10 @@ export const ListarEmpleados = () => {
                       checked={editarUbicacion}
                       onCheckedChange={(checked) => setEditarUbicacion(checked)}
                     />
-                    <Label htmlFor="editarUbicacion" className="text-sm font-bold">
+                    <Label
+                      htmlFor="editarUbicacion"
+                      className="text-sm font-bold"
+                    >
                       Modificar dirección y ubicación
                     </Label>
                   </div>
@@ -1036,13 +1374,21 @@ export const ListarEmpleados = () => {
                       <Input
                         id="direccion"
                         value={formData.personalData.direccion}
-                        onChange={(e) => handleFieldChange('personalData', { direccion: e.target.value })}
+                        onChange={(e) =>
+                          handleFieldChange("personalData", {
+                            direccion: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <Label className="text-sm font-medium">Dirección actual:</Label>
-                      <p className="text-sm">{selectedEmployee?.direccion || 'N/A'}</p>
+                      <Label className="text-sm font-medium">
+                        Dirección actual:
+                      </Label>
+                      <p className="text-sm">
+                        {selectedEmployee?.direccion || "N/A"}
+                      </p>
                     </div>
                   )}
 
@@ -1053,10 +1399,10 @@ export const ListarEmpleados = () => {
                       <Select
                         value={formData.personalData.dep}
                         onValueChange={(value) => {
-                          handleFieldChange('personalData', {
+                          handleFieldChange("personalData", {
                             dep: value,
-                            prov: '', // Resetear provincia al cambiar departamento
-                            dist: ''  // Resetear distrito al cambiar departamento
+                            prov: "", // Resetear provincia al cambiar departamento
+                            dist: "", // Resetear distrito al cambiar departamento
                           });
                         }}
                       >
@@ -1065,15 +1411,21 @@ export const ListarEmpleados = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {deps.map((dep) => (
-                            <SelectItem key={dep.id} value={dep.name}>{dep.name}</SelectItem>
+                            <SelectItem key={dep.id} value={dep.name}>
+                              {dep.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <Label className="text-sm font-medium">Departamento actual:</Label>
-                      <p className="text-sm">{selectedEmployee?.departamento || 'N/A'}</p>
+                      <Label className="text-sm font-medium">
+                        Departamento actual:
+                      </Label>
+                      <p className="text-sm">
+                        {selectedEmployee?.departamento || "N/A"}
+                      </p>
                     </div>
                   )}
 
@@ -1084,23 +1436,27 @@ export const ListarEmpleados = () => {
                       <Select
                         value={formData.personalData.prov}
                         onValueChange={(value) => {
-                          handleFieldChange('personalData', {
+                          handleFieldChange("personalData", {
                             prov: value,
-                            dist: '' // Resetear distrito al cambiar provincia
+                            dist: "", // Resetear distrito al cambiar provincia
                           });
                         }}
                         disabled={!formData.personalData.dep}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={
-                            formData.personalData.dep
-                              ? "Seleccione provincia"
-                              : "Primero seleccione departamento"
-                          } />
+                          <SelectValue
+                            placeholder={
+                              formData.personalData.dep
+                                ? "Seleccione provincia"
+                                : "Primero seleccione departamento"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {provincias.map((prov) => (
-                            <SelectItem key={prov.id} value={prov.name}>{prov.name}</SelectItem>
+                            <SelectItem key={prov.id} value={prov.name}>
+                              {prov.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -1108,8 +1464,12 @@ export const ListarEmpleados = () => {
                   )}
                   {!editarUbicacion && (
                     <div className="space-y-1">
-                      <Label className="text-sm font-medium">Provincia actual:</Label>
-                      <p className="text-sm">{selectedEmployee?.provincia || 'N/A'}</p>
+                      <Label className="text-sm font-medium">
+                        Provincia actual:
+                      </Label>
+                      <p className="text-sm">
+                        {selectedEmployee?.provincia || "N/A"}
+                      </p>
                     </div>
                   )}
 
@@ -1119,19 +1479,25 @@ export const ListarEmpleados = () => {
                       <Label htmlFor="dist">Distrito*</Label>
                       <Select
                         value={formData.personalData.dist}
-                        onValueChange={(value) => handleFieldChange('personalData', { dist: value })}
+                        onValueChange={(value) =>
+                          handleFieldChange("personalData", { dist: value })
+                        }
                         disabled={!formData.personalData.prov}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={
-                            formData.personalData.prov
-                              ? "Seleccione distrito"
-                              : "Primero seleccione provincia"
-                          } />
+                          <SelectValue
+                            placeholder={
+                              formData.personalData.prov
+                                ? "Seleccione distrito"
+                                : "Primero seleccione provincia"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {distritos.map((dist) => (
-                            <SelectItem key={dist.id} value={dist.name}>{dist.name}</SelectItem>
+                            <SelectItem key={dist.id} value={dist.name}>
+                              {dist.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -1139,8 +1505,12 @@ export const ListarEmpleados = () => {
                   )}
                   {!editarUbicacion && (
                     <div className="space-y-1">
-                      <Label className="text-sm font-medium">Distrito actual:</Label>
-                      <p className="text-sm">{selectedEmployee?.distrito || 'N/A'}</p>
+                      <Label className="text-sm font-medium">
+                        Distrito actual:
+                      </Label>
+                      <p className="text-sm">
+                        {selectedEmployee?.distrito || "N/A"}
+                      </p>
                     </div>
                   )}
 
@@ -1151,9 +1521,11 @@ export const ListarEmpleados = () => {
                       type="number"
                       min="0"
                       value={formData.personalData.nroHijos}
-                      onChange={(e) => handleFieldChange('personalData', {
-                        nroHijos: Math.max(0, parseInt(e.target.value) || 0)
-                      })}
+                      onChange={(e) =>
+                        handleFieldChange("personalData", {
+                          nroHijos: Math.max(0, parseInt(e.target.value) || 0),
+                        })
+                      }
                     />
                   </div>
 
@@ -1162,7 +1534,11 @@ export const ListarEmpleados = () => {
                     <Label>Estado Civil*</Label>
                     <Select
                       value={formData.personalData.estadoCivil}
-                      onValueChange={(value) => handleFieldChange('personalData', { estadoCivil: value })}
+                      onValueChange={(value) =>
+                        handleFieldChange("personalData", {
+                          estadoCivil: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione estado civil" />
@@ -1177,7 +1553,9 @@ export const ListarEmpleados = () => {
                   </div>
                 </div>
                 {!formData.personalData.valid && (
-                  <p className="text-sm text-red-500">Por favor complete todos los campos requeridos</p>
+                  <p className="text-sm text-red-500">
+                    Por favor complete todos los campos requeridos
+                  </p>
                 )}
               </div>
             )}
@@ -1197,18 +1575,26 @@ export const ListarEmpleados = () => {
                 <>
                   <div className="flex justify-between w-full">
                     <p className="text-red-500">
-                      <span className="font-medium text-black">Anterior sueldo:</span>{" "}
+                      <span className="font-medium text-black">
+                        Anterior sueldo:
+                      </span>{" "}
                       {ultimoSueldo.sueldoFijo}
                     </p>
                     <p className="text-green-500">
-                      <span className="font-medium text-black">Nuevo sueldo:</span>{" "}
+                      <span className="font-medium text-black">
+                        Nuevo sueldo:
+                      </span>{" "}
                       {formData.salary.amount}
                     </p>
                   </div>
                   <div>
                     <p>
                       <span className="font-medium">Codigo Mes: </span>
-                      {formData.salary.cod_mes.split("-").reverse().slice(1).join("-")}
+                      {formData.salary.cod_mes
+                        .split("-")
+                        .reverse()
+                        .slice(1)
+                        .join("-")}
                     </p>
                   </div>
                 </>
@@ -1221,7 +1607,11 @@ export const ListarEmpleados = () => {
                   </p>
                   <p>
                     <span className="font-medium">Codigo Mes:</span>{" "}
-                    {formData.position.cod_mes.split("-").reverse().slice(1).join("-")}
+                    {formData.position.cod_mes
+                      .split("-")
+                      .reverse()
+                      .slice(1)
+                      .join("-")}
                   </p>
                 </>
               )}
@@ -1229,17 +1619,25 @@ export const ListarEmpleados = () => {
                 <>
                   <div className="flex justify-between pr-4">
                     <p className="text-red-500">
-                      <span className="font-medium text-black">Anterior Asignacion Familiar:</span>{" "}
+                      <span className="font-medium text-black">
+                        Anterior Asignacion Familiar:
+                      </span>{" "}
                       {selectedEmployee.asignacionFamiliar ? "Sí" : "No"}
                     </p>
                     <p className="text-green-500">
-                      <span className="font-medium text-black">Nueva Asignacion Familiar:</span>{" "}
+                      <span className="font-medium text-black">
+                        Nueva Asignacion Familiar:
+                      </span>{" "}
                       {formData.familyAllowance.hasAllowance ? "Sí" : "No"}
                     </p>
                   </div>
                   <p>
                     <span className="font-medium">Codigo Mes:</span>{" "}
-                    {formData.familyAllowance.cod_mes.split("-").reverse().slice(1).join("-")}
+                    {formData.familyAllowance.cod_mes
+                      .split("-")
+                      .reverse()
+                      .slice(1)
+                      .join("-")}
                   </p>
                 </>
               )}
@@ -1297,15 +1695,21 @@ export const ListarEmpleados = () => {
                     </p>
                     <p>
                       <span className="font-medium">Departamento:</span>{" "}
-                      {formData.personalData.dep !== "" ? formData.personalData.dep : selectedEmployee.departamento}
+                      {formData.personalData.dep !== ""
+                        ? formData.personalData.dep
+                        : selectedEmployee.departamento}
                     </p>
                     <p>
                       <span className="font-medium">Provincia:</span>{" "}
-                      {formData.personalData.prov !== "" ? formData.personalData.prov : selectedEmployee.provincia}
+                      {formData.personalData.prov !== ""
+                        ? formData.personalData.prov
+                        : selectedEmployee.provincia}
                     </p>
                     <p>
                       <span className="font-medium">Distrito:</span>{" "}
-                      {formData.personalData.dist !== "" ? formData.personalData.dist : selectedEmployee.distrito}
+                      {formData.personalData.dist !== ""
+                        ? formData.personalData.dist
+                        : selectedEmployee.distrito}
                     </p>
                     <p>
                       <span className="font-medium">Número de hijos:</span>{" "}
@@ -1335,10 +1739,11 @@ export const ListarEmpleados = () => {
       <div className="flex flex-col md:flex-row gap-4 py-8 w-full animate-fade-in">
         {/* Fila de filtros */}
         <div className="flex flex-col sm:flex-row gap-4 w-full">
-
           {/* Buscador */}
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar empleado</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Buscar empleado
+            </label>
             <div className="relative group">
               <Input
                 type="text"
@@ -1355,11 +1760,13 @@ export const ListarEmpleados = () => {
 
           {/* Rango de fechas */}
           <div className="flex-1 min-w-[250px]">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rango de fechas</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Rango de fechas
+            </label>
             <RangePicker
               onChange={(dates) => {
                 if (dates) {
-                  dates = dates.map(date => date.format("YYYY-MM-DD"));
+                  dates = dates.map((date) => date.format("YYYY-MM-DD"));
                   setFiltroDias(dates);
                 }
               }}
@@ -1370,7 +1777,9 @@ export const ListarEmpleados = () => {
 
           {/* Estado del empleado */}
           <div className="flex-1 min-w-[180px]">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Estado
+            </label>
             <Select
               value={estadoEmpleado}
               onValueChange={(value) => setEstadoEmpleado(value)}
@@ -1384,14 +1793,18 @@ export const ListarEmpleados = () => {
                   className="flex items-center hover:bg-indigo-50 focus:bg-indigo-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors duration-200"
                 >
                   <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-                  <span className="text-gray-800 dark:text-gray-200">VIGENTE</span>
+                  <span className="text-gray-800 dark:text-gray-200">
+                    VIGENTE
+                  </span>
                 </SelectItem>
                 <SelectItem
                   value="CESADO"
                   className="flex items-center hover:bg-indigo-50 focus:bg-indigo-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors duration-200"
                 >
                   <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>
-                  <span className="text-gray-800 dark:text-gray-200">CESADO</span>
+                  <span className="text-gray-800 dark:text-gray-200">
+                    CESADO
+                  </span>
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -1438,7 +1851,11 @@ export const ListarEmpleados = () => {
                     <TableCell>{employee.CODIGO}</TableCell>
                     <TableCell>{employee.nombreCompleto}</TableCell>
                     <TableCell>{employee.documento}</TableCell>
-                    <TableCell>{employee.fecIngreso ? employee.fecIngreso.split("T")[0] : "N/A"}</TableCell>
+                    <TableCell>
+                      {employee.fecIngreso
+                        ? employee.fecIngreso.split("T")[0]
+                        : "N/A"}
+                    </TableCell>
                     <TableCell>{employee.estadoLaboral}</TableCell>
                     <TableCell>
                       <Button
@@ -1451,21 +1868,18 @@ export const ListarEmpleados = () => {
                       </Button>
                     </TableCell>
                     <TableCell>
-                      {
-                        employee.estadoLaboral === "CESADO" ?
-                          (
-                            <div></div>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-green-600 hover:text-green-800 hover:bg-green-300 cursor-pointer"
-                              onClick={() => openEdit(employee)}
-                            >
-                              <Pencil className="h-5 w-5" />
-                            </Button>
-                          )
-                      }
+                      {employee.estadoLaboral === "CESADO" ? (
+                        <div></div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-green-600 hover:text-green-800 hover:bg-green-300 cursor-pointer"
+                          onClick={() => openEdit(employee)}
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1502,9 +1916,41 @@ export const ListarEmpleados = () => {
             selectedEmployee && (
               <div className="space-y-2">
                 <div className="border border-blue-200 rounded-lg p-2 bg-neutral-100">
-                  <h3 className="font-bold text-center mb-2 text-slate-700">
-                    DATOS GENERALES
-                  </h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-700 text-lg">
+                      DATOS GENERALES
+                    </h3>
+                    <Button
+                      onClick={handleExportarClick}
+                      disabled={exportando || !selectedEmployee}
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition-all duration-300 shadow hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {exportando ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          Exportando...
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          Exportar Histórico
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="space-y-1">
                       <p>
@@ -1577,7 +2023,9 @@ export const ListarEmpleados = () => {
                       </p>
                       <p>
                         <span className="font-semibold">Fech. Nacimiento:</span>{" "}
-                        {selectedEmployee.fecNacimiento ? selectedEmployee.fecNacimiento.split("T")[0] : "N/A"}
+                        {selectedEmployee.fecNacimiento
+                          ? selectedEmployee.fecNacimiento.split("T")[0]
+                          : "N/A"}
                       </p>
                     </div>
                   </div>
@@ -1760,7 +2208,9 @@ export const ListarEmpleados = () => {
                               <TableCell>
                                 {formatDate(cese.fecIngreso)}
                               </TableCell>
-                              <TableCell>{cese.fecCese.split("T")[0]}</TableCell>
+                              <TableCell>
+                                {cese.fecCese.split("T")[0]}
+                              </TableCell>
                               <TableCell>{cese.motivo}</TableCell>
                             </TableRow>
                           ))}
@@ -1797,10 +2247,9 @@ export const ListarEmpleados = () => {
             <DialogTitle className="text-xl font-bold text-center text-yellow-800">
               {currentStep === 1
                 ? "¿QUÉ CAMPO REQUIERE MODIFICAR?"
-                : (currentStep === 2
-                  ? "MODIFICAR DATOS"
-                  : "CONFIRMAR CAMBIOS")}
-
+                : currentStep === 2
+                ? "MODIFICAR DATOS"
+                : "CONFIRMAR CAMBIOS"}
             </DialogTitle>
             <div className="py-2">
               <Progress value={(currentStep / 3) * 100} className="h-2" />
@@ -1873,7 +2322,9 @@ export const ListarEmpleados = () => {
       <Dialog open={isLoading}>
         <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
-            <DialogTitle className="text-center">Procesando actualizacion</DialogTitle>
+            <DialogTitle className="text-center">
+              Procesando actualizacion
+            </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center justify-center py-12">
             <div className="relative w-16 h-16">
@@ -1887,16 +2338,20 @@ export const ListarEmpleados = () => {
         </DialogContent>
       </Dialog>
       {/* MODAL DE SUCCES */}
-      <Dialog open={isSuccess} >
+      <Dialog open={isSuccess}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-center">Datos Actualizados</DialogTitle>
+            <DialogTitle className="text-center">
+              Datos Actualizados
+            </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center py-4">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <Check className="h-8 w-8 text-green-600" />
             </div>
-            <p className="text-gray-600 text-center">Los datos del empleado se han actualizado correctamente.</p>
+            <p className="text-gray-600 text-center">
+              Los datos del empleado se han actualizado correctamente.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
