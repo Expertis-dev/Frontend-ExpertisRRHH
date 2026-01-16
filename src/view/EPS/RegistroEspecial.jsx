@@ -240,7 +240,8 @@ export const RegistroEspecial = () => {
                     idPlan: planObj?.idPlanEPS,
                     mesInicio: data.periodo,
                     idAfiliadoDependiente: depId,
-                    parentesco: parentescos[depId] || "HIJO"
+                    parentesco: parentescos[depId] || "HIJO",
+                    tipoRegistro: "E"
                 };
                 console.log(`PAYLOAD ASOCIACIÓN DEPENDIENTE ESPECIAL ${depId}:`, payloadAsoc);
                 await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/asosciarDependiente`, payloadAsoc);

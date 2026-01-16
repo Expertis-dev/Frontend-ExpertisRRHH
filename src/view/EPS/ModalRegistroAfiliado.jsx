@@ -365,7 +365,8 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                         idPlan: selectedPlanObj?.idPlanEPS,
                         mesInicio: data.periodo,
                         idAfiliadoDependiente: depId, // depId ya es el idAfiliado por el getDepKey
-                        parentesco: parentescos[depId]
+                        parentesco: parentescos[depId],
+                        tipoRegistro: "R"
                     };
                     console.log(`PAYLOAD ASOCIACIÓN DEPENDIENTE ${depId} (A enviar a /asosciarDependiente):`, payloadAsoc);
                     await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/asosciarDependiente`, payloadAsoc);
