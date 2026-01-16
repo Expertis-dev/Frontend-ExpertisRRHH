@@ -11,11 +11,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { EditarDependiente } from "./EditarDependiente";
 import { toast } from "sonner";
-import { ModalEliminarDependiente } from "./ModalEliminarDependiente ";
 import axios from "axios";
 
 export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
-    const [isEliminar, setIsEliminar] = useState(false)
     const [historicoAfiliado, setHistoricoAfiliado] = useState([])
     const [dependientes, setDependientes] = useState([])
     const [selectDependiente, setSelectDependiente] = useState({})
@@ -46,7 +44,7 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                 }
             };
             fetchHistorial();
-        } else{
+        } else {
             setHistoricoAfiliado([]);
             setDependientes([]);
             setSelectHistoricoAfi(null);
@@ -56,10 +54,11 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
         if (isVer && selectHistoricoAfi) {
             const fetchDependientes = async () => {
                 try {
-                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/obtenerDependientesPorIdMovEPS`, 
-                    { 
-                        idAfiliado: selectHistoricoAfi.idAfiliado,
-                        idMovEPS: selectHistoricoAfi.idMovEPS }); // Reemplaza con tu endpoint real
+                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/obtenerDependientesPorIdMovEPS`,
+                        {
+                            idAfiliado: selectHistoricoAfi.idAfiliado,
+                            idMovEPS: selectHistoricoAfi.idMovEPS
+                        }); // Reemplaza con tu endpoint real
                     console.log("Respuesta del servidor:", response.data);
                     setDependientes(response.data); // Asume que la respuesta es un array de afiliados
                 } catch (error) {
@@ -143,7 +142,7 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {historicoAfiliado && historicoAfiliado.length > 0 ?
                                         historicoAfiliado.map((item, i) => (
-                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={()=>setSelectHistoricoAfi(item)}>
+                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={() => setSelectHistoricoAfi(item)}>
                                                 <td className="p-1">{item[""] || "-"}</td>
                                                 <td className="p-1">{item.tipo || "-"}</td>
                                                 <td className="p-1">{item.nombrePlan || "-"}</td>
@@ -174,73 +173,62 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                             Dependientes
                         </h3>
                     </div>
-                        {/* Listar dependientes */}
-                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                                <div className="overflow-x-auto max-h-[250px]">
-                                    <table className="min-w-full text-sm">
-                                        <thead className="bg-gray-100 dark:bg-gray-800">
-                                            <tr>
-                                                <th className="p-1 text-left font-medium">Nombre Completo</th>
-                                                <th className="p-1 text-left font-medium">Parentesco</th>
-                                                <th className="p-1 text-left font-medium">Sexo</th>
-                                                <th className="p-1 text-left font-medium">Fecha Nac.</th>
-                                                <th className="p-1 text-left font-medium">Acciones</th>
+                    {/* Listar dependientes */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto max-h-[250px]">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-gray-100 dark:bg-gray-800">
+                                    <tr>
+                                        <th className="p-1 text-left font-medium">Nombre Completo</th>
+                                        <th className="p-1 text-left font-medium">Parentesco</th>
+                                        <th className="p-1 text-left font-medium">Sexo</th>
+                                        <th className="p-1 text-left font-medium">Fecha Nac.</th>
+                                        <th className="p-1 text-left font-medium">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {dependientes && dependientes.length > 0 ?
+                                        dependientes.map((dep, i) => (
+                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                                <td className="p-1 font-medium">{dep.nombreAfiliado || "-"}</td>
+                                                <td className="p-1">
+                                                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs">
+                                                        {dep.parentesco || "-"}
+                                                    </span>
+                                                </td>
+                                                <td className="p-1">{dep.sexo || "-"}</td>
+                                                <td className="p-1">{dep.fecNacimiento.split("T")[0] || "-"}</td>
+                                                <td className="p-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setSelectDependiente(dep);
+                                                                setIsEditarDep(true);
+                                                            }}
+                                                            className="h-8 px-2 text-green-600 border-green-200 hover:bg-green-50"
+                                                        >
+                                                            <Pencil className="h-3 w-3 text-green-700" />
+                                                        </Button>
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                            {dependientes && dependientes.length > 0 ?
-                                                dependientes.map((dep, i) => (
-                                                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                                        <td className="p-1 font-medium">{dep.nombreAfiliado || "-"}</td>
-                                                        <td className="p-1">
-                                                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs">
-                                                                {dep.parentesco || "-"}
-                                                            </span>
-                                                        </td>
-                                                        <td className="p-1">{dep.sexo || "-"}</td>
-                                                        <td className="p-1">{dep.fecNacimiento.split("T")[0] || "-"}</td>
-                                                        <td className="p-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => {
-                                                                        setSelectDependiente(dep);
-                                                                        setIsEditarDep(true);
-                                                                    }}
-                                                                    className="h-8 px-2 text-green-600 border-green-200 hover:bg-green-50"
-                                                                >
-                                                                    <Pencil className="h-3 w-3 text-green-700" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => {
-                                                                        setSelectDependiente(dep);
-                                                                        setIsEliminar(true);
-                                                                    }}
-                                                                    className="h-8 px-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
-                                                                >
-                                                                    <Trash className="h-3 w-3 text-red-700" />
-                                                                </Button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )) : (
-                                                    <tr>
-                                                        <td colSpan={5} className="p-6 text-center text-gray-500 dark:text-gray-400">
-                                                            <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                                            <p>No se encontraron dependientes</p>
-                                                        </td>
-                                                    </tr>
-                                                )
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan={5} className="p-6 text-center text-gray-500 dark:text-gray-400">
+                                                    <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                                    <p>No se encontraron dependientes</p>
+                                                </td>
+                                            </tr>
+                                        )
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-                        {/* Registrar dependiente 
+                    {/* Registrar dependiente 
                             <form onSubmit={handleRegistrarDependiente} className="">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                     <FormField
@@ -339,14 +327,6 @@ export const DetalleAfiliado = ({ isVer, selectAfiliado, setIsVer }) => {
                 selectDependiente={selectDependiente}
                 isEditarDep={isEditarDep}
                 setIsEditarDep={setIsEditarDep}
-            />
-            <ModalEliminarDependiente
-                isEliminar={isEliminar}
-                setIsEliminar={setIsEliminar}
-                selectDependiente={selectDependiente}
-                onConfirmarEliminacion={(dependiente) => {
-                    console.log("Eliminando dependiente:", dependiente);
-                }}
             />
         </Dialog>
     )

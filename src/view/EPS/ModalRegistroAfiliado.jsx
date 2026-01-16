@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Modal, Select, Card, Steps, Tag } from "antd";
+import dayjs from "dayjs";
+import { Modal, Select, Card, Steps, Tag, DatePicker } from "antd";
 import { useData } from "@/provider/Provider";
 import {
     Tabs,
@@ -15,12 +16,16 @@ import {
 } from "@/components/ui/tabs"
 import { CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
+
 const { Option } = Select;
+
 const emptyNuevoDependiente = {
     nombre: "",
     apellidoPaterno: "",
     apellidoMaterno: "",
-    fechaNacimiento: null, // "DD/MM/YYYY"
+    fechaNacimiento: null, // Guardaremos como "YYYY-MM-DD"
     tipoDocumento: "DNI",
     numeroDocumento: "",
     sexo: "",
@@ -42,6 +47,9 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
     const [dependientesOptions, setDependientesOptions] = useState([]);
     const [dependientesSeleccionados, setDependientesSeleccionados] = useState([]);
     const [dependientesLoading, setDependientesLoading] = useState(false);
+    const [dependientesFullData, setDependientesFullData] = useState([]); // Nueva: para guardar toda la data cruda
+    const [parentescos, setParentescos] = useState({}); // Nueva: para guardar parentesco por cada dependiente seleccionado
+    const [activeTab, setActiveTab] = useState("seleccionar"); // Nueva: para controlar el tab activo
 
     const [data, setData] = useState({
         plan: "",
@@ -49,6 +57,7 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
         direccion: "",
         sexo: "M",
         tipoDocumento: "DNI",
+        periodo: null,
     });
 
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -78,6 +87,9 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
         setUsarDependientes(false);
         setDependientesSeleccionados([]);
         setDependientesOptions([]);
+        setDependientesFullData([]);
+        setParentescos({});
+        setActiveTab("seleccionar");
 
         setEmpleadoSeleccionado(null);
         setData((prev) => ({
@@ -87,6 +99,7 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
             direccion: "",
             sexo: "M",
             tipoDocumento: "DNI",
+            periodo: null,
         }));
     }, [isCrear, planDefault.plan, planDefault.monto]);
 
@@ -134,14 +147,17 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
     };
     const handleInputChange = (field, value) => {
         if (field === "fechaNacimiento") {
-            const formatted = value ? dayjs(value).format("DD/MM/YYYY") : null;
+            // value llega como "DD/MM/YYYY" desde el componente DateField
+            // Lo guardamos internamente como "YYYY-MM-DD" para facilitar el envío al backend
+            const formatted = value ? dayjs(value, "DD/MM/YYYY").format("YYYY-MM-DD") : null;
             setNuevoDependiente((p) => ({ ...p, [field]: formatted }));
             return;
         }
         setNuevoDependiente((p) => ({ ...p, [field]: value }));
     };
     const getDepKey = (d) => {
-        // Ajusta el orden si en tu API quieres priorizar otro campo
+        // Priorizamos idAfiliadoEPS que es lo que el backend de asociación requiere
+        if (d?.idAfiliadoEPS != null) return String(d.idAfiliadoEPS);
         if (d?.idAfiliado != null) return String(d.idAfiliado);
         if (d?.idDependiente != null) return String(d.idDependiente);
         if (d?.docAfiliado != null) return String(d.docAfiliado);
@@ -154,6 +170,8 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
         try {
             const resp = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarHistoricoAfiliadosEPS`);
             const lista = resp.data?.recordset ?? resp.data ?? [];
+            console.log("LISTA CRUDA DE DEPENDIENTES (desde API):", lista);
+            setDependientesFullData(lista); // Guardamos la data completa aquí
             const options = lista.map((d) => ({
                 value: getDepKey(d),
                 label: d?.nombreAfiliado
@@ -173,9 +191,7 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
         }
     };
     const planLabel = useMemo(() => {
-        console.log("planEPS disponible:", planEPS);
         const plan = data.plan.split(" - ")[0];
-        console.log("plan extraído:", plan);
         const p = planEPS?.find((x) => x.nombrePlan === plan.trim());
         return p?.label ?? p?.nombrePlan ?? "No seleccionado";
     }, [planEPS, data.plan]);
@@ -209,6 +225,10 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
         console.log(data.plan)
         if (data.plan.trim() === "PLAN BASE ESENCIAL") {
             toast.error("Campo requerido", { description: "Debe seleccionar un plan" });
+            return false;
+        }
+        if (!data.periodo) {
+            toast.error("Campo requerido", { description: "Debe seleccionar un período" });
             return false;
         }
         return true;
@@ -248,20 +268,117 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
         // Llegaste a resumen -> abres confirmación
         if (!validarPaso0()) return;
         if (!validarPaso1()) return;
+
+        // Validar que todos los dependientes seleccionados tengan parentesco
+        const faltanParentescos = dependientesSeleccionados.some(id => !parentescos[id]);
+        if (faltanParentescos) {
+            toast.error("Falta información", { description: "Debe seleccionar el parentesco para todos los dependientes." });
+            return;
+        }
+
         setShowConfirmModal(true);
+    };
+
+    const handleRegistrarNuevoDependiente = async () => {
+        // 1. Validaciones básicas
+        if (!nuevoDependiente.nombre || !nuevoDependiente.numeroDocumento || !nuevoDependiente.sexo) {
+            toast.error("Complete los campos obligatorios (*)");
+            return;
+        }
+
+        // 2. Preparar payload según tu SP
+        const payload = {
+            DOCUMENTO: nuevoDependiente.numeroDocumento,
+            nombres: nuevoDependiente.nombre.trim().toUpperCase(),
+            apellidos: `${nuevoDependiente.apellidoPaterno} ${nuevoDependiente.apellidoMaterno}`.trim().toUpperCase(),
+            // Ya está en formato YYYY-MM-DD en el state
+            fecNacimiento: nuevoDependiente.fechaNacimiento,
+            sexo: nuevoDependiente.sexo === "MASCULINO" ? "MASCULINO" : "FEMENINO"
+        };
+
+        const loadingToast = toast.loading("Registrando persona dependiente...");
+        try {
+            const resp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/registrarDependiente`, payload);
+
+            // Capturamos el ID que retorna tu SP
+            const newId = resp.data?.idAfiliado || resp.data?.recordset?.[0]?.idAfiliado || payload.DOCUMENTO;
+
+            toast.dismiss(loadingToast);
+            toast.success("Dependiente registrado exitosamente");
+
+            // 3. Agregar a la lista usando el ID como Key
+            const newKey = String(newId);
+            const newOption = {
+                value: newKey,
+                label: `${payload.nombres} ${payload.apellidos} (NUEVO)`
+            };
+
+            setDependientesOptions(prev => [newOption, ...prev]);
+            setDependientesFullData(prev => [{
+                ...payload,
+                idAfiliadoEPS: newId, // Guardamos el ID real como idAfiliadoEPS
+                nombreAfiliado: `${payload.nombres} ${payload.apellidos}`,
+                documento: payload.DOCUMENTO
+            }, ...prev]);
+
+            handleDependientesChange([...dependientesSeleccionados, newKey]);
+
+            // Limpiar formulario de nuevo dependiente
+            setNuevoDependiente(emptyNuevoDependiente);
+
+            // Redirigir a la pestaña de "Seleccionar Previos"
+            setActiveTab("seleccionar");
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error("Error al registrar dependiente", {
+                description: error.response?.data?.message || "No se pudo registrar a la persona."
+            });
+        }
     };
 
     const confirmRegistration = async () => {
         setShowConfirmModal(false);
         setIsLoading(true);
         const loadingToast = toast.loading("Registrando afiliado...", { duration: Infinity });
+
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            // Extraer el idPlan del string "nombrePlan - tipo"
+            const selectedPlanObj = planEPS?.find(
+                (p) => `${p.nombrePlan} - ${p.tipo}` === data.plan
+            );
+
+            const payload = {
+                Documento: empleadoSeleccionado.documento,
+                idEmpleado: empleadoSeleccionado.idEmpleado,
+                idPlan: selectedPlanObj?.idPlanEPS,
+                mesInicio: data.periodo // Ya está en formato YYYY-MM-01
+            };
+            console.log("PAYLOAD TITULAR (A enviar a /registrarAfiliadoEPS):", payload);
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/registrarAfiliadoEPS`, payload);
+
+            // --- PASO 2: Asociación de Dependientes ---
+            if (dependientesSeleccionados.length > 0) {
+                for (const depId of dependientesSeleccionados) {
+                    const payloadAsoc = {
+                        DOCUMENTO_TITULAR: empleadoSeleccionado.documento,
+                        idEmpleado: empleadoSeleccionado.idEmpleado,
+                        idPlan: selectedPlanObj?.idPlanEPS,
+                        mesInicio: data.periodo,
+                        idAfiliadoDependiente: depId, // depId ya es el idAfiliado por el getDepKey
+                        parentesco: parentescos[depId]
+                    };
+                    console.log(`PAYLOAD ASOCIACIÓN DEPENDIENTE ${depId} (A enviar a /asosciarDependiente):`, payloadAsoc);
+                    await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/asosciarDependiente`, payloadAsoc);
+                }
+            }
+
             toast.dismiss(loadingToast);
             toast.success("Afiliado registrado correctamente", {
                 description: `El empleado ${empleadoSeleccionado.nombreCompleto} ha sido registrado exitosamente.`,
                 duration: 4000,
             });
+
+            // Limpiar estados
             setEmpleadoSeleccionado(null);
             setUsarDependientes(false);
             setDependientesSeleccionados([]);
@@ -272,6 +389,7 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                 direccion: "",
                 sexo: "M",
                 tipoDocumento: "DNI",
+                periodo: null,
             });
 
             setTimeout(() => {
@@ -281,7 +399,7 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
             console.error("Error en confirmRegistration:", error);
             toast.dismiss(loadingToast);
             toast.error("Error al registrar afiliado", {
-                description: "Ha ocurrido un error al procesar la solicitud.",
+                description: error.response?.data?.message || "Ha ocurrido un error al procesar la solicitud.",
                 duration: 4000,
             });
         } finally {
@@ -374,18 +492,38 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                         style={{ borderColor: "#10b981" }}
                     />
                 </div>
+                <div>
+                    <label className={labelStyles}>
+                        <Plus className="h-4 w-4" />
+                        Período
+                    </label>
+                    <DatePicker
+                        picker="month"
+                        style={selectStyles}
+                        placeholder="Seleccione Período (Ej: Febrero 2026)"
+                        value={data.periodo ? dayjs(data.periodo) : null}
+                        onChange={(date) => {
+                            setData(prev => ({
+                                ...prev,
+                                periodo: date ? date.startOf('month').format('YYYY-MM-DD') : null
+                            }))
+                        }}
+                        format="MMMM YYYY"
+                        disabled={isLoading}
+                    />
+                </div>
             </div>
         </Card>
     );
 
     const PasoDependientes = (
-        <Card>
-            <div className="space-y-4 h-[95vh] ">
+        <Card className="border-0 shadow-none">
+            <div className="space-y-2">
                 <label className={labelStyles}>
                     <Users className="h-4 w-4" />
                     Seleccione dependientes
                 </label>
-                <Tabs defaultValue="seleccionar">
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList>
                         <TabsTrigger value="seleccionar">
                             <Users className="h-4 w-4" />
@@ -430,8 +568,8 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                         </Card>
                     </TabsContent>
                     <TabsContent value="agregar">
-                        <Card>
-                            <CardContent className="grid gap-6">
+                        <Card className="border-0 shadow-none">
+                            <CardContent className="grid gap-3 p-0">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                     <FormField label="Plan Asociado" value={nuevoDependiente.plan} disabled />
 
@@ -458,7 +596,7 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                                         label="Fecha Nacimiento *"
                                         value={
                                             nuevoDependiente.fechaNacimiento
-                                                ? dayjs(nuevoDependiente.fechaNacimiento, "DD/MM/YYYY")
+                                                ? dayjs(nuevoDependiente.fechaNacimiento)
                                                 : null
                                         }
                                         onChange={(value) => handleInputChange("fechaNacimiento", value)}
@@ -509,9 +647,10 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                                 </div>
 
                             </CardContent>
-                            <CardFooter className="flex justify-center pt-4">
+                            <CardFooter className="flex justify-center pt-2 pb-0">
                                 <Button
                                     type="button"
+                                    onClick={handleRegistrarNuevoDependiente}
                                     className="bg-green-600 hover:bg-green-700 px-8 py-2 rounded-xl"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
@@ -561,11 +700,17 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                             <Tag color="blue">{dependientesSeleccionados.length}</Tag>
                         </span>
                     </div>
+                    <div className="flex justify-between gap-3">
+                        <span className="font-semibold">CodMes:</span>
+                        <span className="text-right font-medium">
+                            {data.periodo ?? "-"}
+                        </span>
+                    </div>
                 </div>
 
                 {dependientesSeleccionados.length > 0 && (
                     <div className="text-sm">
-                        <div className="font-semibold mb-2">Seleccionados:</div>
+                        <div className="font-semibold mb-2">Seleccionadosa:</div>
                         <div className="flex flex-col flex-wrap gap-2 border-y-2 ">
                             {dependientesSeleccionados.map((id) => {
                                 const opt = dependientesOptions.find((o) => o.value === id);
@@ -574,13 +719,13 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                                         <p>{opt?.label}</p>
                                         <Select
                                             className="w-1/2"
-                                            value={nuevoDependiente.parentesco}
-                                            onChange={(value) => handleInputChange("parentesco", value)}
+                                            value={parentescos[id]}
+                                            onChange={(value) => setParentescos(prev => ({ ...prev, [id]: value }))}
                                             options={[
                                                 { label: "Cónyuge", value: "CONYUGUE" },
-                                                { label: "Hijo/a", value: "HIJO" },
+                                                { label: "Hijo/a", value: "HIJO" }
                                             ]}
-                                            placeholder={`Seleccione Dependiente`}
+                                            placeholder={`Seleccione Parentesco`}
                                             getPopupContainer={(trigger) => trigger.parentNode}
                                             optionFilterProp="label"
                                             showSearch
@@ -648,7 +793,8 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                         ]}
                     />
 
-                    <div className="max-h-[60vh] overflow-y-auto p-4">{contenidoPaso}</div>
+                    {/* Contenedor con scroll para los pasos */}
+                    <div className="max-h-[75vh] overflow-y-auto px-4 py-2">{contenidoPaso}</div>
 
                     {/* Footer (botones wizard) */}
                     <div className="flex justify-between gap-3 mt-2 px-2">
@@ -661,101 +807,40 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                             {pasoActual === 0 ? "Cancelar" : "Atrás"}
                         </Button>
 
-                        {pasoActual < 2 ? (
-                            <Button
-                                onClick={handleNext}
-                                className="px-8 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                                disabled={isLoading}
-                            >
-                                Siguiente
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={handleFinish}
-                                className="px-8 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <span className="flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Procesando...
-                                    </span>
-                                ) : (
-                                    "Registrar"
-                                )}
-                            </Button>
-                        )}
+                        <div className="flex gap-2">
+                            {pasoActual < 2 ? (
+                                <Button
+                                    onClick={handleNext}
+                                    className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-blue-200 transition-all duration-200"
+                                    disabled={isLoading}
+                                >
+                                    Siguiente
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleFinish}
+                                    className="px-8 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg hover:shadow-green-200 transition-all duration-200"
+                                    disabled={isLoading}
+                                >
+                                    Finalizar y Registrar
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </Modal>
 
-            {/* Modal Confirmación */}
+            {/* Modal de confirmación final */}
             <Modal
+                title="Confirmar Registro"
                 open={showConfirmModal}
-                title={
-                    <div className="flex items-center gap-3 text-blue-600">
-                        <UserPlus className="h-6 w-6" />
-                        <span className="text-lg font-semibold">Confirmar Registro</span>
-                    </div>
-                }
+                onOk={confirmRegistration}
                 onCancel={() => setShowConfirmModal(false)}
-                footer={[
-                    <Button
-                        key="cancel"
-                        variant="outline"
-                        onClick={() => setShowConfirmModal(false)}
-                        className="px-6"
-                        disabled={isLoading}
-                    >
-                        Cancelar
-                    </Button>,
-                    <Button
-                        key="confirm"
-                        onClick={confirmRegistration}
-                        className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
-                        disabled={isLoading}
-                    >
-                        Confirmar Registro
-                    </Button>,
-                ]}
-                width={520}
+                okText="Sí, Registrar"
+                cancelText="Revisar de nuevo"
+                confirmLoading={isLoading}
             >
-                <div className="space-y-4 py-4">
-                    <p className="text-gray-700">
-                        ¿Está seguro de que desea registrar al siguiente empleado como afiliado?
-                    </p>
-
-                    <div className="bg-blue-50 p-4 rounded-lg space-y-2">
-                        <div className="flex justify-between">
-                            <span className="font-semibold">Empleado:</span>
-                            <span>{empleadoSeleccionado?.nombreCompleto}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-semibold">Documento:</span>
-                            <span>{empleadoSeleccionado?.documento}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-semibold">Plan:</span>
-                            <span>{planLabel}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-semibold">Tipo:</span>
-                            <span>{tipoLabel}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-semibold">Monto:</span>
-                            <span className="text-green-600 font-bold">
-                                S/ {Number(data.montoPlan ?? 0).toLocaleString("es-PE")}
-                            </span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-semibold">Dependientes:</span>
-                            <span>{numDep}</span>
-                        </div>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                        Esta acción registrará al empleado en el sistema de afiliados con el plan seleccionado.
-                    </p>
-                </div>
+                <p>¿Estás seguro de que deseas registrar este afiliado con los datos proporcionados?</p>
             </Modal>
         </>
     );
