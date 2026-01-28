@@ -349,11 +349,10 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
 
             const payload = {
                 Documento: empleadoSeleccionado.documento,
-                idEmpleado: empleadoSeleccionado.idEmpleado,
                 idPlan: selectedPlanObj?.idPlanEPS,
                 mesInicio: data.periodo // Ya está en formato YYYY-MM-01
             };
-            console.log("PAYLOAD TITULAR (A enviar a /registrarAfiliadoEPS):", payload);
+
             await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/registrarAfiliadoEPS`, payload);
 
             // --- PASO 2: Asociación de Dependientes ---
@@ -361,14 +360,13 @@ export const ModalRegistroAfiliado = ({ isCrear, setIsCrear, afiliados }) => {
                 for (const depId of dependientesSeleccionados) {
                     const payloadAsoc = {
                         DOCUMENTO_TITULAR: empleadoSeleccionado.documento,
-                        idEmpleado: empleadoSeleccionado.idEmpleado,
                         idPlan: selectedPlanObj?.idPlanEPS,
                         mesInicio: data.periodo,
                         idAfiliadoDependiente: depId, // depId ya es el idAfiliado por el getDepKey
                         parentesco: parentescos[depId],
                         tipoRegistro: "R"
                     };
-                    console.log(`PAYLOAD ASOCIACIÓN DEPENDIENTE ${depId} (A enviar a /asosciarDependiente):`, payloadAsoc);
+
                     await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/asosciarDependiente`, payloadAsoc);
                 }
             }

@@ -1,8 +1,8 @@
-import { DatePicker, Input, Card, Tag, Tooltip, Empty, Select } from "antd";
+import { DatePicker, Input, Card, Tag, Tooltip, Empty, Select, Modal, Alert } from "antd";
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Download, Eye, Pencil, RefreshCw, Users, Filter, FileText, UserPlus } from "lucide-react";
+import { Download, Eye, Pencil, RefreshCw, Users, Filter, FileText, UserPlus, Trash2 } from "lucide-react";
 
 import { DetalleAfiliado } from "./DetalleAfiliado";
 import { ModalRegistroAfiliado } from "./ModalRegistroAfiliado";
@@ -33,7 +33,47 @@ export const ListarAfiliado = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [crearAfiliado, setCrearAfiliado] = useState(false);
   const [verEspeciales, setVerEspeciales] = useState(false)
-  const { planEPS} = useData();
+
+  // Estados para baja
+  const [isBaja, setIsBaja] = useState(false);
+  const [bajaDate, setBajaDate] = useState(null);
+  const [afiliadoParaBaja, setAfiliadoParaBaja] = useState(null);
+
+  const confirmarBaja = async () => {
+    if (!afiliadoParaBaja || !bajaDate) return;
+
+    const toastId = toast.loading("Procesando baja del afiliado...");
+    try {
+      const payload = {
+        DOCUMENTO_TITULAR: afiliadoParaBaja.Documento,
+        mesFin: bajaDate
+      };
+      console.log("Confirmando baja:", payload);
+
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/eliminarAfiliadoEPS`, payload);
+
+      setTimeout(() => {
+        toast.dismiss(toastId);
+        toast.success("Afiliación finalizada correctamente", {
+          description: "El titular y sus dependientes han sido dados de baja."
+        });
+        setIsBaja(false);
+        setBajaDate(null);
+        setAfiliadoParaBaja(null);
+
+        // Recargar datos
+        const current = verEspeciales;
+        setVerEspeciales(!current);
+        setTimeout(() => setVerEspeciales(current), 200);
+      }, 1500);
+
+    } catch (error) {
+      console.error("Error al dar de baja:", error);
+      toast.dismiss(toastId);
+      toast.error("Error al procesar la baja");
+    }
+  };
+  const { planEPS } = useData();
   useEffect(() => {
     const fetchAfiliados = async () => {
       try {
@@ -304,6 +344,23 @@ export const ListarAfiliado = () => {
                                 <Pencil className="h-4 w-4 text-green-600" />
                               </Button>
                             </Tooltip>
+
+                            <Tooltip title="Dar de Baja">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log("Afiliado para baja:", fila);
+                                  setAfiliadoParaBaja(fila);
+                                  setBajaDate(null);
+                                  setIsBaja(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </Tooltip>
                           </div>
                         </td>
                       </motion.tr>
@@ -318,8 +375,72 @@ export const ListarAfiliado = () => {
 
       {/* Modales */}
       <DetalleAfiliado isVer={isVer} selectAfiliado={selectAfiliado} setIsVer={setIsVer} />
-      <ModalRegistroAfiliado isCrear={crearAfiliado} setIsCrear={setCrearAfiliado} afiliados= {datosAfiliados2} />
+      <ModalRegistroAfiliado isCrear={crearAfiliado} setIsCrear={setCrearAfiliado} afiliados={datosAfiliados2} />
       <ModalEditAfiliado isEdit={isEdit} setSelectAfiliado={setSelectAfiliado} selectAfiliado={selectAfiliado} setIsEdit={setIsEdit} />
+
+      {/* MODAL DE BAJA */}
+      <Modal
+        open={isBaja}
+        title={
+          <div className="flex items-center gap-2 text-red-600">
+            <Trash2 className="h-5 w-5" />
+            <span className="font-bold">Dar de Baja Afiliación</span>
+          </div>
+        }
+        onCancel={() => {
+          setIsBaja(false);
+          setBajaDate(null);
+          setAfiliadoParaBaja(null);
+        }}
+        footer={null}
+      >
+        <div className="space-y-4 pt-2">
+          <Alert
+            message="Atención"
+            description="Esta acción finalizará la vigencia del plan para el titular y TODOS sus dependientes asociados. Esta acción no se puede deshacer fácilmente."
+            type="warning"
+            showIcon
+            className="mb-4"
+          />
+
+          <div className="bg-gray-50 p-3 rounded-lg border">
+            <p className="text-xs text-gray-500 uppercase font-bold">Afiliado</p>
+            <p className="text-sm font-medium text-gray-900">{afiliadoParaBaja?.NombreCompleto}</p>
+            <p className="text-xs text-gray-500 mt-1 uppercase font-bold">Plan Actual</p>
+            <p className="text-sm font-medium text-gray-900">{afiliadoParaBaja?.Plan}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Seleccione Mes de Fin de Suscripción *
+            </label>
+            <DatePicker
+              picker="month"
+              placeholder="Seleccione mes de baja"
+              className="w-full"
+              format="MMMM YYYY"
+              value={bajaDate ? dayjs(bajaDate) : null}
+              onChange={(date) => setBajaDate(date ? date.startOf('month').format('YYYY-MM-DD') : null)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsBaja(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={confirmarBaja}
+              disabled={!bajaDate}
+            >
+              Confirmar Baja
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
