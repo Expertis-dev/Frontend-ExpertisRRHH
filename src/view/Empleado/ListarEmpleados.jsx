@@ -103,6 +103,8 @@ export const ListarEmpleados = () => {
   const [estadoEmpleado, setEstadoEmpleado] = useState("VIGENTE");
   const [todosEmpleados, setTodosEmpleados] = useState([]);
   const [filtroDias, setFiltroDias] = useState([]);
+  const [selectedAgencia, setSelectedAgencia] = useState("TODAS");
+  const [agencias, setAgencias] = useState([]);
   const [formData, setFormData] = useState({
     salary: { amount: "", valid: false, cod_mes: "" },
     position: { title: "", cod_mes: "", valid: false },
@@ -152,6 +154,17 @@ export const ListarEmpleados = () => {
             String(dato.estadoLaboral).trim().toUpperCase() === "VIGENTE"
         )
       );
+
+      // Extraer agencias únicas
+      const uniqueAgencias = [
+        ...new Set(
+          dataEmpleados
+            .map((emp) => emp.agencia)
+            .filter((agencia) => agencia != null && agencia !== "")
+        ),
+      ].sort();
+      setAgencias(uniqueAgencias);
+
       const cargosResponse = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarCargos`
       );
@@ -276,10 +289,17 @@ export const ListarEmpleados = () => {
       estadoEmpleado === "VIGENTE"
         ? empleados
         : todosEmpleados.filter(
-            (dato) =>
-              String(dato.estadoLaboral).trim().toUpperCase() ===
-              estadoEmpleado.toUpperCase()
-          );
+          (dato) =>
+            String(dato.estadoLaboral).trim().toUpperCase() ===
+            estadoEmpleado.toUpperCase()
+        );
+
+    if (selectedAgencia !== "TODAS") {
+      baseEmpleados = baseEmpleados.filter(
+        (emp) => String(emp.agencia).toUpperCase() === selectedAgencia.toUpperCase()
+      );
+    }
+
     if (Array.isArray(filtroDias) && filtroDias.length == 2) {
       baseEmpleados = filtrarPorRangoFechas(baseEmpleados, filtroDias);
     }
@@ -303,7 +323,14 @@ export const ListarEmpleados = () => {
       });
       setFilteredEmpleados(filtered);
     }
-  }, [searchQuery, estadoEmpleado, empleados, todosEmpleados, filtroDias]);
+  }, [
+    searchQuery,
+    estadoEmpleado,
+    empleados,
+    todosEmpleados,
+    filtroDias,
+    selectedAgencia,
+  ]);
 
   const handleSearchChange = (e) => {
     const inputValue = e.target.value;
@@ -322,8 +349,7 @@ export const ListarEmpleados = () => {
 
   const HistoricoCese = async (idPersona) => {
     const response = await axios.get(
-      `${
-        import.meta.env.VITE_BACKEND_URL
+      `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoCeses/${idPersona}`
     );
     setDatosCese(response.data.data);
@@ -331,8 +357,7 @@ export const ListarEmpleados = () => {
 
   const HistoricoPuestos = async (idPersona) => {
     const response = await axios.get(
-      `${
-        import.meta.env.VITE_BACKEND_URL
+      `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoPuestoTrabajo/${idPersona}`
     );
     console.log(response.data.data);
@@ -344,16 +369,14 @@ export const ListarEmpleados = () => {
 
   const HistoricoAFP = async (idPersona) => {
     const response = await axios.get(
-      `${
-        import.meta.env.VITE_BACKEND_URL
+      `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoAFP/${idPersona}`
     );
     setDatosAFP(response.data.data);
   };
   const HistoricoAsignacionFamiliar = async (idPersona) => {
     const response = await axios.get(
-      `${
-        import.meta.env.VITE_BACKEND_URL
+      `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoAsignacionFamiliar/${idPersona}`
     );
     setDatosAsigFam(response.data.data);
@@ -364,8 +387,7 @@ export const ListarEmpleados = () => {
 
   const HistoricoSueldo = async (idPersona) => {
     const response = await axios.get(
-      `${
-        import.meta.env.VITE_BACKEND_URL
+      `${import.meta.env.VITE_BACKEND_URL
       }/api/empleados/historicoSueldos/${idPersona}`
     );
     setDatosSueldos(response.data.data);
@@ -523,9 +545,8 @@ export const ListarEmpleados = () => {
 
       switch (selectedField) {
         case "salary":
-          endpoint = `${
-            import.meta.env.VITE_BACKEND_URL
-          }/api/empleados/modificarSueldo`;
+          endpoint = `${import.meta.env.VITE_BACKEND_URL
+            }/api/empleados/modificarSueldo`;
           requestData = {
             ...basePayload,
             sueldo: formData.salary.amount,
@@ -535,9 +556,8 @@ export const ListarEmpleados = () => {
           break;
 
         case "position":
-          endpoint = `${
-            import.meta.env.VITE_BACKEND_URL
-          }/api/empleados/modificarPuestoTrabajo`;
+          endpoint = `${import.meta.env.VITE_BACKEND_URL
+            }/api/empleados/modificarPuestoTrabajo`;
           requestData = {
             ...basePayload,
             cargo_puestotrabajo: formData.position.title,
@@ -547,9 +567,8 @@ export const ListarEmpleados = () => {
           break;
 
         case "familyAllowance":
-          endpoint = `${
-            import.meta.env.VITE_BACKEND_URL
-          }/api/empleados/modificarAsignacionFamiliar`;
+          endpoint = `${import.meta.env.VITE_BACKEND_URL
+            }/api/empleados/modificarAsignacionFamiliar`;
           requestData = {
             ...basePayload,
             asignacionfamiliar: formData.familyAllowance.hasAllowance
@@ -561,9 +580,8 @@ export const ListarEmpleados = () => {
           break;
 
         case "personalData":
-          endpoint = `${
-            import.meta.env.VITE_BACKEND_URL
-          }/api/empleados/modificarDatosPersonales`;
+          endpoint = `${import.meta.env.VITE_BACKEND_URL
+            }/api/empleados/modificarDatosPersonales`;
           requestData = {
             ...basePayload,
             correo: formData.personalData.correo,
@@ -650,291 +668,291 @@ export const ListarEmpleados = () => {
   // Después de las funciones existentes (después de mapFormDataToEmployee)
   // Agrega estas funciones:
   // Función para consolidar datos (VERSIÓN CORREGIDA)
-// Función para consolidar datos (VERSIÓN CON MES INICIO Y MES FIN POR PERÍODO)
+  // Función para consolidar datos (VERSIÓN CON MES INICIO Y MES FIN POR PERÍODO)
 
-// Función para consolidar datos (VERSIÓN CORREGIDA - SIN PERÍODOS VACÍOS)
-const consolidarDatosEmpleado = () => {
-  if (!selectedEmployee) return [];
-  
-  // 1. Extraer todos los períodos reales de cada histórico
-  const extraerPeriodos = (historico, claveValor, claveComision = "") => {
-    const periodos = [];
-    
-    if (Array.isArray(historico)) {
-      historico.forEach(item => {
-        if (item.mesInicio) {
-          periodos.push({
-            mesInicio: formatDate(item.mesInicio),
-            mesFin: item.mesFin ? formatDate(item.mesFin) : "N/A",
-            valor: item[claveValor] || "",
-            comision: claveComision ? item[claveComision] || "" : ""
-          });
-        }
-      });
-    }
-    
-    return periodos;
-  };
-  
-  const periodosPuestos = extraerPeriodos(datosPuestos, "CARGO");
-  const periodosSueldos = extraerPeriodos(datosSueldos, "sueldoFijo");
-  const periodosAFP = extraerPeriodos(datosAFP, "SP", "tipoComision");
-  const periodosAsignacion = extraerPeriodos(datosAsigFam, "asignacion");
-  
-  console.log("=== PERÍODOS EXTRAÍDOS ===");
-  console.log("Puestos:", periodosPuestos);
-  console.log("Sueldos:", periodosSueldos);
-  console.log("AFP:", periodosAFP);
-  console.log("Asignación:", periodosAsignacion);
-  
-  // 2. Obtener TODOS los meses donde hay cambios REALES (solo inicio de períodos)
-  const mesesDeCambioReal = new Set();
-  
-  // Solo agregar meses de INICIO (no de fin)
-  [periodosPuestos, periodosSueldos, periodosAFP, periodosAsignacion].forEach(periodos => {
-    periodos.forEach(p => {
-      if (p.mesInicio && p.mesInicio !== "N/A") {
-        mesesDeCambioReal.add(p.mesInicio);
-      }
-    });
-  });
-  
-  // Ordenar meses de cambio
-  const mesesCambioOrdenados = Array.from(mesesDeCambioReal).sort((a, b) => {
-    const [mesA, anioA] = a.split('/').map(Number);
-    const [mesB, anioB] = b.split('/').map(Number);
-    return (anioA - anioB) || (mesA - mesB);
-  });
-  
-  console.log("Meses de cambio real:", mesesCambioOrdenados);
-  
-  // 3. Función para convertir mes a número
-  const mesANumero = (mes) => {
-    if (mes === "N/A") return Infinity;
-    const [mesStr, anioStr] = mes.split('/').map(Number);
-    return anioStr * 100 + mesStr;
-  };
-  
-  // 4. Función para encontrar valor vigente en un mes específico
-  const encontrarValorVigente = (fecha, periodos, esComision = false) => {
-    const fechaNum = mesANumero(fecha);
-    
-    for (const periodo of periodos) {
-      const inicioNum = mesANumero(periodo.mesInicio);
-      const finNum = mesANumero(periodo.mesFin);
-      
-      if (fechaNum >= inicioNum && fechaNum <= finNum) {
-        return esComision ? periodo.comision : periodo.valor;
-      }
-    }
-    
-    return esComision ? "" : (periodos === periodosAsignacion ? "NO" : "");
-  };
-  
-  // 5. Crear filas SOLO para períodos entre cambios reales
-  const filasConsolidadas = [];
-  
-  for (let i = 0; i < mesesCambioOrdenados.length; i++) {
-    const mesInicio = mesesCambioOrdenados[i];
-    let mesFin = "N/A";
-    
-    // Determinar el mesFin (si hay siguiente cambio, es el mes anterior a ese cambio)
-    if (i < mesesCambioOrdenados.length - 1) {
-      const siguienteCambio = mesesCambioOrdenados[i + 1];
-      const [mesSig, anioSig] = siguienteCambio.split('/').map(Number);
-      
-      // Calcular mes anterior al siguiente cambio
-      let mesFinNum = mesSig - 1;
-      let anioFinNum = anioSig;
-      
-      if (mesFinNum < 1) {
-        mesFinNum = 12;
-        anioFinNum -= 1;
-      }
-      
-      mesFin = `${mesFinNum.toString().padStart(2, '0')}/${anioFinNum}`;
-    }
-    
-    // Obtener valores vigentes en este período
-    const cargo = encontrarValorVigente(mesInicio, periodosPuestos);
-    const sueldo = encontrarValorVigente(mesInicio, periodosSueldos);
-    const sistemaPension = encontrarValorVigente(mesInicio, periodosAFP);
-    const tipoComision = encontrarValorVigente(mesInicio, periodosAFP, true);
-    const asignacion = encontrarValorVigente(mesInicio, periodosAsignacion);
-    
-    // Solo crear fila si hay al menos un valor no vacío
-    const tieneDatos = cargo || sueldo || sistemaPension || asignacion !== "NO";
-    
-    if (tieneDatos) {
-      // Calcular edad
-      const calcularEdad = (mes) => {
-        if (!selectedEmployee.fecNacimiento) return selectedEmployee.Edad || 0;
-        
-        const [mesNum, anioNum] = mes.split('/').map(Number);
-        const fechaNac = new Date(selectedEmployee.fecNacimiento);
-        const fechaRef = new Date(anioNum, mesNum - 1, 1);
-        
-        let edad = fechaRef.getFullYear() - fechaNac.getFullYear();
-        const diffMes = fechaRef.getMonth() - fechaNac.getMonth();
-        
-        if (diffMes < 0 || (diffMes === 0 && fechaRef.getDate() < fechaNac.getDate())) {
-          edad--;
-        }
-        
-        return edad;
-      };
-      
-      const edad = calcularEdad(mesInicio);
-      
-      filasConsolidadas.push({
-        dni: selectedEmployee.documento,
-        codigo: selectedEmployee.CODIGO,
-        nombre: selectedEmployee.nombreCompleto,
-        edad: edad,
-        correo: selectedEmployee.correo,
-        telefono: selectedEmployee.telefono,
-        estado: selectedEmployee.estadoLaboral,
-        fechaIngreso: selectedEmployee.fecIngreso?.split('T')[0] || "",
-        fechaNacimiento: selectedEmployee.fecNacimiento?.split('T')[0] || "",
-        direccion: selectedEmployee.direccion,
-        departamento: selectedEmployee.departamento,
-        provincia: selectedEmployee.provincia,
-        distrito: selectedEmployee.distrito,
-        estadoCivil: selectedEmployee.estadoCivil,
-        numHijos: selectedEmployee.nroHijos,
-        cantIngresos: selectedEmployee.CantidadIngresos,
-        mesInicio: mesInicio,
-        mesFin: mesFin,
-        cargo: cargo,
-        sistemaPension: sistemaPension,
-        tipoComision: tipoComision,
-        sueldo: sueldo,
-        asignacionFamiliar: asignacion
-      });
-    }
-  }
-  
-  console.log("=== FILAS GENERADAS ===");
-  filasConsolidadas.forEach((fila, idx) => {
-    console.log(`Fila ${idx + 1}: ${fila.mesInicio} - ${fila.mesFin} | Cargo: ${fila.cargo} | Sueldo: ${fila.sueldo} | SP: ${fila.sistemaPension}`);
-  });
-  
-  return filasConsolidadas;
-};
+  // Función para consolidar datos (VERSIÓN CORREGIDA - SIN PERÍODOS VACÍOS)
+  const consolidarDatosEmpleado = () => {
+    if (!selectedEmployee) return [];
 
-  // Función para exportar a Excel
-  // Función para exportar a Excel
-const handleExportarClick = async () => {
-  try {
-    setExportando(true);
-    
-    // 1. Consolidar datos
-    const datosConsolidados = consolidarDatosEmpleado();
-    
-    if (datosConsolidados.length === 0) {
-      alert("No hay datos para exportar");
-      setExportando(false);
-      return;
-    }
-    
-    console.log("=== DATOS PARA EXPORTAR ===");
-    console.log(datosConsolidados);
-    
-    // 2. Importar XLSX dinámicamente
-    const XLSX = await import('xlsx');
-    
-    // 3. DEFINIR LAS COLUMNAS CON MES INICIO Y MES FIN
-    const columnas = [
-      { header: "DNI", key: "dni" },
-      { header: "Código", key: "codigo" },
-      { header: "Nombre", key: "nombre" },
-      { header: "Edad", key: "edad" },
-      { header: "Correo", key: "correo" },
-      { header: "Teléfono", key: "telefono" },
-      { header: "Estado", key: "estado" },
-      { header: "Fecha Ingreso", key: "fechaIngreso" },
-      { header: "Fecha Nacimiento", key: "fechaNacimiento" },
-      { header: "Dirección", key: "direccion" },
-      { header: "Departamento", key: "departamento" },
-      { header: "Provincia", key: "provincia" },
-      { header: "Distrito", key: "distrito" },
-      { header: "Estado Civil", key: "estadoCivil" },
-      { header: "Num.Hijos", key: "numHijos" },
-      { header: "Cant.Ingresos", key: "cantIngresos" },
-      // AQUÍ ESTÁN LAS COLUMNAS DE MES INICIO Y MES FIN
-      { header: "Mes Inicio", key: "mesInicio" },
-      { header: "Mes Fin", key: "mesFin" },
-      { header: "Cargo", key: "cargo" },
-      { header: "Sistema Pensión", key: "sistemaPension" },
-      { header: "Tipo Comisión", key: "tipoComision" },
-      { header: "Sueldo", key: "sueldo" },
-      { header: "Asignación Familiar", key: "asignacionFamiliar" }
-    ];
-    
-    // 4. Crear array de datos para Excel
-    const wsData = [
-      columnas.map(col => col.header), // Encabezados
-      ...datosConsolidados.map(fila => {
-        // Mapear cada fila según las columnas definidas
-        return columnas.map(col => {
-          const valor = fila[col.key];
-          
-          // Formatear valores específicos si es necesario
-          if (col.key === "sueldo" && valor === 0) {
-            return "";
+    // 1. Extraer todos los períodos reales de cada histórico
+    const extraerPeriodos = (historico, claveValor, claveComision = "") => {
+      const periodos = [];
+
+      if (Array.isArray(historico)) {
+        historico.forEach(item => {
+          if (item.mesInicio) {
+            periodos.push({
+              mesInicio: formatDate(item.mesInicio),
+              mesFin: item.mesFin ? formatDate(item.mesFin) : "N/A",
+              valor: item[claveValor] || "",
+              comision: claveComision ? item[claveComision] || "" : ""
+            });
           }
-          if (col.key === "asignacionFamiliar" && valor === "NO") {
-            return "";
-          }
-          
-          return valor !== undefined ? valor : "";
         });
-      })
-    ];
-    
-    console.log("=== DATOS PARA EXCEL ===");
-    console.log(wsData);
-    
-    // 5. Crear libro y hoja de Excel
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    
-    // 6. Ajustar anchos de columnas
-    const wscols = columnas.map(col => {
-      // Ajustar ancho según el tipo de dato
-      if (col.key === "nombre" || col.key === "direccion") {
-        return { wch: 30 };
-      } else if (col.key === "cargo") {
-        return { wch: 35 };
-      } else if (col.key === "correo") {
-        return { wch: 25 };
-      } else {
-        return { wch: 15 };
       }
+
+      return periodos;
+    };
+
+    const periodosPuestos = extraerPeriodos(datosPuestos, "CARGO");
+    const periodosSueldos = extraerPeriodos(datosSueldos, "sueldoFijo");
+    const periodosAFP = extraerPeriodos(datosAFP, "SP", "tipoComision");
+    const periodosAsignacion = extraerPeriodos(datosAsigFam, "asignacion");
+
+    console.log("=== PERÍODOS EXTRAÍDOS ===");
+    console.log("Puestos:", periodosPuestos);
+    console.log("Sueldos:", periodosSueldos);
+    console.log("AFP:", periodosAFP);
+    console.log("Asignación:", periodosAsignacion);
+
+    // 2. Obtener TODOS los meses donde hay cambios REALES (solo inicio de períodos)
+    const mesesDeCambioReal = new Set();
+
+    // Solo agregar meses de INICIO (no de fin)
+    [periodosPuestos, periodosSueldos, periodosAFP, periodosAsignacion].forEach(periodos => {
+      periodos.forEach(p => {
+        if (p.mesInicio && p.mesInicio !== "N/A") {
+          mesesDeCambioReal.add(p.mesInicio);
+        }
+      });
     });
-    ws['!cols'] = wscols;
-    
-    // 7. Agregar hoja al libro
-    const nombreHoja = selectedEmployee.nombreCompleto.substring(0, 31); // Máximo 31 caracteres
-    XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
-    
-    // 8. Generar nombre del archivo
-    const fechaActual = new Date().toISOString().split('T')[0];
-    const nombreArchivo = `historico_${selectedEmployee.documento}_${fechaActual}.xlsx`;
-    
-    // 9. Descargar archivo
-    XLSX.writeFile(wb, nombreArchivo);
-    
-    console.log("✅ Archivo exportado exitosamente:", nombreArchivo);
-    console.log("Columnas exportadas:", columnas.map(c => c.header));
-    
-  } catch (error) {
-    console.error("❌ Error al exportar:", error);
-    alert("Hubo un error al exportar el archivo. Por favor, intente nuevamente.");
-  } finally {
-    setExportando(false);
-  }
-};
+
+    // Ordenar meses de cambio
+    const mesesCambioOrdenados = Array.from(mesesDeCambioReal).sort((a, b) => {
+      const [mesA, anioA] = a.split('/').map(Number);
+      const [mesB, anioB] = b.split('/').map(Number);
+      return (anioA - anioB) || (mesA - mesB);
+    });
+
+    console.log("Meses de cambio real:", mesesCambioOrdenados);
+
+    // 3. Función para convertir mes a número
+    const mesANumero = (mes) => {
+      if (mes === "N/A") return Infinity;
+      const [mesStr, anioStr] = mes.split('/').map(Number);
+      return anioStr * 100 + mesStr;
+    };
+
+    // 4. Función para encontrar valor vigente en un mes específico
+    const encontrarValorVigente = (fecha, periodos, esComision = false) => {
+      const fechaNum = mesANumero(fecha);
+
+      for (const periodo of periodos) {
+        const inicioNum = mesANumero(periodo.mesInicio);
+        const finNum = mesANumero(periodo.mesFin);
+
+        if (fechaNum >= inicioNum && fechaNum <= finNum) {
+          return esComision ? periodo.comision : periodo.valor;
+        }
+      }
+
+      return esComision ? "" : (periodos === periodosAsignacion ? "NO" : "");
+    };
+
+    // 5. Crear filas SOLO para períodos entre cambios reales
+    const filasConsolidadas = [];
+
+    for (let i = 0; i < mesesCambioOrdenados.length; i++) {
+      const mesInicio = mesesCambioOrdenados[i];
+      let mesFin = "N/A";
+
+      // Determinar el mesFin (si hay siguiente cambio, es el mes anterior a ese cambio)
+      if (i < mesesCambioOrdenados.length - 1) {
+        const siguienteCambio = mesesCambioOrdenados[i + 1];
+        const [mesSig, anioSig] = siguienteCambio.split('/').map(Number);
+
+        // Calcular mes anterior al siguiente cambio
+        let mesFinNum = mesSig - 1;
+        let anioFinNum = anioSig;
+
+        if (mesFinNum < 1) {
+          mesFinNum = 12;
+          anioFinNum -= 1;
+        }
+
+        mesFin = `${mesFinNum.toString().padStart(2, '0')}/${anioFinNum}`;
+      }
+
+      // Obtener valores vigentes en este período
+      const cargo = encontrarValorVigente(mesInicio, periodosPuestos);
+      const sueldo = encontrarValorVigente(mesInicio, periodosSueldos);
+      const sistemaPension = encontrarValorVigente(mesInicio, periodosAFP);
+      const tipoComision = encontrarValorVigente(mesInicio, periodosAFP, true);
+      const asignacion = encontrarValorVigente(mesInicio, periodosAsignacion);
+
+      // Solo crear fila si hay al menos un valor no vacío
+      const tieneDatos = cargo || sueldo || sistemaPension || asignacion !== "NO";
+
+      if (tieneDatos) {
+        // Calcular edad
+        const calcularEdad = (mes) => {
+          if (!selectedEmployee.fecNacimiento) return selectedEmployee.Edad || 0;
+
+          const [mesNum, anioNum] = mes.split('/').map(Number);
+          const fechaNac = new Date(selectedEmployee.fecNacimiento);
+          const fechaRef = new Date(anioNum, mesNum - 1, 1);
+
+          let edad = fechaRef.getFullYear() - fechaNac.getFullYear();
+          const diffMes = fechaRef.getMonth() - fechaNac.getMonth();
+
+          if (diffMes < 0 || (diffMes === 0 && fechaRef.getDate() < fechaNac.getDate())) {
+            edad--;
+          }
+
+          return edad;
+        };
+
+        const edad = calcularEdad(mesInicio);
+
+        filasConsolidadas.push({
+          dni: selectedEmployee.documento,
+          codigo: selectedEmployee.CODIGO,
+          nombre: selectedEmployee.nombreCompleto,
+          edad: edad,
+          correo: selectedEmployee.correo,
+          telefono: selectedEmployee.telefono,
+          estado: selectedEmployee.estadoLaboral,
+          fechaIngreso: selectedEmployee.fecIngreso?.split('T')[0] || "",
+          fechaNacimiento: selectedEmployee.fecNacimiento?.split('T')[0] || "",
+          direccion: selectedEmployee.direccion,
+          departamento: selectedEmployee.departamento,
+          provincia: selectedEmployee.provincia,
+          distrito: selectedEmployee.distrito,
+          estadoCivil: selectedEmployee.estadoCivil,
+          numHijos: selectedEmployee.nroHijos,
+          cantIngresos: selectedEmployee.CantidadIngresos,
+          mesInicio: mesInicio,
+          mesFin: mesFin,
+          cargo: cargo,
+          sistemaPension: sistemaPension,
+          tipoComision: tipoComision,
+          sueldo: sueldo,
+          asignacionFamiliar: asignacion
+        });
+      }
+    }
+
+    console.log("=== FILAS GENERADAS ===");
+    filasConsolidadas.forEach((fila, idx) => {
+      console.log(`Fila ${idx + 1}: ${fila.mesInicio} - ${fila.mesFin} | Cargo: ${fila.cargo} | Sueldo: ${fila.sueldo} | SP: ${fila.sistemaPension}`);
+    });
+
+    return filasConsolidadas;
+  };
+
+  // Función para exportar a Excel
+  // Función para exportar a Excel
+  const handleExportarClick = async () => {
+    try {
+      setExportando(true);
+
+      // 1. Consolidar datos
+      const datosConsolidados = consolidarDatosEmpleado();
+
+      if (datosConsolidados.length === 0) {
+        alert("No hay datos para exportar");
+        setExportando(false);
+        return;
+      }
+
+      console.log("=== DATOS PARA EXPORTAR ===");
+      console.log(datosConsolidados);
+
+      // 2. Importar XLSX dinámicamente
+      const XLSX = await import('xlsx');
+
+      // 3. DEFINIR LAS COLUMNAS CON MES INICIO Y MES FIN
+      const columnas = [
+        { header: "DNI", key: "dni" },
+        { header: "Código", key: "codigo" },
+        { header: "Nombre", key: "nombre" },
+        { header: "Edad", key: "edad" },
+        { header: "Correo", key: "correo" },
+        { header: "Teléfono", key: "telefono" },
+        { header: "Estado", key: "estado" },
+        { header: "Fecha Ingreso", key: "fechaIngreso" },
+        { header: "Fecha Nacimiento", key: "fechaNacimiento" },
+        { header: "Dirección", key: "direccion" },
+        { header: "Departamento", key: "departamento" },
+        { header: "Provincia", key: "provincia" },
+        { header: "Distrito", key: "distrito" },
+        { header: "Estado Civil", key: "estadoCivil" },
+        { header: "Num.Hijos", key: "numHijos" },
+        { header: "Cant.Ingresos", key: "cantIngresos" },
+        // AQUÍ ESTÁN LAS COLUMNAS DE MES INICIO Y MES FIN
+        { header: "Mes Inicio", key: "mesInicio" },
+        { header: "Mes Fin", key: "mesFin" },
+        { header: "Cargo", key: "cargo" },
+        { header: "Sistema Pensión", key: "sistemaPension" },
+        { header: "Tipo Comisión", key: "tipoComision" },
+        { header: "Sueldo", key: "sueldo" },
+        { header: "Asignación Familiar", key: "asignacionFamiliar" }
+      ];
+
+      // 4. Crear array de datos para Excel
+      const wsData = [
+        columnas.map(col => col.header), // Encabezados
+        ...datosConsolidados.map(fila => {
+          // Mapear cada fila según las columnas definidas
+          return columnas.map(col => {
+            const valor = fila[col.key];
+
+            // Formatear valores específicos si es necesario
+            if (col.key === "sueldo" && valor === 0) {
+              return "";
+            }
+            if (col.key === "asignacionFamiliar" && valor === "NO") {
+              return "";
+            }
+
+            return valor !== undefined ? valor : "";
+          });
+        })
+      ];
+
+      console.log("=== DATOS PARA EXCEL ===");
+      console.log(wsData);
+
+      // 5. Crear libro y hoja de Excel
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // 6. Ajustar anchos de columnas
+      const wscols = columnas.map(col => {
+        // Ajustar ancho según el tipo de dato
+        if (col.key === "nombre" || col.key === "direccion") {
+          return { wch: 30 };
+        } else if (col.key === "cargo") {
+          return { wch: 35 };
+        } else if (col.key === "correo") {
+          return { wch: 25 };
+        } else {
+          return { wch: 15 };
+        }
+      });
+      ws['!cols'] = wscols;
+
+      // 7. Agregar hoja al libro
+      const nombreHoja = selectedEmployee.nombreCompleto.substring(0, 31); // Máximo 31 caracteres
+      XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+
+      // 8. Generar nombre del archivo
+      const fechaActual = new Date().toISOString().split('T')[0];
+      const nombreArchivo = `historico_${selectedEmployee.documento}_${fechaActual}.xlsx`;
+
+      // 9. Descargar archivo
+      XLSX.writeFile(wb, nombreArchivo);
+
+      console.log("✅ Archivo exportado exitosamente:", nombreArchivo);
+      console.log("Columnas exportadas:", columnas.map(c => c.header));
+
+    } catch (error) {
+      console.error("❌ Error al exportar:", error);
+      alert("Hubo un error al exportar el archivo. Por favor, intente nuevamente.");
+    } finally {
+      setExportando(false);
+    }
+  };
 
   const getFieldLabel = (selectedField) => {
     switch (selectedField) {
@@ -1060,11 +1078,11 @@ const handleExportarClick = async () => {
                       !formData.salary.valid && (
                         <p className="text-sm text-red-500">
                           {parseFloat(formData.salary.amount) ===
-                          ultimoSueldo.sueldoFijo
+                            ultimoSueldo.sueldoFijo
                             ? "El sueldo que quiere ingresar es el mismo al sueldo actual"
                             : parseFloat(formData.salary.amount) < 1200
-                            ? "El monto mínimo permitido es 1200"
-                            : ""}
+                              ? "El monto mínimo permitido es 1200"
+                              : ""}
                         </p>
                       )}
                   </div>
@@ -1086,7 +1104,7 @@ const handleExportarClick = async () => {
                                 prev.salary.amount !== "" &&
                                 parseFloat(prev.salary.amount) >= 1200 &&
                                 parseFloat(prev.salary.amount) !==
-                                  ultimoSueldo.sueldoFijo &&
+                                ultimoSueldo.sueldoFijo &&
                                 hasDate,
                             },
                           }));
@@ -1168,8 +1186,8 @@ const handleExportarClick = async () => {
                     {!formData.position.title
                       ? "Por favor seleccione un cargo"
                       : !formData.position.cod_mes
-                      ? "Por favor seleccione una fecha"
-                      : "Complete todos los campos requeridos"}
+                        ? "Por favor seleccione una fecha"
+                        : "Complete todos los campos requeridos"}
                   </p>
                 )}
                 <Dialog
@@ -1810,6 +1828,38 @@ const handleExportarClick = async () => {
             </Select>
           </div>
 
+          {/* Filtro Agencia */}
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Agencia
+            </label>
+            <Select
+              value={selectedAgencia}
+              onValueChange={(value) => setSelectedAgencia(value)}
+            >
+              <SelectTrigger className="w-full border-gray-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 py-1 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                <SelectValue placeholder="Agencia" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg border border-gray-200 shadow-lg animate-pop-in dark:bg-gray-800 dark:border-gray-600">
+                <SelectItem
+                  value="TODAS"
+                  className="flex items-center hover:bg-indigo-50 focus:bg-indigo-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors duration-200"
+                >
+                  TODAS
+                </SelectItem>
+                {agencias.map((agencia) => (
+                  <SelectItem
+                    key={agencia}
+                    value={agencia}
+                    className="flex items-center hover:bg-indigo-50 focus:bg-indigo-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors duration-200"
+                  >
+                    {agencia}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Botón Limpiar */}
           <div className="flex items-end min-w-[100px]">
             <button
@@ -1817,6 +1867,7 @@ const handleExportarClick = async () => {
                 setSearchQuery("");
                 setFiltroDias(null);
                 setEstadoEmpleado("VIGENTE");
+                setSelectedAgencia("TODAS");
               }}
               className="cursor-pointer h-[35px] px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2"
             >
@@ -1838,6 +1889,7 @@ const handleExportarClick = async () => {
                   <TableHead>DNI</TableHead>
                   <TableHead>FECHA INGRESO</TableHead>
                   <TableHead>ESTADO LABORAL</TableHead>
+                  <TableHead>AGENCIA</TableHead>
                   <TableHead>DETALLE</TableHead>
                   <TableHead>EDITAR</TableHead>
                 </TableRow>
@@ -1857,6 +1909,7 @@ const handleExportarClick = async () => {
                         : "N/A"}
                     </TableCell>
                     <TableCell>{employee.estadoLaboral}</TableCell>
+                    <TableCell>{employee.agencia || "N/A"}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -2248,8 +2301,8 @@ const handleExportarClick = async () => {
               {currentStep === 1
                 ? "¿QUÉ CAMPO REQUIERE MODIFICAR?"
                 : currentStep === 2
-                ? "MODIFICAR DATOS"
-                : "CONFIRMAR CAMBIOS"}
+                  ? "MODIFICAR DATOS"
+                  : "CONFIRMAR CAMBIOS"}
             </DialogTitle>
             <div className="py-2">
               <Progress value={(currentStep / 3) * 100} className="h-2" />

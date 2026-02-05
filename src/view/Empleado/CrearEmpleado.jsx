@@ -120,6 +120,7 @@ export const CrearEmpleado = () => {
         porcentajeAfp: "",
         impuestoRetenido: "",
         ingresoBruto: "",
+        agencia: "",
     }
 
     // Estados del componente
@@ -170,6 +171,7 @@ export const CrearEmpleado = () => {
                 { label: "Asignación Familiar", value: formData.asignacionfamiliar.toUpperCase() },
                 { label: "Impuesto Retenido", value: formData.impuestoRetenido.toUpperCase() },
                 { label: "Ingreso Bruto", value: formData.ingresoBruto.toUpperCase() },
+                { label: "Agencia", value: formData.agencia.toUpperCase() },
             ]
         },
         {
@@ -314,6 +316,7 @@ export const CrearEmpleado = () => {
             if (!formData.tip_comision) errors.tip_comision = "Tipo de comisión es requerido"
             if (!formData.impuestoRetenido || isNaN(formData.impuestoRetenido) || formData.impuestoRetenido < 0) errors.impuestoRetenido = "Impuesto retenido inválido"
             if (!formData.ingresoBruto || isNaN(formData.ingresoBruto) || formData.ingresoBruto < 0) errors.ingresoBruto = "Ingreso bruto inválido"
+            if (!formData.agencia) errors.agencia = "Agencia es requerida"
         }
 
         setFormErrors(errors)
@@ -417,6 +420,7 @@ export const CrearEmpleado = () => {
                 asignacionfamiliar: formData.asignacionfamiliar.toUpperCase(),
                 impRetenido: formData.impuestoRetenido,
                 ingresoBruto: formData.ingresoBruto,
+                agencia: formData.agencia.toUpperCase(),
                 usuario: "ADMIN"
             }
             console.log("Datos a enviar:", datos)
@@ -677,6 +681,15 @@ export const CrearEmpleado = () => {
                     error={formErrors.tip_comision}
                     options={comisionOptions}
                     disabled={isPracticante || formData.afp === "" || formData.afp === "ONP" || formData.afp === "0"}
+                />
+                <SelectField
+                    label="AGENCIA*" name="agencia" value={formData.agencia}
+                    onValueChange={handleSelectChange}
+                    error={formErrors.agencia}
+                    options={[
+                        { value: "EXPERTIS", label: "EXPERTIS" },
+                        { value: "EXPERTIS BPO", label: "EXPERTIS BPO" }
+                    ]}
                 />
 
             </div>
