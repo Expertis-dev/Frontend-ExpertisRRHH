@@ -709,11 +709,7 @@ export const ModalEditAfiliado = ({
                                                         onChange={(value) => handleInputChange("parentesco", value)}
                                                         options={[
                                                             { label: "Cónyuge", value: "CONYUGUE" },
-                                                            { label: "Hijo/a", value: "HIJO" },
-                                                            { label: "Padre", value: "PADRE" },
-                                                            { label: "Madre", value: "MADRE" },
-                                                            { label: "Hermano/a", value: "HERMANO" },
-                                                            { label: "Otro", value: "OTRO" },
+                                                            { label: "Hijo/a", value: "HIJO" }
                                                         ]}
                                                     />
                                                 </div>
@@ -794,11 +790,7 @@ export const ModalEditAfiliado = ({
                                                                         onChange={(val) => setParentescos(prev => ({ ...prev, [id]: val }))}
                                                                         options={[
                                                                             { label: "Cónyuge", value: "CONYUGUE" },
-                                                                            { label: "Hijo/a", value: "HIJO" },
-                                                                            { label: "Padre", value: "PADRE" },
-                                                                            { label: "Madre", value: "MADRE" },
-                                                                            { label: "Hermano/a", value: "HERMANO" },
-                                                                            { label: "Otro", value: "OTRO" },
+                                                                            { label: "Hijo/a", value: "HIJO" }
                                                                         ]}
                                                                         getPopupContainer={(trigger) => trigger.parentNode}
                                                                     />

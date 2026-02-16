@@ -395,8 +395,7 @@ export const RegistroEspecial = () => {
                                         >
                                             <Option value="CONYUGUE">Cónyuge</Option>
                                             <Option value="HIJO">Hijo/a</Option>
-                                            <Option value="PADRE">Padre</Option>
-                                            <Option value="MADRE">Madre</Option>
+
                                         </Select>
                                     </div>
                                 ))}
