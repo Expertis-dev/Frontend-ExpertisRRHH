@@ -40,7 +40,7 @@ export const Login = () => {
         try {
             const userIP = await getClientIP();
             const token = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
-                { usuario: credenciales.usuario, contrasenia: credenciales.contraseña }, {
+                { usuario: credenciales.usuario.toUpperCase(), contrasenia: credenciales.contraseña }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Forwarded-For': userIP
