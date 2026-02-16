@@ -1,15 +1,23 @@
-import { DatePicker, Input, Card, Tag, Tooltip, Empty, Select } from "antd";
-import { useMemo, useState } from "react";
+import { DatePicker, Input, Card, Tag, Tooltip, Empty, Select, Modal, Alert } from "antd";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Download, Eye, Pencil, RefreshCw, Users, Filter, FileText, UserPlus } from "lucide-react";
-import { datosAfiliados, Planes } from "../../data/Info";
+import { Download, Eye, Pencil, RefreshCw, Users, Filter, FileText, UserPlus, Trash2 } from "lucide-react";
+
 import { DetalleAfiliado } from "./DetalleAfiliado";
 import { ModalRegistroAfiliado } from "./ModalRegistroAfiliado";
 import { ModalEditAfiliado } from "./ModalEditAfiliado";
 import { exportToExcel } from "@/logic/ExportarDocumento";
-import dayjs from "dayjs";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import 'dayjs/locale/es';
+
+dayjs.extend(utc);
+dayjs.locale('es');
 import isBetween from "dayjs/plugin/isBetween";
+import axios from "axios";
+import { toast } from "sonner";
+import { useData } from "@/provider/Provider";
 dayjs.extend(isBetween);
 
 const { RangePicker } = DatePicker;
@@ -21,18 +29,91 @@ export const ListarAfiliado = () => {
   const [dateRange, setDateRange] = useState([]); // guardamos [] o [dayjs, dayjs]
   const [isVer, setIsVer] = useState(false);
   const [selectAfiliado, setSelectAfiliado] = useState({});
+  const [datosAfiliados2, setDatosAfiliados2] = useState([]); // Nuevo estado para los datos del backend
   const [searchTerm, setSearchTerm] = useState("");
   const [crearAfiliado, setCrearAfiliado] = useState(false);
+  const [verEspeciales, setVerEspeciales] = useState(false)
+
+  // Estados para baja
+  const [isBaja, setIsBaja] = useState(false);
+  const [bajaDate, setBajaDate] = useState(null);
+  const [afiliadoParaBaja, setAfiliadoParaBaja] = useState(null);
+
+  const confirmarBaja = async () => {
+    if (!afiliadoParaBaja || !bajaDate) return;
+
+    const toastId = toast.loading("Procesando baja del afiliado...");
+    try {
+      const payload = {
+        DOCUMENTO_TITULAR: afiliadoParaBaja.Documento,
+        mesFin: bajaDate
+      };
+      console.log("Confirmando baja:", payload);
+
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/eps/eliminarAfiliadoEPS`, payload);
+
+      setTimeout(() => {
+        toast.dismiss(toastId);
+        toast.success("Afiliación finalizada correctamente", {
+          description: "El titular y sus dependientes han sido dados de baja."
+        });
+        setIsBaja(false);
+        setBajaDate(null);
+        setAfiliadoParaBaja(null);
+
+        // Recargar datos
+        const current = verEspeciales;
+        setVerEspeciales(!current);
+        setTimeout(() => setVerEspeciales(current), 200);
+      }, 1500);
+
+    } catch (error) {
+      console.error("Error al dar de baja:", error);
+      toast.dismiss(toastId);
+      toast.error("Error al procesar la baja");
+    }
+  };
+  const { planEPS } = useData();
+  useEffect(() => {
+    const fetchAfiliados = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarAfiliadosEPS`); // Reemplaza con tu endpoint real
+        const datosFiltrados = response.data.filter(afiliado => afiliado.mesFin === null);
+        console.log("Respuesta del servidor:", datosFiltrados);
+        setDatosAfiliados2(datosFiltrados); // Asume que la respuesta es un array de afiliados
+      } catch (error) {
+        console.error("Error al obtener los afiliados:", error);
+        toast.error("Error al cargar la lista de afiliados", {
+          description: "No se pudieron obtener los datos del servidor.",
+        });
+      }
+    };
+    const fetchEspeciales = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/eps/listarAfiliadosEPS-especiales`); // Reemplaza con tu endpoint real
+        const datosFiltrados = response.data.filter(afiliado => afiliado.mesFin === null);
+        console.log("Respuesta del servidor:", datosFiltrados);
+        setDatosAfiliados2(datosFiltrados); // Asume que la respuesta es un array de afiliados
+      } catch (error) {
+        console.error("Error al obtener los afiliados:", error);
+        toast.error("Error al cargar la lista de afiliados", {
+          description: "No se pudieron obtener los datos del servidor.",
+        });
+      }
+    };
+    verEspeciales ? fetchEspeciales() : fetchAfiliados();
+  }, [verEspeciales]);
+
 
   // 1) Calcular filtrados sin estado derivado
   const datosFiltrados = useMemo(() => {
-    let data = [...datosAfiliados];
-
+    let data = [...datosAfiliados2]; // Usa los datos del backend
+    console.log("Datos originales:", data);
     // Buscar (nombre, documento, eps)
     const q = searchTerm.trim().toLowerCase();
     if (q) {
       data = data.filter((a) =>
-        [a.nombreCompleto, a.documento, a.eps ?? ""]
+        [a.NombreCompleto, a.Documento, a.Plan ?? ""]
           .map((v) => String(v).toLowerCase())
           .some((v) => v.includes(q))
       );
@@ -41,7 +122,7 @@ export const ListarAfiliado = () => {
     // Plan (igualdad estricta normalizada)
     const plan = (planSeleccionado || "").trim().toLowerCase();
     if (plan) {
-      data = data.filter((a) => (a.plan ?? "").toLowerCase() === plan);
+      data = data.filter((a) => (a.Plan ?? "").toLowerCase() === plan);
     }
 
     // Rango de fechas (opcional: usando fechaInicio en formato DD/MM/YYYY)
@@ -53,8 +134,8 @@ export const ListarAfiliado = () => {
       });
     }
 
-    return data;
-  }, [searchTerm, planSeleccionado, dateRange]);
+    return data; // Retorna los datos filtrados
+  }, [searchTerm, planSeleccionado, dateRange, datosAfiliados2]); // Agrega datosAfiliados2 como dependencia
 
   // 2) Limpiar filtros
   const handleClearFilters = () => {
@@ -65,10 +146,10 @@ export const ListarAfiliado = () => {
 
   const getPlanColor = (plan) => {
     const planColors = {
-      Integral: "blue",
-      "Red Preferente": "purple",
-      "Total Salud": "green",
-      Clásico: "orange",
+      "PLANADICIONAL2": "blue",
+      "PLANBASEPLUS": "purple",
+      "PLANADICIONAL1": "green",
+      "PLANBASEESENCIAL": "orange",
     };
     return planColors[plan] || "default";
   };
@@ -96,9 +177,11 @@ export const ListarAfiliado = () => {
           }
           extra={
             <div className="flex flex-wrap gap-3">
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Button
+                onClick={() => setVerEspeciales(!verEspeciales)}
+                className="bg-amber-600 hover:bg-amber-700 text-white">
                 <FileText className="h-4 w-4" />
-                Ver Especiales
+                {verEspeciales ? "Ver Afiliados" : "Ver Especiales"}
               </Button>
               <Button
                 disabled={datosFiltrados.length === 0}
@@ -108,7 +191,7 @@ export const ListarAfiliado = () => {
                 <Download className="h-4 w-4" />
                 Descargar Excel
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setCrearAfiliado(true)}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setCrearAfiliado(true)} disabled={verEspeciales}>
                 <UserPlus className="h-4 w-4" />
                 Registrar Nuevo Afiliado
               </Button>
@@ -146,7 +229,7 @@ export const ListarAfiliado = () => {
                 onChange={(value) => setPlanSeleccionado((value ?? "").toString())} // ← maneja allowClear
                 options={
                   // Asegura que options.label y .value existan
-                  (Planes ?? []).map((p) => ({
+                  (planEPS ?? []).map((p) => ({
                     label: p.label ?? p.value,
                     value: (p.value ?? "").toString().toLowerCase(), // normaliza a minúsculas
                   }))
@@ -175,7 +258,7 @@ export const ListarAfiliado = () => {
           title={
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-gray-600" />
-              <span className="font-semibold">Lista de Afiliados</span>
+              <span className="font-semibold">{verEspeciales ? "Lista de Afiliados Especiales" : "Lista de Afiliados"}</span>
               <Tag color="blue">{datosFiltrados.length} registros</Tag>
             </div>
           }
@@ -203,34 +286,32 @@ export const ListarAfiliado = () => {
                   <tbody>
                     {datosFiltrados.map((fila, index) => (
                       <motion.tr
-                        key={`${fila.documento}-${index}`}
+                        key={`${fila.Documento}-${index}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: index * 0.03 }}
                         className="bg-white hover:bg-gray-50 border-b last:border-b-0 transition-colors cursor-pointer"
                       >
-                        <td className="p-3 text-sm font-medium text-gray-900">{fila.documento}</td>
+                        <td className="p-3 text-sm text-gray-900">{fila.Documento}</td>
                         <td className="p-3">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{fila.nombreCompleto}</div>
-                            <div className="text-xs text-gray-500">{fila.regimenSalud}</div>
+                            <div className="text-sm font-medium text-gray-900">{fila.NombreCompleto}</div>
                           </div>
                         </td>
                         <td className="p-3">
-                          <Tag color={getPlanColor(fila.plan)}>{fila.plan}</Tag>
+                          <Tag color={getPlanColor(fila.Plan?.split(' ').join(''))}>{fila.Plan}</Tag>
                         </td>
-                        <td className="p-3 text-sm text-gray-700">{fila.eps}</td>
+                        <td className="p-3 text-sm text-gray-700">{fila.Tipo}</td>
                         <td className="p-3 text-center">
                           <span
-                            className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                              fila.nroDependientes > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-                            }`}
+                            className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${fila.totalDependientes > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-600"
+                              }`}
                           >
-                            {fila.nroDependientes}
+                            {fila.totalDependientes}
                           </span>
                         </td>
-                        <td className="p-3 text-sm text-gray-600">{fila.fechaInicio}</td>
-                        <td className="p-3 text-sm text-gray-600">{fila.fechaFin || "Indefinido"}</td>
+                        <td className="p-3 text-sm text-gray-600">{dayjs.utc(fila.mesInicio).format('DD/MM/YYYY')}</td>
+                        <td className="p-3 text-sm text-gray-600">{fila.mesFin ? dayjs.utc(fila.mesFin).format('DD/MM/YYYY') : "VIGENTE"}</td>
                         <td className="p-3">
                           <div className="flex justify-center gap-1">
                             <Tooltip title="Ver detalles">
@@ -239,6 +320,7 @@ export const ListarAfiliado = () => {
                                 size="icon"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log("Afiliado seleccionado para ver:", fila);
                                   setSelectAfiliado(fila);
                                   setIsVer(true);
                                 }}
@@ -262,6 +344,23 @@ export const ListarAfiliado = () => {
                                 <Pencil className="h-4 w-4 text-green-600" />
                               </Button>
                             </Tooltip>
+
+                            <Tooltip title="Dar de Baja">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log("Afiliado para baja:", fila);
+                                  setAfiliadoParaBaja(fila);
+                                  setBajaDate(null);
+                                  setIsBaja(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </Tooltip>
                           </div>
                         </td>
                       </motion.tr>
@@ -276,8 +375,72 @@ export const ListarAfiliado = () => {
 
       {/* Modales */}
       <DetalleAfiliado isVer={isVer} selectAfiliado={selectAfiliado} setIsVer={setIsVer} />
-      <ModalRegistroAfiliado isCrear={crearAfiliado} setIsCrear={setCrearAfiliado} />
+      <ModalRegistroAfiliado isCrear={crearAfiliado} setIsCrear={setCrearAfiliado} afiliados={datosAfiliados2} />
       <ModalEditAfiliado isEdit={isEdit} setSelectAfiliado={setSelectAfiliado} selectAfiliado={selectAfiliado} setIsEdit={setIsEdit} />
+
+      {/* MODAL DE BAJA */}
+      <Modal
+        open={isBaja}
+        title={
+          <div className="flex items-center gap-2 text-red-600">
+            <Trash2 className="h-5 w-5" />
+            <span className="font-bold">Dar de Baja Afiliación</span>
+          </div>
+        }
+        onCancel={() => {
+          setIsBaja(false);
+          setBajaDate(null);
+          setAfiliadoParaBaja(null);
+        }}
+        footer={null}
+      >
+        <div className="space-y-4 pt-2">
+          <Alert
+            message="Atención"
+            description="Esta acción finalizará la vigencia del plan para el titular y TODOS sus dependientes asociados. Esta acción no se puede deshacer fácilmente."
+            type="warning"
+            showIcon
+            className="mb-4"
+          />
+
+          <div className="bg-gray-50 p-3 rounded-lg border">
+            <p className="text-xs text-gray-500 uppercase font-bold">Afiliado</p>
+            <p className="text-sm font-medium text-gray-900">{afiliadoParaBaja?.NombreCompleto}</p>
+            <p className="text-xs text-gray-500 mt-1 uppercase font-bold">Plan Actual</p>
+            <p className="text-sm font-medium text-gray-900">{afiliadoParaBaja?.Plan}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Seleccione Mes de Fin de Suscripción *
+            </label>
+            <DatePicker
+              picker="month"
+              placeholder="Seleccione mes de baja"
+              className="w-full"
+              format="MMMM YYYY"
+              value={bajaDate ? dayjs(bajaDate) : null}
+              onChange={(date) => setBajaDate(date ? date.startOf('month').format('YYYY-MM-DD') : null)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsBaja(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={confirmarBaja}
+              disabled={!bajaDate}
+            >
+              Confirmar Baja
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

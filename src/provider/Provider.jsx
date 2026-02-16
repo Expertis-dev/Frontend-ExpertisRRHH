@@ -16,20 +16,28 @@ export const DataProvider = ({ children }) => {
         const nombreObtenido = localStorage.getItem("nombre")
         return nombreObtenido || null
     })
-        const [token, setToken] = useState(() => {
+    const [token, setToken] = useState(() => {
         const tokenObtenido = localStorage.getItem("token")
         return tokenObtenido || null
     })
-    useEffect(()=>{
+    const [planEPS, setPlanEPS] = useState(() => {
+        const planEPSObtenido = localStorage.getItem("planesEPS")
+        const plan = planEPSObtenido ? JSON.parse(planEPSObtenido) : null
+        return plan || null
+    })
+    useEffect(() => {
         localStorage.setItem("nombre", nombre)
         localStorage.setItem("token", token)
-    }, [nombre, token])
+        localStorage.setItem("planEPS", planEPS)
+    }, [nombre, token, planEPS])
     const value = useMemo(() => ({
         nombre,
         setNombre,
         token,
-        setToken
-    }), [nombre, token]);
+        setToken,
+        planEPS,
+        setPlanEPS
+    }), [nombre, token, planEPS]);
     return (
         <Context.Provider
             value={value}

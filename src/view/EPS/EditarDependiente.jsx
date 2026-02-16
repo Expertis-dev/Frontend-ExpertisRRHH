@@ -18,11 +18,7 @@ const SEXO_OPTIONS = [
 
 const PARENTESCO_OPTIONS = [
     { label: "Cónyuge", value: "CONYUGUE" },
-    { label: "Hijo/a", value: "HIJO" },
-    { label: "Padre", value: "PADRE" },
-    { label: "Madre", value: "MADRE" },
-    { label: "Hermano/a", value: "HERMANO" },
-    { label: "Otro", value: "OTRO" },
+    { label: "Hijo/a", value: "HIJO" }
 ];
 
 export const EditarDependiente = ({
