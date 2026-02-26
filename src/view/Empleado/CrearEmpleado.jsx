@@ -28,6 +28,29 @@ function sumarDiasHabiles(fecha, cantidad) {
     return resultado;
 }
 
+const paisesLatam = [
+    { value: "ARGENTINA", label: "Argentina" },
+    { value: "BOLIVIA", label: "Bolivia" },
+    { value: "BRASIL", label: "Brasil" },
+    { value: "CHILE", label: "Chile" },
+    { value: "COLOMBIA", label: "Colombia" },
+    { value: "COSTA RICA", label: "Costa Rica" },
+    { value: "CUBA", label: "Cuba" },
+    { value: "ECUADOR", label: "Ecuador" },
+    { value: "EL SALVADOR", label: "El Salvador" },
+    { value: "GUATEMALA", label: "Guatemala" },
+    { value: "HONDURAS", label: "Honduras" },
+    { value: "MEXICO", label: "México" },
+    { value: "NICARAGUA", label: "Nicaragua" },
+    { value: "PANAMA", label: "Panamá" },
+    { value: "PARAGUAY", label: "Paraguay" },
+    { value: "PERU", label: "Perú" },
+    { value: "PUERTO RICO", label: "Puerto Rico" },
+    { value: "REPUBLICA DOMINICANA", label: "República Dominicana" },
+    { value: "URUGUAY", label: "Uruguay" },
+    { value: "VENEZUELA", label: "Venezuela" }
+]
+
 const InputField = ({ label, id, name, type = "text", value, onChange, error, className = "", ...props }) => (
     <div className={`space-y-2 ${className}`}>
         <Label htmlFor={id} className="text-slate-800 mb-1">{label}</Label>
@@ -110,6 +133,7 @@ export const CrearEmpleado = () => {
         prov: "",
         dist: "",
         fecNacimiento: "",
+        nacionalidad: "PERU",
         depNacimiento: "",
         provNacimiento: "",
         distNacimiento: "",
@@ -194,6 +218,7 @@ export const CrearEmpleado = () => {
             title: "Datos de Nacimiento",
             fields: [
                 { label: "Fecha Nacimiento", value: formData.fecNacimiento.toUpperCase() },
+                { label: "Nacionalidad", value: formData.nacionalidad.toUpperCase() },
                 { label: "Departamento", value: formData.depNacimiento.toUpperCase() },
                 { label: "Provincia", value: formData.provNacimiento.toUpperCase() },
                 { label: "Distrito", value: formData.distNacimiento.toUpperCase() },
@@ -248,7 +273,7 @@ export const CrearEmpleado = () => {
     }, [formData.prov, ubigeoData, formData.dep])
 
     useEffect(() => {
-        if (formData.depNacimiento && ubigeoData.length > 0) {
+        if (formData.depNacimiento && ubigeoData.length > 0 && formData.nacionalidad === "PERU") {
             const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.depNacimiento)
             if (deptoSeleccionado) {
                 setProvsNacimiento(deptoSeleccionado.provincias.map(prov => ({ id: prov.id, name: prov.name })))
@@ -258,7 +283,7 @@ export const CrearEmpleado = () => {
     }, [formData.depNacimiento, ubigeoData])
 
     useEffect(() => {
-        if (formData.provNacimiento && ubigeoData.length > 0) {
+        if (formData.provNacimiento && ubigeoData.length > 0 && formData.nacionalidad === "PERU") {
             const deptoSeleccionado = ubigeoData.find(depto => depto.name === formData.depNacimiento)
             if (deptoSeleccionado) {
                 const provSeleccionada = deptoSeleccionado.provincias.find(prov => prov.name === formData.provNacimiento)
@@ -305,9 +330,12 @@ export const CrearEmpleado = () => {
             if (!formData.dep) errors.dep = "Departamento es requerido"
             if (!formData.prov) errors.prov = "Provincia es requerida"
             if (!formData.dist) errors.dist = "Distrito es requerido"
-            if (!formData.depNacimiento) errors.depNacimiento = "Departamento de nacimiento es requerido"
-            if (!formData.provNacimiento) errors.provNacimiento = "Provincia de nacimiento es requerida"
-            if (!formData.distNacimiento) errors.distNacimiento = "Distrito de nacimiento es requerido"
+            if (!formData.nacionalidad) errors.nacionalidad = "Nacionalidad es requerida"
+            if (formData.nacionalidad === 'PERU') {
+                if (!formData.depNacimiento) errors.depNacimiento = "Departamento de nacimiento es requerido"
+                if (!formData.provNacimiento) errors.provNacimiento = "Provincia de nacimiento es requerida"
+                if (!formData.distNacimiento) errors.distNacimiento = "Distrito de nacimiento es requerido"
+            }
         }
         else if (step === 2) {
             if (!formData.sueldo || isNaN(formData.sueldo) || formData.sueldo < 500) errors.sueldo = "Sueldo mínimo es 500"
@@ -584,24 +612,54 @@ export const CrearEmpleado = () => {
     const renderBirthplaceFields = () => (
         <div className="flex flex-col gap-2">
             <SelectField
-                label="DEPARTAMENTO*" name="depNacimiento" value={formData.depNacimiento}
-                onValueChange={handleSelectChange} error={formErrors.depNacimiento}
-                options={deps.map(d => ({ value: d.name, label: d.name }))}
+                label="NACIONALIDAD*" name="nacionalidad" value={formData.nacionalidad}
+                onValueChange={(name, value) => {
+                    if (value !== "PERU") {
+                        setFormData(prev => ({
+                            ...prev,
+                            nacionalidad: value,
+                            depNacimiento: value,
+                            provNacimiento: value,
+                            distNacimiento: value
+                        }))
+                    } else {
+                        setFormData(prev => ({
+                            ...prev,
+                            nacionalidad: value,
+                            depNacimiento: "",
+                            provNacimiento: "",
+                            distNacimiento: ""
+                        }))
+                    }
+                    if (formErrors.nacionalidad) setFormErrors(prev => ({ ...prev, nacionalidad: null }))
+                }}
+                error={formErrors.nacionalidad}
+                options={paisesLatam}
             />
-            <SelectField
-                label="PROVINCIA*" name="provNacimiento" value={formData.provNacimiento}
-                onValueChange={handleSelectChange} error={formErrors.provNacimiento}
-                disabled={!formData.depNacimiento}
-                options={provsNacimiento.map(p => ({ value: p.name, label: p.name }))}
-                placeholder={formData.depNacimiento ? "Seleccione provincia" : "Primero seleccione departamento"}
-            />
-            <SelectField
-                label="DISTRITO*" name="distNacimiento" value={formData.distNacimiento}
-                onValueChange={handleSelectChange} error={formErrors.distNacimiento}
-                disabled={!formData.provNacimiento}
-                options={distsNacimiento.map(d => ({ value: d.name, label: d.name }))}
-                placeholder={formData.provNacimiento ? "Seleccione distrito" : "Primero seleccione provincia"}
-            />
+
+            {formData.nacionalidad === "PERU" && (
+                <>
+                    <SelectField
+                        label="DEPARTAMENTO*" name="depNacimiento" value={formData.depNacimiento}
+                        onValueChange={handleSelectChange} error={formErrors.depNacimiento}
+                        options={deps.map(d => ({ value: d.name, label: d.name }))}
+                    />
+                    <SelectField
+                        label="PROVINCIA*" name="provNacimiento" value={formData.provNacimiento}
+                        onValueChange={handleSelectChange} error={formErrors.provNacimiento}
+                        disabled={!formData.depNacimiento}
+                        options={provsNacimiento.map(p => ({ value: p.name, label: p.name }))}
+                        placeholder={formData.depNacimiento ? "Seleccione provincia" : "Primero seleccione departamento"}
+                    />
+                    <SelectField
+                        label="DISTRITO*" name="distNacimiento" value={formData.distNacimiento}
+                        onValueChange={handleSelectChange} error={formErrors.distNacimiento}
+                        disabled={!formData.provNacimiento}
+                        options={distsNacimiento.map(d => ({ value: d.name, label: d.name }))}
+                        placeholder={formData.provNacimiento ? "Seleccione distrito" : "Primero seleccione provincia"}
+                    />
+                </>
+            )}
         </div>
     )
 
@@ -759,7 +817,7 @@ export const CrearEmpleado = () => {
     const validateDocumento = () => {
         const errors = {}
         if (!formData.documento) errors.documento = "Documento es requerido"
-        else if (!/^\d{8}$/.test(formData.documento)) errors.documento = "Documento debe tener 8 dígitos"
+        else if (!/^\d{8,9}$/.test(formData.documento)) errors.documento = "Documento debe tener 8 o 9 dígitos"
 
         setFormErrors(errors)
         return Object.keys(errors).length === 0
@@ -812,12 +870,11 @@ export const CrearEmpleado = () => {
                                 id="documento"
                                 name="documento"
                                 type="text"
-                                inputMode="numeric"
                                 value={formData.documento}
                                 onChange={handleChange}
-                                maxLength={8}
+                                maxLength={9}
                                 className={`border-gray-300 ${formErrors.documento ? "border-red-500" : ""}`}
-                                placeholder="Ingrese 8 dígitos"
+                                placeholder="Ingrese 8 o 9 dígitos"
                             />
                             {formErrors.documento && (
                                 <p className="text-sm text-red-500 flex items-center">
