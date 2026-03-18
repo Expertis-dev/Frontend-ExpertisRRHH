@@ -651,7 +651,7 @@ const DescansoMedicoTable = () => {
                             variant="ghost"
                             size="icon"
                             title="Editar"
-                            disabled={true}
+                            // disabled={true}
                             onClick={() => prepareEditLicense(item)}
                           >
                             <Pencil className="h-4 w-4 text-green-500" />
