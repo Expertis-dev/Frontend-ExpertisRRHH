@@ -145,6 +145,7 @@ export const CrearEmpleado = () => {
         impuestoRetenido: "",
         ingresoBruto: "",
         agencia: "",
+        procedencia: "",
     }
 
     // Estados del componente
@@ -183,6 +184,7 @@ export const CrearEmpleado = () => {
                 { label: "N° de Hijos", value: formData.nroHijos.toUpperCase() },
                 { label: "Teléfono", value: formData.telefono.toUpperCase() },
                 { label: "Correo", value: formData.correo.toUpperCase() },
+                { label: "Procedencia", value: formData.procedencia.toUpperCase() }
             ]
         },
         {
@@ -324,6 +326,7 @@ export const CrearEmpleado = () => {
             if (!isValidEmail(formData.correo)) errors.correo = "Correo electrónico inválido";
             if (!formData.fecNacimiento) errors.fecNacimiento = "Fecha de nacimiento es requerida";
             if (!formData.asignacionfamiliar) errors.asignacionfamiliar = "Asignación familiar es requerida";
+            if (!formData.procedencia) errors.procedencia = "la Procedencia es requerida"
         }
         else if (step === 1) {
             if (!formData.dir.trim()) errors.dir = "Dirección es requerida"
@@ -449,7 +452,8 @@ export const CrearEmpleado = () => {
                 impRetenido: formData.impuestoRetenido,
                 ingresoBruto: formData.ingresoBruto,
                 agencia: formData.agencia.toUpperCase(),
-                usuario: "ADMIN"
+                usuario: "ADMIN",
+                procedencia: formData.procedencia
             }
             console.log("Datos a enviar:", datos)
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleado`, datos)
@@ -574,6 +578,17 @@ export const CrearEmpleado = () => {
                 options={[
                     { value: "si", label: "SI" },
                     { value: "no", label: "NO" }
+                ]}
+            />
+            <SelectField
+                label="PROCEDENCIA*" name="procedencia" value={formData.procedencia}
+                onValueChange={handleSelectChange} error={formErrors.procedencia}
+                options={[
+                    { value: "Pandapé", label: "PANDAPE" },
+                    { value: "RR. SS. (Redes Sociales)", label: "REDES SOCIALES" },
+                    { value: "Reingreso", label: "REINGRESO" },
+                    { value: "Referido", label: "REFERIDO" },
+                    { value: "Triskell", label: "TRISKELL" }
                 ]}
             />
 
