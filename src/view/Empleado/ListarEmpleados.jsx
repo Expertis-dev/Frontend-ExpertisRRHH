@@ -2030,6 +2030,12 @@ export const ListarEmpleados = () => {
                         <span className="font-semibold">Num.Hijos:</span>{" "}
                         {selectedEmployee.nroHijos}
                       </p>
+                      <p>
+                        <span className="font-semibold">Procedencia:</span>{" "}
+                        {selectedEmployee.procedencia
+                          ? selectedEmployee.procedencia
+                          : "N/A"}
+                      </p>
                     </div>
                     <div className="space-y-1">
                       <p>
