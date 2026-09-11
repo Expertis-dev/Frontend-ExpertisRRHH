@@ -34,6 +34,7 @@ export const CesarEmpleado = () => {
   const [nuevoMotivo, setNuevoMotivo] = useState("");
   const [detalle, setDetalle] = useState("");
   const [motivo, setMotivo] = useState("NO SUPERO EL PERIODO DE PRUEBA");
+  const [subMotivo, setSubMotivo] = useState("BAJO DESEMPEÑO");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirmacion, setIsConfirmacion] = useState(false);
@@ -47,6 +48,20 @@ export const CesarEmpleado = () => {
     "DESPIDO",
     "DESISTIO",
   ];
+  const subMotivosPorMotivo = {
+    "RENUNCIA": ["VOLUNTARIA", "INDUCIR A RENUNCIAR"],
+    "DESPIDO": ["FALTA GRAVE", "MUY GRAVE"],
+    "NO SUPERO EL PERIODO DE PRUEBA": [
+      "BAJO DESEMPEÑO",
+      "INCUMPLIMIENTO DE POLÍTICAS INTERNAS",
+    ],
+    "NO RENOVACION": [
+      "VENCIMIENTO DE CONTRATO",
+      "REESTRUCTURACION ORGANIZACIONAL",
+      "REDUCCIÓN DE PRESUPUESTO",
+    ],
+  };
+  const subMotivosDisponibles = subMotivosPorMotivo[motivo] || [];
   const ObetenerEmpleados = async () => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/listarEmpleados`);
     const dataEmpleados = response.data.recordset.filter(dato => dato.nombreCompleto !== null)
@@ -79,6 +94,7 @@ export const CesarEmpleado = () => {
     }
 
     setMotivo(nuevoMotivo);
+    setSubMotivo("");
     setNuevoMotivo("");
     setModalMotivo(false);
     messageApi.open({
@@ -91,6 +107,7 @@ export const CesarEmpleado = () => {
 
   const Limpiar = () => {
     setMotivo("NO SUPERO EL PERIODO DE PRUEBA");
+    setSubMotivo("BAJO DESEMPEÑO");
     setDetalle("");
     setFecCese(hoy);
   };
@@ -103,6 +120,7 @@ export const CesarEmpleado = () => {
         idEmpleado,
         fecCese,
         motivo,
+        subMotivo,
         detalle,
         usuario: nombre,
         sumaGraciosa: isSumaGraciosa ? Number(sumaGraciosa) : 0,
@@ -158,6 +176,9 @@ export const CesarEmpleado = () => {
             <p className="font-medium">Empleado: <span className="font-light"> {usuario}</span></p>
             <p className="font-medium">Fecha de cese: <span className="font-light"> {fecCese}</span></p>
             <p className="font-medium">Motivo: <span className="font-light">  {motivo}</span></p>
+            {subMotivo && (
+              <p className="font-medium">Submotivo: <span className="font-light"> {subMotivo}</span></p>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button
@@ -285,7 +306,11 @@ export const CesarEmpleado = () => {
           <div className="flex items-center gap-2">
             <Select
               value={motivo}
-              onChange={setMotivo}
+              onChange={(value) => {
+                const nuevosSubMotivos = subMotivosPorMotivo[value] || [];
+                setMotivo(value);
+                setSubMotivo(nuevosSubMotivos[0] || "");
+              }}
               className="flex-1 min-w-0"
               dropdownStyle={{ zIndex: 2000 }}
             >
@@ -329,6 +354,24 @@ export const CesarEmpleado = () => {
             </motion.div>
           </Modal>
         </div>
+
+        {subMotivosDisponibles.length > 0 && (
+          <div className="flex items-center justify-between gap-4">
+            <label className="font-semibold">SUBMOTIVO:</label>
+            <Select
+              value={subMotivo}
+              onChange={setSubMotivo}
+              className="flex-1 min-w-0"
+              dropdownStyle={{ zIndex: 2000 }}
+            >
+              {subMotivosDisponibles.map((item) => (
+                <Option key={item} value={item}>
+                  {item}
+                </Option>
+              ))}
+            </Select>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-4">
           <label className="text-black font-semibold dark:text-white flex items-center gap-2">
