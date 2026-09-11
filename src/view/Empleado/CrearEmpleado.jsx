@@ -145,6 +145,8 @@ export const CrearEmpleado = () => {
         impuestoRetenido: "",
         ingresoBruto: "",
         agencia: "",
+        procedencia: "",
+        detalleProcedencia: ""
     }
 
     // Estados del componente
@@ -183,6 +185,8 @@ export const CrearEmpleado = () => {
                 { label: "N° de Hijos", value: formData.nroHijos.toUpperCase() },
                 { label: "Teléfono", value: formData.telefono.toUpperCase() },
                 { label: "Correo", value: formData.correo.toUpperCase() },
+                { label: "Procedencia", value: formData.procedencia.toUpperCase() },
+                { label: "Detalle procedencia", value: formData.detalleProcedencia.toUpperCase() }
             ]
         },
         {
@@ -324,6 +328,13 @@ export const CrearEmpleado = () => {
             if (!isValidEmail(formData.correo)) errors.correo = "Correo electrónico inválido";
             if (!formData.fecNacimiento) errors.fecNacimiento = "Fecha de nacimiento es requerida";
             if (!formData.asignacionfamiliar) errors.asignacionfamiliar = "Asignación familiar es requerida";
+            if (!formData.procedencia) errors.procedencia = "la Procedencia es requerida"
+
+            if (formData.procedencia === "PLATAFORMA_EMPLEO_ATS" || formData.procedencia === "CONSULTORA_AGENCIA_EXTERNA"){
+                if (!formData.detalleProcedencia){
+                    errors.detalleProcedencia = "Es obligatorio detallar el nombre de la empresa externa"
+                }
+            }
         }
         else if (step === 1) {
             if (!formData.dir.trim()) errors.dir = "Dirección es requerida"
@@ -380,6 +391,23 @@ export const CrearEmpleado = () => {
     const handleSelectChange = (name, value) => {
         setFormData(prev => ({ ...prev, [name]: value }))
         if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: null }))
+    }
+
+    const handleProcedenciaChange = (name, value) => {
+        setFormData(prev => ({
+            ...prev,
+            procedencia: value,
+            detalleProcedencia: [
+                "PLATAFORMA_EMPLEO_ATS",
+                "CONSULTORA_AGENCIA_EXTERNA"
+            ].includes(value)
+                ? prev.detalleProcedencia
+                : ""
+        }))
+
+        if (formErrors[name]) {
+            setFormErrors(prev => ({ ...prev, [name]: null }))
+        }
     }
 
     const handleRadioChange = (name, value) => {
@@ -449,7 +477,9 @@ export const CrearEmpleado = () => {
                 impRetenido: formData.impuestoRetenido,
                 ingresoBruto: formData.ingresoBruto,
                 agencia: formData.agencia.toUpperCase(),
-                usuario: "ADMIN"
+                usuario: "ADMIN",
+                procedencia: formData.procedencia,
+                detalleProcedencia: formData.detalleProcedencia.toUpperCase().trim(),
             }
             console.log("Datos a enviar:", datos)
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/empleados/registrarEmpleado`, datos)
@@ -576,6 +606,26 @@ export const CrearEmpleado = () => {
                     { value: "no", label: "NO" }
                 ]}
             />
+            <SelectField
+                label="PROCEDENCIA*" name="procedencia" value={formData.procedencia}
+                onValueChange={handleProcedenciaChange} error={formErrors.procedencia}
+                options={[
+                    { value: "PLATAFORMA_EMPLEO_ATS", label: "Plataformas de Empleo / ATS "},
+                    { value: "REDES SOCIALES", label: "Redes Sociales"},
+                    { value: "REINGRESOS", label: "Reingreso"},
+                    { value: "REFERIDOS", label: "Referido"},
+                    { value: "CONSULTORA_AGENCIA_EXTERNA", label: "Consultora / Agencia externa "}
+                ]}
+            />
+            {
+                (
+                    (formData.procedencia === "PLATAFORMA_EMPLEO_ATS" || formData.procedencia === "CONSULTORA_AGENCIA_EXTERNA")
+                ) &&
+                <InputField
+                    label="DETALLE PROCEDENCIA*" id="detalleProcedencia" name="detalleProcedencia" type="text"
+                    value={formData.detalleProcedencia} onChange={handleChange} error={formErrors.detalleProcedencia}
+                />
+            }
 
 
         </>
