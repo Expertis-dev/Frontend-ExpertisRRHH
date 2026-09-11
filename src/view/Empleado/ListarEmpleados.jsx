@@ -2030,12 +2030,6 @@ export const ListarEmpleados = () => {
                         <span className="font-semibold">Num.Hijos:</span>{" "}
                         {selectedEmployee.nroHijos}
                       </p>
-                      <p>
-                        <span className="font-semibold">Procedencia:</span>{" "}
-                        {selectedEmployee.procedencia
-                          ? selectedEmployee.procedencia
-                          : "N/A"}
-                      </p>
                     </div>
                     <div className="space-y-1">
                       <p>
@@ -2061,6 +2055,18 @@ export const ListarEmpleados = () => {
                       <p>
                         <span className="font-semibold">Cant. Ingresos:</span>{" "}
                         {selectedEmployee.CantidadIngresos}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Procedencia:</span>{" "}
+                        {selectedEmployee.procedencia
+                          ? selectedEmployee.procedencia
+                          : "N/A"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Detalle procedencia:</span>{" "}
+                        {selectedEmployee.detProcedencia
+                          ? selectedEmployee.detProcedencia
+                          : "N/A"}
                       </p>
                     </div>
                     <div className="space-y-1">
