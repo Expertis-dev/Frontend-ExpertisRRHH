@@ -106,7 +106,8 @@ const DescansoMedicoTable = () => {
       const [start, end] = dateRange;
       result = result.filter(item => {
         const fechaInicio = dayjs(item.fecha_inicio?.split("T")[0]);
-        return fechaInicio.isAfter(start) && fechaInicio.isBefore(end);
+        return (fechaInicio.isSame(start, 'day') || fechaInicio.isAfter(start, 'day')) && 
+               (fechaInicio.isSame(end, 'day') || fechaInicio.isBefore(end, 'day'));
       });
     }
 
@@ -651,7 +652,7 @@ const DescansoMedicoTable = () => {
                             variant="ghost"
                             size="icon"
                             title="Editar"
-                            disabled={true}
+                            // disabled={true}
                             onClick={() => prepareEditLicense(item)}
                           >
                             <Pencil className="h-4 w-4 text-green-500" />

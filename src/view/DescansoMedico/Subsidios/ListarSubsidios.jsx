@@ -1,4 +1,4 @@
-import { Search, RefreshCw, Trash, Eye, SquarePen, Pencil, CalendarDays, Clock, User } from "lucide-react";
+import { Search, RefreshCw, Trash, Eye, SquarePen, Pencil, CalendarDays, Clock, User, FileSpreadsheet } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Input, Modal, Form, DatePicker, AutoComplete, Select, Tag, Checkbox } from "antd";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { CompResultado } from "@/components/CompSucces";
 import { DiffOutlined } from "@ant-design/icons";
+import * as XLSX from "xlsx"
 dayjs.locale("es");
 
 export const ListarSubsidios = () => {
@@ -86,7 +87,8 @@ export const ListarSubsidios = () => {
       const [start, end] = dateRange;
       result = result.filter(item => {
         const fechaInicio = dayjs(item.fecha_inicio?.split("T")[0]);
-        return fechaInicio.isAfter(start) && fechaInicio.isBefore(end);
+        return (fechaInicio.isSame(start, 'day') || fechaInicio.isAfter(start, 'day')) && 
+               (fechaInicio.isSame(end, 'day') || fechaInicio.isBefore(end, 'day'));
       });
     }
     console.log(diasFilter)
@@ -233,6 +235,38 @@ export const ListarSubsidios = () => {
     setDiasFilter(null);
     setTiposAtencion(null);
   };
+
+  const onExportExcel = () => {
+    const formattedData = filteredData.map((item) => ({
+      "Nombre Completo": item.nombreCompleto,
+      "Doc. Identidad": item.documento,
+      "Tipo Sub.": item.Tipo,
+      "Diagnóstico": item.Diagnostico || "-",
+      "Tipo Atención": item.TipoAtencion,
+      "Nro. CITT": item.NroCITT || "-",
+      "Fecha Inicio": item.fecha_inicio ? item.fecha_inicio.split("T")[0] : "",
+      "Fecha Fin": item.fecha_fin ? item.fecha_fin.split("T")[0] : "",
+      "Días": item.numDias,
+      "Dias Acoplados": item.dias_acoplados,
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+    const objectKeys = Object.keys(formattedData[0]);
+    worksheet["!cols"] = objectKeys.map((key) => {
+      const maxLen = Math.max(
+        key.length,
+        ...formattedData.map((row) => (row[key] ? row[key].toString().length : 0))
+      );
+      return { wch: maxLen + 3 };
+    });
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Subsidios");
+    
+    const fechaHoy = new Date().toISOString().split("T")[0];
+    XLSX.writeFileXLSX(workbook, `subsidios_${fechaHoy}.xlsx`);
+  }
 
   const Limpieza = () => {
     setSearchTerm("");
@@ -393,6 +427,16 @@ export const ListarSubsidios = () => {
               Limpiar
             </Button>
 
+          </div>
+          <div className="flex gap-4">
+            <Button
+              onClick={onExportExcel}
+              variant="outline"
+              className="rounded-lg flex items-center gap-2 bg-green-500 text-white hover:bg-green-700 hover:text-white"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Exportar
+            </Button>
           </div>
         </div>
         <motion.div
