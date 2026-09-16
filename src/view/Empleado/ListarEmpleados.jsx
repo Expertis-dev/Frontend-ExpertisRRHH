@@ -2251,7 +2251,7 @@ export const ListarEmpleados = () => {
                     </div>
                   </div>
 
-                  <div className="border rounded-lg p-4">
+                  <div className="border rounded-lg p-4 col-span-2">
                     <h3 className="font-semibold text-slate-700 mb-2 border-b pb-1">
                       HISTÓRICO DE CESES
                     </h3>
@@ -2262,6 +2262,7 @@ export const ListarEmpleados = () => {
                             <TableHead>FECHA INGRESO</TableHead>
                             <TableHead>FECHA CESE</TableHead>
                             <TableHead>MOTIVO</TableHead>
+                            <TableHead>SUB MOTIVO</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2277,6 +2278,7 @@ export const ListarEmpleados = () => {
                                 {cese.fecCese.split("T")[0]}
                               </TableCell>
                               <TableCell>{cese.motivo}</TableCell>
+                              <TableCell>{cese.submotivo || "N/A"}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
